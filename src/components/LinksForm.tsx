@@ -36,6 +36,7 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
       id: uuidv4(),
       type: "website",
       url: "",
+      title: "Sitio web", // Adding the title property
       label: "Sitio web"
     };
     
@@ -58,8 +59,13 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
             return {
               ...link,
               [field]: validType,
-              label: typeOption?.label || link.label
+              label: typeOption?.label || link.label,
+              title: typeOption?.label || link.label // Update title when type changes
             };
+          }
+          // Also update title when label changes if field is "label"
+          if (field === "label") {
+            return { ...link, [field]: value, title: value };
           }
           return { ...link, [field]: value };
         }
