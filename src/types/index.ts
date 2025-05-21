@@ -1,52 +1,3 @@
-
-// Definición de un enlace en la tarjeta
-export interface CardLink {
-  id: string;
-  type: "website" | "linkedin" | "facebook" | "twitter" | "instagram" | "calendar" | "whatsapp" | "other";
-  label?: string;
-  url: string;
-}
-
-// Roles de usuario
-export type UserRole = "user" | "admin" | "superadmin";
-
-// Extend the BusinessCard type to include company field
-export interface BusinessCard {
-  id: string;
-  name: string;
-  jobTitle: string;
-  company: string;
-  email: string;
-  phone: string;
-  website?: string;
-  address?: string;
-  avatarUrl?: string;
-  createdAt: number;
-  userId?: string;
-  links?: CardLink[];
-}
-
-// Interface for cards from Supabase
-export interface SupabaseBusinessCard {
-  id: string;
-  name: string;
-  title: string | null;
-  company?: string | null;
-  email: string | null;
-  phone: string | null;
-  photo: string | null;
-  links: Array<{ type: string; url: string; label?: string; id?: string }> | null;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  theme: {
-    text: string;
-    accent: string;
-    background: string;
-  };
-}
-
-// Tipo para el contexto de autenticación
 export interface AuthContextType {
   user: any | null;
   session: any | null;
@@ -58,4 +9,37 @@ export interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
+}
+
+export type UserRole = 'user' | 'admin' | 'superadmin' | null;
+
+export interface CardLink {
+  id?: string;
+  title: string;
+  url: string;
+}
+
+// Auth related types
+export interface AuthFormValues {
+  email: string;
+  password: string;
+  fullName?: string;
+  acceptTerms?: boolean;
+  rememberMe?: boolean;
+}
+
+export interface BusinessCard {
+  id?: string;
+  name: string;
+  jobTitle: string;
+  company: string;
+  email: string;
+  phone: string;
+  website: string;
+  address: string;
+  avatarUrl: string;
+  logoUrl?: string; // Add logoUrl as an optional property
+  createdAt?: number;
+  userId?: string;
+  links?: CardLink[];
 }
