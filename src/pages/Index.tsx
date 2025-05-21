@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { BusinessCard } from "@/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Plus, QrCode } from "lucide-react";
 import { toast } from "sonner";
-import { checkSupabaseConnection } from "@/integrations/supabase/client";
+import { checkSupabaseConnection, supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [cards, setCards] = useState<BusinessCard[]>([]);
