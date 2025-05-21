@@ -80,23 +80,28 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
       }
     };
     
-    // Upsert to Supabase (insert or update)
-    const { data, error } = await supabase
-      .from('cards')
-      .upsert(supabaseCard)
-      .select();
-    
-    if (error) {
-      console.error("Error saving to Supabase:", error);
-      toast.error("No se pudo guardar la tarjeta en Supabase");
-      throw error;
+    // Try to upsert to Supabase
+    try {
+      const { data, error } = await supabase
+        .from('cards')
+        .upsert(supabaseCard)
+        .select();
+      
+      if (error) {
+        console.error("Error saving to Supabase:", error);
+        toast.error("No se pudo guardar la tarjeta en Supabase");
+      } else {
+        console.log("Card saved to Supabase successfully:", data);
+        toast.success("Tarjeta guardada correctamente en Supabase");
+      }
+    } catch (supabaseError) {
+      console.error("Supabase operation failed:", supabaseError);
+      toast.warning("Usando almacenamiento local como respaldo");
     }
     
-    console.log("Card saved to Supabase successfully:", data);
-    toast.success("Tarjeta guardada correctamente en Supabase");
     return card;
   } catch (error) {
-    console.error("Error saving card to Supabase:", error);
+    console.error("Error saving card:", error);
     toast.error("Error al guardar la tarjeta");
     return card; // Return original card in case of error
   }
@@ -105,27 +110,34 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
 export const getCards = async (): Promise<BusinessCard[]> => {
   try {
     console.log("Fetching all cards from Supabase");
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*');
     
-    if (error) {
-      console.error("Supabase error fetching cards:", error);
-      toast.error("Error al obtener las tarjetas de Supabase");
-      throw error;
-    }
-    if (!data || data.length === 0) {
-      console.log("No data found in Supabase, falling back to local storage");
-      const localCards = getCardsLocally();
-      if (localCards.length > 0) {
-        toast.info("Mostrando tarjetas guardadas localmente");
+    try {
+      const { data, error } = await supabase
+        .from('cards')
+        .select('*');
+      
+      if (error) {
+        console.error("Supabase error fetching cards:", error);
+        toast.error("Error al obtener las tarjetas de Supabase");
+        throw error;
       }
-      return localCards; // Fallback to local storage
+      
+      if (!data || data.length === 0) {
+        console.log("No data found in Supabase, falling back to local storage");
+        const localCards = getCardsLocally();
+        if (localCards.length > 0) {
+          toast.info("Mostrando tarjetas guardadas localmente");
+        }
+        return localCards; // Fallback to local storage
+      }
+      
+      console.log("Cards fetched from Supabase:", data);
+      toast.success("Tarjetas cargadas desde Supabase");
+      return data.map((item: any) => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+    } catch (supabaseError) {
+      console.error("Supabase operation failed:", supabaseError);
+      throw supabaseError;
     }
-    
-    console.log("Cards fetched from Supabase:", data);
-    toast.success("Tarjetas cargadas desde Supabase");
-    return data.map((item: any) => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
   } catch (error) {
     console.error("Error getting cards from Supabase:", error);
     const localCards = getCardsLocally();
@@ -137,32 +149,38 @@ export const getCards = async (): Promise<BusinessCard[]> => {
 export const getCardById = async (id: string): Promise<BusinessCard | undefined> => {
   try {
     console.log(`Fetching card with ID ${id} from Supabase`);
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
     
-    if (error) {
-      console.error("Supabase error fetching card:", error);
-      toast.error("Error al obtener la tarjeta de Supabase");
-      throw error;
-    }
-    
-    if (!data) {
-      // If not found in Supabase, check locally
-      console.log(`Card with ID ${id} not found in Supabase, checking locally`);
-      const localCard = getCardByIdLocally(id);
-      console.log("Local card result:", localCard);
-      if (localCard) {
-        toast.info("Mostrando tarjeta guardada localmente");
+    try {
+      const { data, error } = await supabase
+        .from('cards')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Supabase error fetching card:", error);
+        toast.error("Error al obtener la tarjeta de Supabase");
+        throw error;
       }
-      return localCard;
+      
+      if (!data) {
+        // If not found in Supabase, check locally
+        console.log(`Card with ID ${id} not found in Supabase, checking locally`);
+        const localCard = getCardByIdLocally(id);
+        console.log("Local card result:", localCard);
+        if (localCard) {
+          toast.info("Mostrando tarjeta guardada localmente");
+        }
+        return localCard;
+      }
+      
+      console.log("Card found in Supabase:", data);
+      toast.success("Tarjeta cargada desde Supabase");
+      return mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
+    } catch (supabaseError) {
+      console.error("Supabase operation failed:", supabaseError);
+      throw supabaseError;
     }
-    
-    console.log("Card found in Supabase:", data);
-    toast.success("Tarjeta cargada desde Supabase");
-    return mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
   } catch (error) {
     console.error(`Error getting card ${id} from Supabase:`, error);
     console.log("Falling back to local storage");
@@ -178,19 +196,25 @@ export const deleteCard = async (id: string): Promise<void> => {
     deleteCardLocally(id);
     
     console.log(`Deleting card with ID ${id} from Supabase`);
-    const { error } = await supabase
-      .from('cards')
-      .delete()
-      .eq('id', id);
     
-    if (error) {
-      console.error("Error deleting from Supabase:", error);
-      toast.error("Error al eliminar la tarjeta de Supabase");
-      throw error;
+    try {
+      const { error } = await supabase
+        .from('cards')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Error deleting from Supabase:", error);
+        toast.error("Error al eliminar la tarjeta de Supabase");
+        throw error;
+      }
+      
+      console.log("Card deleted successfully from Supabase");
+      toast.success("Tarjeta eliminada correctamente");
+    } catch (supabaseError) {
+      console.error("Supabase operation failed:", supabaseError);
+      toast.warning("Tarjeta eliminada localmente");
     }
-    
-    console.log("Card deleted successfully from Supabase");
-    toast.success("Tarjeta eliminada correctamente");
   } catch (error) {
     console.error("Error deleting card from Supabase:", error);
     toast.error("Error al eliminar la tarjeta");
