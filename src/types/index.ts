@@ -7,6 +7,9 @@ export interface CardLink {
   url: string;
 }
 
+// Roles de usuario
+export type UserRole = "user" | "admin" | "superadmin";
+
 // Extend the BusinessCard type to include company field
 export interface BusinessCard {
   id: string;
@@ -48,8 +51,11 @@ export interface AuthContextType {
   user: any | null;
   session: any | null;
   isLoading: boolean;
+  userRole: UserRole | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  isAdmin: () => boolean;
+  isSuperAdmin: () => boolean;
 }

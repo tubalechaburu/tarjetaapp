@@ -12,17 +12,25 @@ import {
   Trash2,
   QrCode, 
   CreditCard as CardIcon,
-  Search
+  Search,
+  Shield
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { checkSupabaseConnection } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { Input } from "@/components/ui/input";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole, isAdmin, isSuperAdmin } = useAuth();
   const [cards, setCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
@@ -82,6 +90,15 @@ const Index = () => {
     ? filteredCards.filter(card => card.userId === user.id)
     : filteredCards.filter(card => !card.userId || card.userId === "anonymous");
 
+  // Función para obtener el color del badge según el rol
+  const getRoleBadgeVariant = (role: string | null) => {
+    switch (role) {
+      case 'superadmin': return 'destructive';
+      case 'admin': return 'default';
+      default: return 'secondary';
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -92,9 +109,27 @@ const Index = () => {
               <Button variant="outline" size="icon" onClick={() => signOut()}>
                 <LogOut className="h-4 w-4" />
               </Button>
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>{user.email?.substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{user.email?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      {userRole && (
+                        <Badge variant={getRoleBadgeVariant(userRole)} className="h-5 ml-1">
+                          <Shield className="h-3 w-3 mr-1" />
+                          {userRole}
+                        </Badge>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{user.email}</p>
+                    {userRole && <p className="text-xs mt-1 font-semibold">Rol: {userRole}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           ) : (
             <Link to="/auth">
@@ -118,6 +153,24 @@ const Index = () => {
           <p>
             No se pudo conectar con Supabase. Las tarjetas se guardarán localmente.
           </p>
+        </div>
+      )}
+
+      {isSuperAdmin() && (
+        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 mb-6 rounded">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-red-500" />
+            Panel de Superadmin
+          </h2>
+          <p className="text-sm text-muted-foreground mb-2">
+            Tienes acceso completo como superadministrador del sistema.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Button variant="outline" size="sm" className="gap-1">
+              <User className="h-4 w-4" />
+              Gestionar Usuarios
+            </Button>
+          </div>
         </div>
       )}
 

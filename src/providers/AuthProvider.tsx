@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { AuthContextType } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { AuthContextType, UserRole } from "@/types";
+import { supabase, getUserRole } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Creamos el contexto de autenticación
@@ -21,6 +21,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<any | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+
+  // Función para cargar el rol del usuario
+  const loadUserRole = async (userId: string) => {
+    if (!userId) return;
+    
+    try {
+      const role = await getUserRole(userId);
+      console.log("User role loaded:", role);
+      setUserRole(role);
+    } catch (error) {
+      console.error("Error loading user role:", error);
+    }
+  };
 
   useEffect(() => {
     // Obtener la sesión actual al montar el componente
@@ -29,6 +43,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user?.id) {
+          loadUserRole(session.user.id);
+        }
       } catch (error) {
         console.error("Error al obtener la sesión inicial:", error);
       } finally {
@@ -38,10 +56,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Escuchar cambios en el estado de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        if (session?.user?.id) {
+          // Actualizamos el rol cuando cambia la sesión
+          loadUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+        }
       }
     );
 
@@ -102,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         throw error;
       }
+      setUserRole(null);
       toast.success("Sesión cerrada correctamente");
     } catch (error: any) {
       toast.error(error.message || "Error al cerrar sesión");
@@ -129,14 +155,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Funciones de verificación de roles
+  const isAdmin = () => {
+    return userRole === 'admin' || userRole === 'superadmin';
+  };
+
+  const isSuperAdmin = () => {
+    return userRole === 'superadmin';
+  };
+
   const value = {
     user,
     session,
     isLoading,
+    userRole,
     signIn,
     signUp,
     signOut,
     resetPassword,
+    isAdmin,
+    isSuperAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
