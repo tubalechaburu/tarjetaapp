@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers/AuthProvider";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -20,6 +20,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface AuthFormValues {
   email: string;
@@ -36,6 +37,7 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [forgotPassword, setForgotPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const loginForm = useForm<AuthFormValues>({
     defaultValues: {
@@ -94,8 +96,8 @@ const Auth = () => {
       await signUp(data.email, data.password, {
         full_name: data.fullName
       });
-      toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
-      setActiveTab("login");
+      setRegistrationSuccess(true);
+      // No cambiamos a la pestaña de login automáticamente para que el usuario vea el mensaje
     } catch (error: any) {
       console.error("Error en registro:", error);
       toast.error(error.message || "Error al registrarse. Por favor, inténtalo de nuevo.");
@@ -287,123 +289,145 @@ const Auth = () => {
               </TabsContent>
               
               <TabsContent value="register">
-                <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-name">Nombre completo</Label>
-                    <Input
-                      id="register-name"
-                      type="text"
-                      placeholder="Tu nombre"
-                      {...registerForm.register("fullName", {
-                        required: "El nombre es obligatorio"
-                      })}
-                    />
-                    {registerForm.formState.errors.fullName && (
-                      <p className="text-sm text-red-500">
-                        {registerForm.formState.errors.fullName.message}
-                      </p>
-                    )}
+                {registrationSuccess ? (
+                  <div className="space-y-4">
+                    <Alert className="bg-green-50 border-green-200">
+                      <Mail className="h-4 w-4" />
+                      <AlertTitle>¡Registro exitoso!</AlertTitle>
+                      <AlertDescription>
+                        Te hemos enviado un correo de confirmación a tu dirección de email. 
+                        Por favor, revisa tu bandeja de entrada y haz clic en el enlace para verificar tu cuenta.
+                      </AlertDescription>
+                    </Alert>
+                    <Button 
+                      onClick={() => {
+                        setRegistrationSuccess(false);
+                        setActiveTab("login");
+                      }}
+                      className="w-full"
+                    >
+                      Ir a iniciar sesión
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Correo electrónico</Label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="tu@email.com"
-                      {...registerForm.register("email", {
-                        required: "El correo electrónico es obligatorio",
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "Dirección de correo inválida"
-                        }
-                      })}
-                    />
-                    {registerForm.formState.errors.email && (
-                      <p className="text-sm text-red-500">
-                        {registerForm.formState.errors.email.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Contraseña</Label>
-                    <div className="relative">
+                ) : (
+                  <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="register-name">Nombre completo</Label>
                       <Input
-                        id="register-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...registerForm.register("password", {
-                          required: "La contraseña es obligatoria",
-                          minLength: {
-                            value: 6,
-                            message: "La contraseña debe tener al menos 6 caracteres"
-                          }
+                        id="register-name"
+                        type="text"
+                        placeholder="Tu nombre"
+                        {...registerForm.register("fullName", {
+                          required: "El nombre es obligatorio"
                         })}
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    {registerForm.formState.errors.password && (
-                      <p className="text-sm text-red-500">
-                        {registerForm.formState.errors.password.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="terms" 
-                      onCheckedChange={(checked) => {
-                        registerForm.setValue("acceptTerms", checked === true);
-                        // Limpiar el error si se marca el checkbox
-                        if (checked) {
-                          registerForm.clearErrors("acceptTerms");
-                        }
-                      }}
-                      aria-invalid={registerForm.formState.errors.acceptTerms ? "true" : "false"}
-                    />
-                    <div>
-                      <label
-                        htmlFor="terms"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Acepto los{" "}
-                        <Link to="/terms" className="text-primary hover:underline">
-                          términos y condiciones
-                        </Link>
-                        {" "}y la{" "}
-                        <Link to="/privacy" className="text-primary hover:underline">
-                          política de privacidad
-                        </Link>
-                      </label>
-                      {registerForm.formState.errors.acceptTerms && (
-                        <p className="text-sm text-red-500 mt-1">
-                          {registerForm.formState.errors.acceptTerms.message}
+                      {registerForm.formState.errors.fullName && (
+                        <p className="text-sm text-red-500">
+                          {registerForm.formState.errors.fullName.message}
                         </p>
                       )}
                     </div>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full mt-4"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Registrando..." : "Registrarse"}
-                  </Button>
-                </form>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="register-email">Correo electrónico</Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        placeholder="tu@email.com"
+                        {...registerForm.register("email", {
+                          required: "El correo electrónico es obligatorio",
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: "Dirección de correo inválida"
+                          }
+                        })}
+                      />
+                      {registerForm.formState.errors.email && (
+                        <p className="text-sm text-red-500">
+                          {registerForm.formState.errors.email.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="register-password">Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="register-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...registerForm.register("password", {
+                            required: "La contraseña es obligatoria",
+                            minLength: {
+                              value: 6,
+                              message: "La contraseña debe tener al menos 6 caracteres"
+                            }
+                          })}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      {registerForm.formState.errors.password && (
+                        <p className="text-sm text-red-500">
+                          {registerForm.formState.errors.password.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="terms" 
+                        onCheckedChange={(checked) => {
+                          registerForm.setValue("acceptTerms", checked === true);
+                          // Limpiar el error si se marca el checkbox
+                          if (checked) {
+                            registerForm.clearErrors("acceptTerms");
+                          }
+                        }}
+                        aria-invalid={registerForm.formState.errors.acceptTerms ? "true" : "false"}
+                      />
+                      <div>
+                        <label
+                          htmlFor="terms"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Acepto los{" "}
+                          <RouterLink to="/terms" className="text-primary hover:underline">
+                            términos y condiciones
+                          </RouterLink>
+                          {" "}y la{" "}
+                          <RouterLink to="/privacy" className="text-primary hover:underline">
+                            política de privacidad
+                          </RouterLink>
+                        </label>
+                        {registerForm.formState.errors.acceptTerms && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {registerForm.formState.errors.acceptTerms.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full mt-4"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Registrando..." : "Registrarse"}
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
             </Tabs>
           )}

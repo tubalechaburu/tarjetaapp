@@ -1,10 +1,37 @@
 
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import CardForm from "@/components/CardForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CreateCard = () => {
+  const { user, isLoading } = useAuth();
+
+  // Si está cargando, no hacemos nada aún
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <div className="animate-pulse flex space-x-4">
+          <div className="h-12 w-12 rounded-full bg-gray-200"></div>
+          <div className="flex-1 space-y-4 py-1">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no está autenticado, redirigir a la página de autenticación
+  if (!user) {
+    return <Navigate to="/auth" state={{ redirectTo: "/create" }} />;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Link to="/">
