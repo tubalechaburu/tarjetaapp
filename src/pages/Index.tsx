@@ -6,12 +6,29 @@ import { getCards } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Plus, QrCode } from "lucide-react";
+import { toast } from "sonner";
+import { checkSupabaseConnection } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [cards, setCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Verificar la conexión a Supabase
+    const checkConnection = async () => {
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected);
+      
+      if (!isConnected) {
+        toast.error("Error al conectar con Supabase");
+      } else {
+        toast.success("Conectado a Supabase correctamente");
+      }
+    };
+    
+    checkConnection();
+    
     const loadCards = async () => {
       try {
         setLoading(true);
@@ -19,6 +36,7 @@ const Index = () => {
         setCards(fetchedCards);
       } catch (error) {
         console.error("Error loading cards:", error);
+        toast.error("Error al cargar las tarjetas");
       } finally {
         setLoading(false);
       }
@@ -34,6 +52,14 @@ const Index = () => {
         <p className="text-xl text-muted-foreground mb-6">
           Crea tu tarjeta de visita virtual con código QR y comparte fácilmente tu información de contacto
         </p>
+        
+        {connectionStatus === false && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 text-yellow-700">
+            <p className="font-bold">Advertencia</p>
+            <p>No se pudo establecer conexión con Supabase. Algunas funcionalidades podrían no estar disponibles.</p>
+          </div>
+        )}
+        
         <Link to="/create">
           <Button size="lg" className="gap-2">
             <Plus size={18} />
