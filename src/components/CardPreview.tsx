@@ -42,9 +42,22 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
           </p>
         )}
         {card.company && (
-          <p className="font-semibold text-center" style={{ color: accentColor }}>
-            {card.company}
-          </p>
+          <div className="flex flex-col items-center">
+            <p className="font-semibold text-center" style={{ color: accentColor }}>
+              {card.company}
+            </p>
+            
+            {/* Logo de empresa */}
+            {card.logoUrl && (
+              <div className="mt-2 p-1 rounded-md bg-white/80 max-h-16 flex items-center justify-center">
+                <img 
+                  src={card.logoUrl} 
+                  alt={`Logo de ${card.company}`} 
+                  className="max-h-14 max-w-32 object-contain"
+                />
+              </div>
+            )}
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-2">
