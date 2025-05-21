@@ -1,3 +1,4 @@
+
 // Extend the BusinessCard type to include company field
 export interface BusinessCard {
   id: string;
@@ -22,7 +23,7 @@ export interface SupabaseBusinessCard {
   email: string | null;
   phone: string | null;
   photo: string | null;
-  links: { type: string; url: string }[] | null;
+  links: Array<{ type: string; url: string }> | null;
   created_at: string;
   updated_at: string;
   user_id: string;

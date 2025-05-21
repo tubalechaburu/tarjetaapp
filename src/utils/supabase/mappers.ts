@@ -6,6 +6,14 @@ import { BusinessCard, SupabaseBusinessCard } from "../../types";
  */
 export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => {
   console.log("Mapping Supabase card:", card);
+  
+  // Safely access the website URL from links
+  let website: string | undefined = undefined;
+  if (card.links && Array.isArray(card.links) && card.links.length > 0) {
+    const websiteLink = card.links.find(link => link.type === "website");
+    website = websiteLink?.url;
+  }
+  
   return {
     id: card.id,
     name: card.name,
@@ -13,9 +21,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     company: card.company || "", 
     email: card.email || "",
     phone: card.phone || "",
-    website: card.links && Array.isArray(card.links) && card.links.length > 0 
-      ? card.links[0].url 
-      : undefined,
+    website: website,
     avatarUrl: card.photo,
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id

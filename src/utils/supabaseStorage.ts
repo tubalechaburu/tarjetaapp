@@ -1,5 +1,5 @@
 
-import { BusinessCard } from "../types";
+import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
 import { mapSupabaseToBusinessCard, prepareSupabaseCard } from "./supabase/mappers";
@@ -48,7 +48,8 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     handleSupabaseSuccess(data, "Tarjetas cargadas desde Supabase");
-    return data.map(item => mapSupabaseToBusinessCard(item));
+    // Explicitly cast the data as SupabaseBusinessCard[]
+    return (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
   } catch (supabaseError) {
     handleSupabaseError(supabaseError, "Error al conectar con Supabase");
     return null;
@@ -76,7 +77,8 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
     }
     
     handleSupabaseSuccess(data, "Tarjeta cargada desde Supabase");
-    return mapSupabaseToBusinessCard(data);
+    // Explicitly cast the data as SupabaseBusinessCard
+    return mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
   } catch (supabaseError) {
     handleSupabaseError(supabaseError, "Error al conectar con Supabase");
     return null;
