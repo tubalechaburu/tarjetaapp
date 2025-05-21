@@ -9,9 +9,22 @@ import { Plus, QrCode } from "lucide-react";
 
 const Index = () => {
   const [cards, setCards] = useState<BusinessCard[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setCards(getCards());
+    const loadCards = async () => {
+      try {
+        setLoading(true);
+        const fetchedCards = await getCards();
+        setCards(fetchedCards);
+      } catch (error) {
+        console.error("Error loading cards:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCards();
   }, []);
 
   return (
@@ -29,7 +42,11 @@ const Index = () => {
         </Link>
       </div>
 
-      {cards.length > 0 ? (
+      {loading ? (
+        <div className="text-center">
+          <p>Cargando tarjetas...</p>
+        </div>
+      ) : cards.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((card) => (
             <Link to={`/card/${card.id}`} key={card.id}>

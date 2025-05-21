@@ -16,7 +16,7 @@ interface CardFormProps {
 
 const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm<BusinessCard>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<BusinessCard>({
     defaultValues: initialData || {
       id: uuidv4(),
       name: "",
@@ -31,10 +31,18 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     }
   });
 
-  const onSubmit = (data: BusinessCard) => {
-    saveCard(data);
-    toast.success("Tarjeta guardada exitosamente");
-    navigate(`/card/${data.id}`);
+  const onSubmit = async (data: BusinessCard) => {
+    try {
+      await saveCard({
+        ...data,
+        userId: "anonymous" // Podríamos implementar autenticación después
+      });
+      toast.success("Tarjeta guardada exitosamente");
+      navigate(`/card/${data.id}`);
+    } catch (error) {
+      console.error("Error al guardar la tarjeta:", error);
+      toast.error("Error al guardar la tarjeta");
+    }
   };
 
   return (
@@ -118,8 +126,8 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         </div>
       </div>
 
-      <Button type="submit" className="w-full">
-        Guardar Tarjeta
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? "Guardando..." : "Guardar Tarjeta"}
       </Button>
     </form>
   );

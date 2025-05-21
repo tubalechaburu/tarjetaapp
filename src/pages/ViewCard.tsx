@@ -13,25 +13,43 @@ const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [card, setCard] = useState<BusinessCard | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"preview" | "qrcode">("preview");
 
   useEffect(() => {
-    if (id) {
-      const foundCard = getCardById(id);
-      if (foundCard) {
-        setCard(foundCard);
-      } else {
-        toast.error("Tarjeta no encontrada");
-        navigate("/");
+    const fetchCard = async () => {
+      if (id) {
+        setLoading(true);
+        try {
+          const foundCard = await getCardById(id);
+          if (foundCard) {
+            setCard(foundCard);
+          } else {
+            toast.error("Tarjeta no encontrada");
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Error al cargar la tarjeta:", error);
+          toast.error("Error al cargar la tarjeta");
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    };
+
+    fetchCard();
   }, [id, navigate]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (id && confirm("¿Estás seguro de que quieres eliminar esta tarjeta?")) {
-      deleteCard(id);
-      toast.success("Tarjeta eliminada");
-      navigate("/");
+      try {
+        await deleteCard(id);
+        toast.success("Tarjeta eliminada");
+        navigate("/");
+      } catch (error) {
+        console.error("Error al eliminar la tarjeta:", error);
+        toast.error("Error al eliminar la tarjeta");
+      }
     }
   };
 
@@ -55,10 +73,22 @@ const ViewCard = () => {
     }
   };
 
-  if (!card) {
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <p>Cargando...</p>
+      </div>
+    );
+  }
+
+  if (!card) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h2 className="text-xl font-semibold mb-4">Tarjeta no encontrada</h2>
+        <p className="mb-6">La tarjeta que estás buscando no existe o ha sido eliminada.</p>
+        <Link to="/">
+          <Button>Volver al inicio</Button>
+        </Link>
       </div>
     );
   }
