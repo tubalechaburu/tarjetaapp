@@ -1,3 +1,4 @@
+
 export interface AuthContextType {
   user: any | null;
   session: any | null;
@@ -17,6 +18,9 @@ export interface CardLink {
   id?: string;
   title: string;
   url: string;
+  // Add missing properties
+  type: 'website' | 'linkedin' | 'facebook' | 'twitter' | 'instagram' | 'whatsapp' | 'calendar' | 'other';
+  label?: string;
 }
 
 // Auth related types
@@ -38,8 +42,27 @@ export interface BusinessCard {
   website: string;
   address: string;
   avatarUrl: string;
-  logoUrl?: string; // Add logoUrl as an optional property
+  logoUrl?: string;
   createdAt?: number;
   userId?: string;
   links?: CardLink[];
+}
+
+// Add the SupabaseBusinessCard interface for Supabase data mapping
+export interface SupabaseBusinessCard {
+  id: string;
+  name: string;
+  title?: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  photo: string;
+  created_at: string;
+  user_id: string;
+  links?: {
+    id?: string;
+    type?: string;
+    url?: string;
+    label?: string;
+  }[];
 }

@@ -8,21 +8,22 @@ import { v4 as uuidv4 } from "uuid";
 export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => {
   console.log("Mapping Supabase card:", card);
   
-  // Mapeamos los enlaces con formato correcto
+  // Map links with correct format
   let links: CardLink[] = [];
-  let website: string | undefined = undefined;
+  let website: string = "";
   
   if (card.links && Array.isArray(card.links) && card.links.length > 0) {
     links = card.links.map(link => ({
       id: link.id || uuidv4(),
-      type: link.type as CardLink['type'],
-      label: link.label,
-      url: link.url
+      type: link.type as CardLink['type'] || 'website',
+      url: link.url || '',
+      label: link.label || '',
+      title: link.label || link.url || '' // Ensure title is set for compatibility
     }));
     
-    // Mantener compatibilidad con el website en la raíz para tarjetas antiguas
+    // Maintain compatibility with the website in the root for older cards
     const websiteLink = card.links.find(link => link.type === "website");
-    website = websiteLink?.url;
+    website = websiteLink?.url || "";
   }
   
   return {
@@ -32,8 +33,9 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     company: card.company || "", 
     email: card.email || "",
     phone: card.phone || "",
-    website: website,
-    avatarUrl: card.photo,
+    website: website || "",
+    address: "", // Add default empty address
+    avatarUrl: card.photo || "",
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links
@@ -44,13 +46,13 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
  * Prepares a BusinessCard object for Supabase format
  */
 export const prepareSupabaseCard = (card: BusinessCard) => {
-  // Aseguramos que el ID de usuario no es undefined
+  // Ensure user ID is not undefined
   const userId = card.userId || "00000000-0000-0000-0000-000000000000";
   
-  // Preparamos los enlaces para Supabase
+  // Prepare links for Supabase
   const links = [];
   
-  // Añadimos el website como enlace si existe
+  // Add website as link if it exists
   if (card.website) {
     links.push({ 
       id: uuidv4(),
@@ -60,9 +62,9 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     });
   }
   
-  // Añadimos los enlaces adicionales si existen
+  // Add additional links if they exist
   if (card.links && card.links.length > 0) {
-    // Filtrar para evitar duplicados (por si el website ya está en los links)
+    // Filter to avoid duplicates (in case the website is already in the links)
     const additionalLinks = card.links.filter(link => 
       link.type !== "website" || link.url !== card.website
     );
