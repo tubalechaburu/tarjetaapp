@@ -1,17 +1,16 @@
-
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 
 const STORAGE_KEY = "business-cards";
 
-// Función para mapear la respuesta de Supabase a nuestro formato BusinessCard
+// Function to map Supabase response to our BusinessCard format
 const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => {
   console.log("Mapping Supabase card:", card);
   return {
     id: card.id,
     name: card.name,
     jobTitle: card.title || "",
-    company: card.company || "", // Ahora manejamos este campo
+    company: card.company || "", 
     email: card.email || "",
     phone: card.phone || "",
     website: card.links && Array.isArray(card.links) && card.links.length > 0 
@@ -23,7 +22,7 @@ const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => 
   };
 };
 
-// Conservamos las funciones locales como respaldo
+// We keep local storage functions as fallback
 export const saveCardLocally = (card: BusinessCard): void => {
   const cards = getCardsLocally();
   const existingCardIndex = cards.findIndex((c) => c.id === card.id);
@@ -53,25 +52,25 @@ export const deleteCardLocally = (id: string): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredCards));
 };
 
-// Nuevas funciones que utilizan Supabase
+// Functions that use Supabase
 export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
   try {
-    // Guardamos localmente como respaldo
+    // Save locally as backup
     saveCardLocally(card);
     
     console.log("Saving card to Supabase:", card);
     
-    // Preparamos los datos para Supabase
+    // Prepare data for Supabase
     const supabaseCard = {
       id: card.id,
       name: card.name,
       title: card.jobTitle,
-      company: card.company, // Aseguramos que este campo se guarde
+      company: card.company,
       email: card.email,
       phone: card.phone,
       photo: card.avatarUrl || null,
       links: card.website ? [{ type: "website", url: card.website }] : [],
-      user_id: card.userId || "anonymous",
+      user_id: card.userId || "00000000-0000-0000-0000-000000000000", // Use default user ID if not provided
       theme: {
         text: "#FFFFFF",
         accent: "#9061F9",
@@ -79,22 +78,22 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
       }
     };
     
-    // Upsert en Supabase (insertar o actualizar)
+    // Upsert to Supabase (insert or update)
     const { data, error } = await supabase
       .from('cards')
       .upsert(supabaseCard)
       .select();
     
     if (error) {
-      console.error("Error al guardar en Supabase:", error);
+      console.error("Error saving to Supabase:", error);
       throw error;
     }
     
     console.log("Card saved to Supabase successfully:", data);
     return card;
   } catch (error) {
-    console.error("Error al guardar la tarjeta en Supabase:", error);
-    return card; // Devolvemos la tarjeta original en caso de error
+    console.error("Error saving card to Supabase:", error);
+    return card; // Return original card in case of error
   }
 };
 
@@ -109,16 +108,16 @@ export const getCards = async (): Promise<BusinessCard[]> => {
       console.error("Supabase error fetching cards:", error);
       throw error;
     }
-    if (!data) {
+    if (!data || data.length === 0) {
       console.log("No data found in Supabase, falling back to local storage");
-      return getCardsLocally(); // Fallback a almacenamiento local
+      return getCardsLocally(); // Fallback to local storage
     }
     
     console.log("Cards fetched from Supabase:", data);
     return data.map((item: any) => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
   } catch (error) {
-    console.error("Error al obtener tarjetas de Supabase:", error);
-    return getCardsLocally(); // Fallback a almacenamiento local
+    console.error("Error getting cards from Supabase:", error);
+    return getCardsLocally(); // Fallback to local storage
   }
 };
 
@@ -137,7 +136,7 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
     }
     
     if (!data) {
-      // Si no encontramos en Supabase, buscamos localmente
+      // If not found in Supabase, check locally
       console.log(`Card with ID ${id} not found in Supabase, checking locally`);
       const localCard = getCardByIdLocally(id);
       console.log("Local card result:", localCard);
@@ -147,15 +146,15 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
     console.log("Card found in Supabase:", data);
     return mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
   } catch (error) {
-    console.error(`Error al obtener la tarjeta ${id} de Supabase:`, error);
+    console.error(`Error getting card ${id} from Supabase:`, error);
     console.log("Falling back to local storage");
-    return getCardByIdLocally(id); // Fallback a almacenamiento local
+    return getCardByIdLocally(id); // Fallback to local storage
   }
 };
 
 export const deleteCard = async (id: string): Promise<void> => {
   try {
-    // Eliminamos localmente como respaldo
+    // Delete locally as backup
     deleteCardLocally(id);
     
     console.log(`Deleting card with ID ${id} from Supabase`);
@@ -171,6 +170,6 @@ export const deleteCard = async (id: string): Promise<void> => {
     
     console.log("Card deleted successfully from Supabase");
   } catch (error) {
-    console.error("Error al eliminar la tarjeta de Supabase:", error);
+    console.error("Error deleting card from Supabase:", error);
   }
 };

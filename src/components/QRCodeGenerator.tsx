@@ -17,6 +17,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     ? url 
     : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
   
+  console.log("QR Code generated for URL:", fullUrl);
+  
   return (
     <Card className="flex flex-col items-center p-4 bg-white">
       <CardContent className="pt-4">

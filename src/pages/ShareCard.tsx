@@ -24,9 +24,9 @@ const ShareCard = () => {
         setLoading(true);
         setError(null);
         try {
-          console.log("Fetching card with ID:", id);
+          console.log("ShareCard: Fetching card with ID:", id);
           const foundCard = await getCardById(id);
-          console.log("Card fetch result:", foundCard);
+          console.log("ShareCard: Card fetch result:", foundCard);
           
           if (foundCard) {
             setCard(foundCard);
