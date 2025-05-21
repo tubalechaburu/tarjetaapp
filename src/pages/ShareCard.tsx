@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { getCardById } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import CardPreview from "@/components/CardPreview";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Share2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import QRCodeGenerator from "@/components/QRCodeGenerator";
 
 const ShareCard = () => {
   const { id } = useParams<{ id: string }>();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showQR, setShowQR] = useState(false);
   
   // Generate the shareable URL for this card
   const fullShareUrl = window.location.href;
@@ -25,14 +27,26 @@ const ShareCard = () => {
         setError(null);
         try {
           console.log("ShareCard: Fetching card with ID:", id);
-          const foundCard = await getCardById(id);
-          console.log("ShareCard: Card fetch result:", foundCard);
+          // Try multiple times with a delay to ensure we get the data
+          let attempts = 0;
+          let foundCard = null;
+          
+          while (!foundCard && attempts < 3) {
+            foundCard = await getCardById(id);
+            console.log(`ShareCard: Card fetch attempt ${attempts + 1} result:`, foundCard);
+            
+            if (!foundCard && attempts < 2) {
+              // Wait before trying again
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            attempts++;
+          }
           
           if (foundCard) {
             setCard(foundCard);
           } else {
             console.error("Tarjeta no encontrada");
-            setError(`Tarjeta con ID ${id} no encontrada en la base de datos`);
+            setError(`Tarjeta con ID ${id} no encontrada en la base de datos o almacenamiento local`);
           }
         } catch (error) {
           console.error("Error al cargar la tarjeta:", error);
@@ -96,6 +110,7 @@ const ShareCard = () => {
               <li>La tarjeta fue eliminada</li>
               <li>El ID de la tarjeta no es correcto</li>
               <li>La tarjeta no se ha guardado correctamente en la base de datos</li>
+              <li>La tarjeta está solo en almacenamiento local de otro dispositivo</li>
             </ul>
           </div>
           
@@ -128,14 +143,35 @@ const ShareCard = () => {
           </p>
         </div>
 
-        <CardPreview card={card} />
-
-        <div className="mt-6 flex justify-center">
-          <Button onClick={shareCard} className="gap-1">
-            <Share2 className="h-4 w-4" />
-            Compartir
-          </Button>
-        </div>
+        {showQR ? (
+          <div className="space-y-4">
+            <p className="text-center text-muted-foreground">
+              Comparte esta tarjeta escaneando el código QR
+            </p>
+            <QRCodeGenerator url={window.location.href} size={200} />
+            <Button 
+              onClick={() => setShowQR(false)} 
+              variant="outline" 
+              className="w-full mt-4"
+            >
+              Ver tarjeta
+            </Button>
+          </div>
+        ) : (
+          <>
+            <CardPreview card={card} />
+            <div className="mt-6 flex justify-center gap-2">
+              <Button onClick={shareCard} className="gap-1">
+                <Share2 className="h-4 w-4" />
+                Compartir
+              </Button>
+              <Button onClick={() => setShowQR(true)} variant="outline" className="gap-1">
+                <Download className="h-4 w-4" />
+                Mostrar QR
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

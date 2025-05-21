@@ -69,7 +69,7 @@ const ViewCard = () => {
           url: fullShareUrl
         });
       } else {
-        navigator.clipboard.writeText(fullShareUrl);
+        await navigator.clipboard.writeText(fullShareUrl);
         toast.success("URL copiada al portapapeles");
       }
     } catch (error) {

@@ -44,13 +44,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         const pngFile = canvas.toDataURL("image/png");
         const downloadLink = document.createElement("a");
         
-        downloadLink.download = `qrcode-${new Date().getTime()}.png`;
+        downloadLink.download = `tarjeta-${new Date().getTime()}.png`;
         downloadLink.href = pngFile;
         downloadLink.click();
       }
     };
     
-    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
   };
   
   return (
