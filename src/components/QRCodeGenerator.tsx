@@ -36,16 +36,18 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     canvas.height = size;
     
     img.onload = () => {
-      ctx?.fillStyle = "white";
-      ctx?.fillRect(0, 0, canvas.width, canvas.height);
-      ctx?.drawImage(img, 0, 0);
-      
-      const pngFile = canvas.toDataURL("image/png");
-      const downloadLink = document.createElement("a");
-      
-      downloadLink.download = `qrcode-${new Date().getTime()}.png`;
-      downloadLink.href = pngFile;
-      downloadLink.click();
+      if (ctx) {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        
+        downloadLink.download = `qrcode-${new Date().getTime()}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      }
     };
     
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
