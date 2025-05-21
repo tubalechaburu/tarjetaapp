@@ -1,22 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getCardById, deleteCard, saveCard } from "@/utils/storage";
+import { getCardById } from "@/utils/storage";
 import { BusinessCard } from "@/types";
-import CardPreview from "@/components/CardPreview";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
-import { 
-  ArrowLeft, 
-  Share2, 
-  Trash2, 
-  QrCode, 
-  Pencil, 
-  Download, 
-  MessageCircle 
-} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
 import Footer from "@/components/Footer";
+import BackButton from "@/components/navigation/BackButton";
+import CardActions from "@/components/card/CardActions";
+import TabNavigation from "@/components/card/TabNavigation";
+import PreviewTab from "@/components/card/PreviewTab";
+import QRCodeTab from "@/components/card/QRCodeTab";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,14 +49,6 @@ const ViewCard = () => {
           
           if (foundCard) {
             setCard(foundCard);
-            
-            // Asegurar que la tarjeta esté sincronizada con Supabase
-            try {
-              console.log("ViewCard: Ensuring card is synced with Supabase");
-              await saveCard(foundCard);
-            } catch (syncError) {
-              console.error("Error syncing card with Supabase:", syncError);
-            }
           } else {
             toast.error("Tarjeta no encontrada");
             navigate("/");
@@ -78,40 +65,19 @@ const ViewCard = () => {
     fetchCard();
   }, [id, navigate]);
 
-  const handleDelete = async () => {
-    if (id && confirm("¿Estás seguro de que quieres eliminar esta tarjeta?")) {
-      try {
-        await deleteCard(id);
-        toast.success("Tarjeta eliminada");
-        navigate("/");
-      } catch (error) {
-        console.error("Error al eliminar la tarjeta:", error);
-        toast.error("Error al eliminar la tarjeta");
-      }
-    }
+  const isOwner = () => {
+    if (!card || !user) return false;
+    return user.id === card.userId || !card.userId;
   };
 
-  const handleEdit = () => {
-    if (id) {
-      navigate(`/edit/${id}`);
-    }
-  };
-
-  const shareCard = async () => {
+  const handleShare = async () => {
+    if (!card) return;
+    
     try {
-      // Ensure the card exists in Supabase before sharing
-      if (card) {
-        try {
-          await saveCard(card);
-        } catch (error) {
-          console.error("Error ensuring card exists in Supabase:", error);
-        }
-      }
-      
       if (navigator.share) {
         await navigator.share({
-          title: `Tarjeta de ${card?.name}`,
-          text: `Información de contacto de ${card?.name} - ${card?.jobTitle} en ${card?.company}`,
+          title: `Tarjeta de ${card.name}`,
+          text: `Información de contacto de ${card.name} - ${card.jobTitle} en ${card.company}`,
           url: fullShareUrl
         });
       } else {
@@ -122,37 +88,6 @@ const ViewCard = () => {
       console.error("Error sharing:", error);
       toast.error("No se pudo compartir la tarjeta");
     }
-  };
-
-  // Generar vCard para descargar contacto
-  const generateVCard = () => {
-    if (!card) return;
-    
-    const vcard = [
-      "BEGIN:VCARD",
-      "VERSION:3.0",
-      `FN:${card.name}`,
-      card.jobTitle ? `TITLE:${card.jobTitle}` : "",
-      card.company ? `ORG:${card.company}` : "",
-      card.email ? `EMAIL:${card.email}` : "",
-      card.phone ? `TEL:${card.phone}` : "",
-      card.website ? `URL:${card.website}` : "",
-      card.address ? `ADR:;;${card.address};;;` : "",
-      "END:VCARD"
-    ].filter(Boolean).join("\n");
-
-    const blob = new Blob([vcard], { type: "text/vcard" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${card.name.replace(/\s+/g, "_")}.vcf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const isOwner = () => {
-    if (!card || !user) return false;
-    return user.id === card.userId || !card.userId;
   };
 
   if (loading) {
@@ -178,91 +113,26 @@ const ViewCard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link to="/">
-        <Button variant="ghost" className="mb-4 gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Volver
-        </Button>
-      </Link>
+      <BackButton to="/" />
 
       <div className="max-w-md mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Tarjeta de {card?.name}</h1>
-          {isOwner() && (
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={handleEdit}>
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button variant="destructive" size="icon" onClick={handleDelete}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+        <CardActions 
+          card={card} 
+          isOwner={isOwner()} 
+          shareUrl={fullShareUrl}
+          onDelete={() => navigate("/")}
+        />
 
-        <div className="flex justify-center gap-2 mb-6">
-          <Button
-            variant={activeTab === "preview" ? "default" : "outline"}
-            onClick={() => setActiveTab("preview")}
-            className="w-1/2"
-          >
-            Vista previa
-          </Button>
-          <Button
-            variant={activeTab === "qrcode" ? "default" : "outline"}
-            onClick={() => setActiveTab("qrcode")}
-            className="w-1/2 gap-1"
-          >
-            <QrCode className="h-4 w-4" />
-            Código QR
-          </Button>
-        </div>
+        <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {activeTab === "preview" ? (
-          <>
-            <CardPreview card={card} />
-            
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <Button onClick={shareCard} className="gap-1">
-                <Share2 className="h-4 w-4" />
-                Compartir
-              </Button>
-              
-              <Button onClick={generateVCard} variant="outline" className="gap-1">
-                <Download className="h-4 w-4" />
-                Guardar contacto
-              </Button>
-              
-              {card.phone && (
-                <Button 
-                  variant="outline" 
-                  className="gap-1"
-                  onClick={() => window.open(`https://wa.me/${card.phone.replace(/\D/g, "")}`, "_blank")}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp
-                </Button>
-              )}
-            </div>
-          </>
+          <PreviewTab card={card} onShare={handleShare} />
         ) : (
-          <div className="text-center">
-            <p className="mb-4 text-muted-foreground">
-              Comparte tu tarjeta digital escaneando este código QR
-            </p>
-            <QRCodeGenerator url={cardShareUrl} size={200} />
-            
-            <div className="mt-4 p-3 bg-muted rounded-md">
-              <p className="text-sm break-all">{fullShareUrl}</p>
-            </div>
-            
-            <div className="mt-6 flex justify-center gap-3">
-              <Button onClick={shareCard} className="gap-1">
-                <Share2 className="h-4 w-4" />
-                Compartir
-              </Button>
-            </div>
-          </div>
+          <QRCodeTab 
+            shareUrl={cardShareUrl} 
+            fullShareUrl={fullShareUrl} 
+            onShare={handleShare}
+          />
         )}
       </div>
       <Footer />
