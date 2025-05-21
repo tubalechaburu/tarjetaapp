@@ -6,11 +6,12 @@ const STORAGE_KEY = "business-cards";
 
 // Función para mapear la respuesta de Supabase a nuestro formato BusinessCard
 const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => {
+  console.log("Mapping Supabase card:", card);
   return {
     id: card.id,
     name: card.name,
     jobTitle: card.title || "",
-    company: "", // La tabla de Supabase no tiene este campo, pero podríamos actualizarla
+    company: card.company || "", // Ahora manejamos este campo
     email: card.email || "",
     phone: card.phone || "",
     website: card.links && Array.isArray(card.links) && card.links.length > 0 
@@ -58,11 +59,14 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
     // Guardamos localmente como respaldo
     saveCardLocally(card);
     
+    console.log("Saving card to Supabase:", card);
+    
     // Preparamos los datos para Supabase
     const supabaseCard = {
       id: card.id,
       name: card.name,
       title: card.jobTitle,
+      company: card.company, // Aseguramos que este campo se guarde
       email: card.email,
       phone: card.phone,
       photo: card.avatarUrl || null,
@@ -81,8 +85,12 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
       .upsert(supabaseCard)
       .select();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error al guardar en Supabase:", error);
+      throw error;
+    }
     
+    console.log("Card saved to Supabase successfully:", data);
     return card;
   } catch (error) {
     console.error("Error al guardar la tarjeta en Supabase:", error);
@@ -92,13 +100,21 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
 
 export const getCards = async (): Promise<BusinessCard[]> => {
   try {
+    console.log("Fetching all cards from Supabase");
     const { data, error } = await supabase
       .from('cards')
       .select('*');
     
-    if (error) throw error;
-    if (!data) return getCardsLocally(); // Fallback a almacenamiento local
+    if (error) {
+      console.error("Supabase error fetching cards:", error);
+      throw error;
+    }
+    if (!data) {
+      console.log("No data found in Supabase, falling back to local storage");
+      return getCardsLocally(); // Fallback a almacenamiento local
+    }
     
+    console.log("Cards fetched from Supabase:", data);
     return data.map((item: any) => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
   } catch (error) {
     console.error("Error al obtener tarjetas de Supabase:", error);
@@ -108,22 +124,31 @@ export const getCards = async (): Promise<BusinessCard[]> => {
 
 export const getCardById = async (id: string): Promise<BusinessCard | undefined> => {
   try {
+    console.log(`Fetching card with ID ${id} from Supabase`);
     const { data, error } = await supabase
       .from('cards')
       .select('*')
       .eq('id', id)
       .maybeSingle();
     
-    if (error) throw error;
-    if (!data) {
-      // Si no encontramos en Supabase, buscamos localmente
-      console.log("Tarjeta no encontrada en Supabase, buscando localmente");
-      return getCardByIdLocally(id);
+    if (error) {
+      console.error("Supabase error fetching card:", error);
+      throw error;
     }
     
+    if (!data) {
+      // Si no encontramos en Supabase, buscamos localmente
+      console.log(`Card with ID ${id} not found in Supabase, checking locally`);
+      const localCard = getCardByIdLocally(id);
+      console.log("Local card result:", localCard);
+      return localCard;
+    }
+    
+    console.log("Card found in Supabase:", data);
     return mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
   } catch (error) {
-    console.error("Error al obtener la tarjeta de Supabase:", error);
+    console.error(`Error al obtener la tarjeta ${id} de Supabase:`, error);
+    console.log("Falling back to local storage");
     return getCardByIdLocally(id); // Fallback a almacenamiento local
   }
 };
@@ -133,12 +158,18 @@ export const deleteCard = async (id: string): Promise<void> => {
     // Eliminamos localmente como respaldo
     deleteCardLocally(id);
     
+    console.log(`Deleting card with ID ${id} from Supabase`);
     const { error } = await supabase
       .from('cards')
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error deleting from Supabase:", error);
+      throw error;
+    }
+    
+    console.log("Card deleted successfully from Supabase");
   } catch (error) {
     console.error("Error al eliminar la tarjeta de Supabase:", error);
   }

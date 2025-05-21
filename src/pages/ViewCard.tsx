@@ -6,7 +6,7 @@ import { getCardById, deleteCard } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import CardPreview from "@/components/CardPreview";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
-import { ArrowLeft, Download, Share2, Trash2, QrCode } from "lucide-react";
+import { ArrowLeft, Share2, Trash2, QrCode } from "lucide-react";
 import { toast } from "sonner";
 
 const ViewCard = () => {
@@ -25,7 +25,10 @@ const ViewCard = () => {
       if (id) {
         setLoading(true);
         try {
+          console.log("ViewCard: Fetching card with ID:", id);
           const foundCard = await getCardById(id);
+          console.log("ViewCard: Card fetch result:", foundCard);
+          
           if (foundCard) {
             setCard(foundCard);
           } else {
@@ -106,7 +109,7 @@ const ViewCard = () => {
 
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Tarjeta de {card.name}</h1>
+          <h1 className="text-2xl font-bold">Tarjeta de {card?.name}</h1>
           <Button variant="destructive" size="icon" onClick={handleDelete}>
             <Trash2 className="h-4 w-4" />
           </Button>

@@ -1,4 +1,4 @@
-
+// Extend the BusinessCard type to include company field
 export interface BusinessCard {
   id: string;
   name: string;
@@ -13,17 +13,19 @@ export interface BusinessCard {
   userId?: string;
 }
 
+// Interface for cards from Supabase
 export interface SupabaseBusinessCard {
   id: string;
   name: string;
-  title: string | null; // Esto corresponde a jobTitle en nuestra interfaz
+  title: string | null;
+  company?: string | null;
   email: string | null;
   phone: string | null;
-  photo?: string | null; // Esto corresponde a avatarUrl en nuestra interfaz
+  photo: string | null;
+  links: { type: string; url: string }[] | null;
   created_at: string;
   updated_at: string;
   user_id: string;
-  links: any; // Cambiado de any[] a any para que coincida con el tipo Json de Supabase
   theme: {
     text: string;
     accent: string;
