@@ -1,12 +1,9 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { CardLink } from "@/types";
 import { v4 as uuidv4 } from "uuid";
-import { Plus } from "lucide-react";
-import LinkItem from "./card/LinkItem";
-import EmptyLinksMessage from "./card/EmptyLinksMessage";
+import LinksHeader from "./card/LinksHeader";
+import LinksList from "./card/LinksList";
 import { LinkTypeOptions } from "./card/LinkTypeSelector";
 
 interface LinksFormProps {
@@ -60,31 +57,12 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Label className="text-base font-medium">Enlaces</Label>
-        <Button 
-          type="button" 
-          onClick={addLink} 
-          variant="outline" 
-          size="sm"
-          className="flex items-center gap-1"
-        >
-          <Plus className="h-4 w-4" />
-          Añadir enlace
-        </Button>
-      </div>
-
-      {links.map((link, index) => (
-        <LinkItem
-          key={link.id}
-          link={link}
-          index={index}
-          onRemove={removeLink}
-          onUpdate={updateLink}
-        />
-      ))}
-
-      {links.length === 0 && <EmptyLinksMessage />}
+      <LinksHeader onAddLink={addLink} />
+      <LinksList 
+        links={links} 
+        onRemove={removeLink} 
+        onUpdate={updateLink} 
+      />
     </div>
   );
 };
