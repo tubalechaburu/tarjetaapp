@@ -1,7 +1,7 @@
 
 import React from "react";
 import { CardLink } from "@/types";
-import { getIconForLinkType } from "@/utils/linkUtils";
+import { getLinkIcon } from "@/utils/linkUtils";
 import { ExternalLink, Mail, Phone, MapPin, Globe } from "lucide-react";
 
 interface CardLinksProps {
@@ -91,7 +91,7 @@ const CardLinks: React.FC<CardLinksProps> = ({
           target="_blank"
           rel="noopener noreferrer"
         >
-          {React.createElement(getIconForLinkType(link.type), { size: 16 })}
+          {React.createElement(getLinkIcon(link.type), { size: 16 })}
           <span>{link.label || link.title}</span>
         </a>
       ))}
