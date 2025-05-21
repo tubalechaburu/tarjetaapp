@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { svgToPng, ensureAbsoluteUrl } from "@/utils/qrUtils";
 
 interface QRCodeGeneratorProps {
   url: string;
@@ -17,40 +18,15 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const qrRef = useRef<SVGSVGElement>(null);
   
   // Ensure URL is absolute with the current origin
-  const fullUrl = url.startsWith('http') 
-    ? url 
-    : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+  const fullUrl = ensureAbsoluteUrl(url);
   
   console.log("QR Code generated for URL:", fullUrl);
   
-  const downloadQRCode = () => {
+  const downloadQRCode = async () => {
     if (!qrRef.current) return;
     
-    const svg = qrRef.current;
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    
-    canvas.width = size;
-    canvas.height = size;
-    
-    img.onload = () => {
-      if (ctx) {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        
-        const pngFile = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        
-        downloadLink.download = `tarjeta-${new Date().getTime()}.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      }
-    };
-    
-    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    const fileName = `tarjeta-${new Date().getTime()}.png`;
+    await svgToPng(qrRef.current, size, fileName);
   };
   
   return (
