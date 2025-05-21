@@ -13,7 +13,9 @@ const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => 
     company: "", // La tabla de Supabase no tiene este campo, pero podríamos actualizarla
     email: card.email || "",
     phone: card.phone || "",
-    website: card.links && card.links.length > 0 ? card.links[0].url : undefined,
+    website: card.links && Array.isArray(card.links) && card.links.length > 0 
+      ? card.links[0].url 
+      : undefined,
     avatarUrl: card.photo,
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id
@@ -97,7 +99,7 @@ export const getCards = async (): Promise<BusinessCard[]> => {
     if (error) throw error;
     if (!data) return getCardsLocally(); // Fallback a almacenamiento local
     
-    return data.map(mapSupabaseToBusinessCard);
+    return data.map((item: any) => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
   } catch (error) {
     console.error("Error al obtener tarjetas de Supabase:", error);
     return getCardsLocally(); // Fallback a almacenamiento local
