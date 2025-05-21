@@ -20,22 +20,25 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   return (
     <div className="space-y-2">
       <Label>Colores de la tarjeta</Label>
-      <div className="grid grid-cols-3 gap-4">
-        {[0, 1, 2].map((index) => (
+      
+      <div className="space-y-4">
+        {colorPurposes.map((purpose, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center space-x-2">
               <div
                 className="w-6 h-6 rounded border"
                 style={{ backgroundColor: selectedColors[index] || "#ffffff" }}
               />
-              <span className="text-sm font-medium">{colorPurposes[index]}</span>
+              <span className="text-sm font-medium">{purpose}</span>
             </div>
+            
             <Input
               type="color"
               value={selectedColors[index] || "#ffffff"}
               onChange={(e) => onChange(index, e.target.value)}
               className="w-full h-10"
             />
+            
             <div className="flex flex-wrap gap-1">
               {brandColors.map((color) => (
                 <button
@@ -51,6 +54,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
           </div>
         ))}
       </div>
+      
       <p className="text-sm text-gray-500">
         Selecciona colores para personalizar tu tarjeta
       </p>
