@@ -32,6 +32,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   return (
     <Card className="flex flex-col items-center p-4 bg-white">
       <CardContent className="pt-4 flex flex-col items-center">
+        <div className="text-center mb-4">
+          <p className="text-sm text-gray-600">Comparte tu tarjeta digital escaneando este código QR</p>
+        </div>
         <QRCodeSVG ref={qrRef} value={fullUrl} size={size} />
         <p className="mt-2 text-xs text-center text-gray-500 break-all">{fullUrl}</p>
         

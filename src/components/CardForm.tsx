@@ -17,12 +17,20 @@ interface CardFormProps {
   initialData?: BusinessCard;
 }
 
+// Define brand colors
+const BRAND_COLORS = [
+  { name: "Dorado", hex: "#dd8d0a" },
+  { name: "Blanco", hex: "#ffffff" },
+  { name: "Negro", hex: "#000000" },
+];
+
 const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [links, setLinks] = useState<CardLink[]>(initialData?.links || []);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl || null);
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
+  const [selectedColors, setSelectedColors] = useState<string[]>(initialData?.themeColors || [BRAND_COLORS[0].hex, BRAND_COLORS[1].hex, BRAND_COLORS[2].hex]);
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<BusinessCard>({
     defaultValues: initialData || {
@@ -30,13 +38,14 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       name: "",
       jobTitle: "",
       company: "",
-      email: "",
+      email: "tubal@tubalechaburu.com", // Valor predeterminado como solicitado
       phone: "",
       website: "",
       address: "",
       avatarUrl: "",
       logoUrl: "",
       createdAt: Date.now(),
+      themeColors: [BRAND_COLORS[0].hex, BRAND_COLORS[1].hex, BRAND_COLORS[2].hex]
     }
   });
 
@@ -66,6 +75,13 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     }
   };
 
+  const handleColorChange = (index: number, color: string) => {
+    const newColors = [...selectedColors];
+    newColors[index] = color;
+    setSelectedColors(newColors);
+    setValue('themeColors', newColors);
+  };
+
   const onSubmit = async (data: BusinessCard) => {
     try {
       // Asegurarse de que haya al menos un enlace (si es obligatorio)
@@ -81,10 +97,11 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         return;
       }
 
-      // Guardar la tarjeta con los enlaces
+      // Guardar la tarjeta con los enlaces y los colores seleccionados
       await saveCard({
         ...data,
         links: links,
+        themeColors: selectedColors,
         userId: user?.id || "anonymous" // Usar el ID del usuario si está autenticado
       });
       
@@ -115,6 +132,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
           <Input
             id="email"
             type="email"
+            defaultValue="tubal@tubalechaburu.com"
             {...register("email", { 
               required: "El correo es obligatorio",
               pattern: {
@@ -152,6 +170,44 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         <div>
           <Label htmlFor="address">Dirección</Label>
           <Input id="address" {...register("address")} />
+        </div>
+
+        {/* Selector de colores */}
+        <div className="space-y-2">
+          <Label>Colores de la tarjeta (máximo 3)</Label>
+          <div className="grid grid-cols-3 gap-4">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div 
+                    className="w-6 h-6 rounded border" 
+                    style={{ backgroundColor: selectedColors[index] || '#ffffff' }}
+                  />
+                  <Input
+                    type="color"
+                    value={selectedColors[index] || '#ffffff'}
+                    onChange={(e) => handleColorChange(index, e.target.value)}
+                    className="w-full h-10"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {BRAND_COLORS.map((color) => (
+                    <button
+                      key={color.hex}
+                      type="button"
+                      className="w-6 h-6 rounded-full border border-gray-300 flex-shrink-0"
+                      style={{ backgroundColor: color.hex }}
+                      onClick={() => handleColorChange(index, color.hex)}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-gray-500">
+            Selecciona hasta 3 colores para personalizar tu tarjeta
+          </p>
         </div>
 
         <div className="space-y-2">

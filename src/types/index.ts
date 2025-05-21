@@ -46,6 +46,7 @@ export interface BusinessCard {
   createdAt?: number;
   userId?: string;
   links?: CardLink[];
+  themeColors?: string[]; // Array de colores personalizados
 }
 
 // Add the SupabaseBusinessCard interface for Supabase data mapping
