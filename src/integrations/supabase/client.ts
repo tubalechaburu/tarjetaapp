@@ -15,7 +15,11 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 export const checkSupabaseConnection = async () => {
   try {
     // Use a simpler query that doesn't depend on specific tables
-    const { error } = await supabase.from('cards').select('count').limit(1);
+    const { error } = await supabase
+      .from('cards')
+      .select('count')
+      .limit(1);
+      
     if (error) {
       console.error("Supabase connection error:", error);
       return false;
