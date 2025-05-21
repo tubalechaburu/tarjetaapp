@@ -32,6 +32,16 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
  * Prepares a BusinessCard object for Supabase format
  */
 export const prepareSupabaseCard = (card: BusinessCard) => {
+  // Asegurarnos que el ID de usuario no es undefined
+  const userId = card.userId || "00000000-0000-0000-0000-000000000000";
+  
+  // Crear un array de enlaces si existe un sitio web
+  const links = card.website 
+    ? [{ type: "website", url: card.website }] 
+    : [];
+  
+  console.log("Preparing card for Supabase:", card.id, "with user ID:", userId);
+    
   return {
     id: card.id,
     name: card.name,
@@ -40,8 +50,8 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    links: card.website ? [{ type: "website", url: card.website }] : [],
-    user_id: card.userId || "00000000-0000-0000-0000-000000000000", // Use default user ID if not provided
+    links: links,
+    user_id: userId,
     theme: {
       text: "#FFFFFF",
       accent: "#9061F9",

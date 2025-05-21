@@ -1,4 +1,3 @@
-
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,6 +18,7 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
       .select();
     
     if (error) {
+      console.error("Supabase error:", error);
       return handleSupabaseError(error, "No se pudo guardar la tarjeta en Supabase");
     } else {
       handleSupabaseSuccess(data, "Tarjeta guardada correctamente en Supabase");
@@ -60,6 +60,7 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
   try {
     console.log(`Fetching card with ID ${id} from Supabase`);
     
+    // Intentamos buscar la tarjeta exacta
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -67,6 +68,7 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
       .maybeSingle();
     
     if (error) {
+      console.error("Supabase query error:", error);
       handleSupabaseError(error, "Error al obtener la tarjeta de Supabase");
       return null;
     }
@@ -76,9 +78,13 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
       return null;
     }
     
+    console.log(`Card with ID ${id} found in Supabase:`, data);
     handleSupabaseSuccess(data, "Tarjeta cargada desde Supabase");
-    // Explicitly cast the data as SupabaseBusinessCard
-    return mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
+    
+    // Convertimos los datos de Supabase al formato BusinessCard usando nuestra función auxiliar
+    // Aseguramos que los tipos sean compatibles con lo esperado
+    const card = mapSupabaseToBusinessCard(data as unknown as SupabaseBusinessCard);
+    return card;
   } catch (supabaseError) {
     handleSupabaseError(supabaseError, "Error al conectar con Supabase");
     return null;

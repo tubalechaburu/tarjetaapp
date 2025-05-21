@@ -30,22 +30,25 @@ export {
 // Main storage API that handles both Supabase and local storage
 export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
   try {
-    // Save locally as backup
+    // Save locally first
     saveCardLocally(card);
+    console.log("Card saved locally:", card.id);
     
-    // Always try to save to Supabase for better sharing support
-    console.log("Attempting to save card to Supabase:", card.id);
+    // Then try to save to Supabase
     try {
+      console.log("Attempting to save card to Supabase:", card.id);
       const saved = await saveCardSupabase(card);
-      if (!saved) {
-        console.log("Failed to save to Supabase, using local storage only");
-        toast.warning("Usando almacenamiento local como respaldo");
-      } else {
+      
+      if (saved) {
         console.log("Card successfully saved to Supabase");
+        toast.success("Tarjeta guardada en la nube");
+      } else {
+        console.log("Failed to save to Supabase, using local storage only");
+        toast.warning("Tarjeta guardada localmente solamente");
       }
     } catch (supabaseError) {
       console.error("Supabase operation failed:", supabaseError);
-      toast.warning("Usando almacenamiento local como respaldo");
+      toast.warning("Tarjeta guardada localmente solamente");
     }
     
     return card;
@@ -102,6 +105,7 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
     
     // Try to fetch from Supabase first
     try {
+      console.log(`Querying Supabase for card ID: ${id}`);
       const supabaseCard = await getCardByIdSupabase(id);
       
       if (supabaseCard) {
@@ -120,8 +124,10 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
         try {
           await saveCardSupabase(localCard);
           console.log("Successfully synced local card to Supabase");
+          toast.success("Tarjeta sincronizada a la nube");
         } catch (syncError) {
           console.error("Failed to sync local card to Supabase:", syncError);
+          toast.error("No se pudo sincronizar la tarjeta a la nube");
         }
         return localCard;
       }

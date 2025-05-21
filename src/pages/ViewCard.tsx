@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getCardById, deleteCard } from "@/utils/storage";
+import { getCardById, deleteCard, saveCard } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import CardPreview from "@/components/CardPreview";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
@@ -26,11 +26,32 @@ const ViewCard = () => {
         setLoading(true);
         try {
           console.log("ViewCard: Fetching card with ID:", id);
-          const foundCard = await getCardById(id);
-          console.log("ViewCard: Card fetch result:", foundCard);
+          
+          // Intenta varias veces para asegurar que la tarjeta se encuentre
+          let attempts = 0;
+          let foundCard = null;
+          
+          while (!foundCard && attempts < 2) {
+            foundCard = await getCardById(id);
+            console.log(`ViewCard: Card fetch attempt ${attempts + 1} result:`, foundCard);
+            
+            if (!foundCard && attempts < 1) {
+              // Esperar antes de intentar de nuevo
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            attempts++;
+          }
           
           if (foundCard) {
             setCard(foundCard);
+            
+            // Asegurar que la tarjeta esté sincronizada con Supabase
+            try {
+              console.log("ViewCard: Ensuring card is synced with Supabase");
+              await saveCard(foundCard);
+            } catch (syncError) {
+              console.error("Error syncing card with Supabase:", syncError);
+            }
           } else {
             toast.error("Tarjeta no encontrada");
             navigate("/");
@@ -62,6 +83,15 @@ const ViewCard = () => {
 
   const shareCard = async () => {
     try {
+      // Ensure the card exists in Supabase before sharing
+      if (card) {
+        try {
+          await saveCard(card);
+        } catch (error) {
+          console.error("Error ensuring card exists in Supabase:", error);
+        }
+      }
+      
       if (navigator.share) {
         await navigator.share({
           title: `Tarjeta de ${card?.name}`,
