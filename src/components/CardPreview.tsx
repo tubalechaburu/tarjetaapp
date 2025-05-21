@@ -13,22 +13,36 @@ interface CardPreviewProps {
 }
 
 const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
+  // Set default colors if not provided
+  const bgColor = card.themeColors?.[0] || "#ffffff";
+  const textColor = card.themeColors?.[1] || "#000000";
+  const accentColor = card.themeColors?.[2] || "#dd8d0a";
+  
   return (
-    <Card className="w-full max-w-md mx-auto bg-white shadow-lg">
+    <Card 
+      className="w-full max-w-md mx-auto shadow-lg"
+      style={{ backgroundColor: bgColor, color: textColor }}
+    >
       <CardHeader className="flex flex-col items-center pb-2">
-        <Avatar className="h-24 w-24 mb-2">
+        <Avatar className="h-24 w-24 mb-2" style={{ borderColor: accentColor, borderWidth: '2px' }}>
           {card.avatarUrl ? (
             <AvatarImage src={card.avatarUrl} alt={card.name} />
           ) : (
-            <AvatarFallback className="text-2xl">
+            <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
               {getInitials(card.name)}
             </AvatarFallback>
           )}
         </Avatar>
-        <CardTitle className="text-xl font-bold text-center">{card.name}</CardTitle>
-        {card.jobTitle && <p className="text-muted-foreground text-center">{card.jobTitle}</p>}
+        <CardTitle className="text-xl font-bold text-center" style={{ color: textColor }}>
+          {card.name}
+        </CardTitle>
+        {card.jobTitle && (
+          <p className="text-center" style={{ color: textColor, opacity: 0.8 }}>
+            {card.jobTitle}
+          </p>
+        )}
         {card.company && (
-          <p className="text-muted-foreground font-semibold text-center">
+          <p className="font-semibold text-center" style={{ color: accentColor }}>
             {card.company}
           </p>
         )}
@@ -40,6 +54,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
           website={card.website} 
           address={card.address} 
           links={card.links} 
+          accentColor={accentColor}
+          textColor={textColor}
         />
 
         {/* Action buttons if required */}

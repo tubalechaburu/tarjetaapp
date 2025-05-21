@@ -1,8 +1,8 @@
 
 import React from "react";
 import { CardLink } from "@/types";
-import { Mail, Phone, Globe, MapPin } from "lucide-react";
-import { getLinkIcon, getFormattedUrl } from "@/utils/linkUtils";
+import { getIconForLinkType } from "@/utils/linkUtils";
+import { ExternalLink, Mail, Phone, MapPin, Globe } from "lucide-react";
 
 interface CardLinksProps {
   email?: string;
@@ -10,74 +10,91 @@ interface CardLinksProps {
   website?: string;
   address?: string;
   links?: CardLink[];
+  accentColor?: string;
+  textColor?: string;
 }
 
-const CardLinks: React.FC<CardLinksProps> = ({ 
-  email, 
-  phone, 
-  website, 
-  address, 
-  links 
+const CardLinks: React.FC<CardLinksProps> = ({
+  email,
+  phone,
+  website,
+  address,
+  links = [],
+  accentColor = "#dd8d0a",
+  textColor = "#000000"
 }) => {
+  const linkStyle = {
+    color: accentColor,
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    padding: "0.5rem",
+    borderRadius: "0.25rem",
+    textDecoration: "none",
+  };
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {email && (
-        <div className="flex items-center gap-2">
-          <Mail className="h-5 w-5 text-muted-foreground" />
-          <a href={`mailto:${email}`} className="text-blue-600 hover:underline">
-            {email}
-          </a>
-        </div>
+        <a
+          href={`mailto:${email}`}
+          style={linkStyle}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Mail size={16} />
+          <span>{email}</span>
+        </a>
       )}
-      
+
       {phone && (
-        <div className="flex items-center gap-2">
-          <Phone className="h-5 w-5 text-muted-foreground" />
-          <a href={`tel:${phone}`} className="text-blue-600 hover:underline">
-            {phone}
-          </a>
-        </div>
+        <a
+          href={`tel:${phone}`}
+          style={linkStyle}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Phone size={16} />
+          <span>{phone}</span>
+        </a>
       )}
-      
-      {/* Show website if not already in links */}
-      {website && !links?.some(link => link.type === "website" && link.url === website) && (
-        <div className="flex items-center gap-2">
-          <Globe className="h-5 w-5 text-muted-foreground" />
-          <a
-            href={website.startsWith("http") ? website : `https://${website}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            {website}
-          </a>
-        </div>
+
+      {website && (
+        <a
+          href={website.startsWith("http") ? website : `https://${website}`}
+          style={linkStyle}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Globe size={16} />
+          <span>{website}</span>
+        </a>
       )}
-      
-      {/* Display additional links */}
-      {links && links.map(link => {
-        const IconComponent = getLinkIcon(link.type);
-        return (
-          <div key={link.id} className="flex items-center gap-2">
-            <IconComponent className="h-5 w-5 text-muted-foreground" />
-            <a
-              href={getFormattedUrl(link)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {link.label || link.url}
-            </a>
-          </div>
-        );
-      })}
-      
+
       {address && (
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-muted-foreground" />
+        <a
+          href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
+          style={linkStyle}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <MapPin size={16} />
           <span>{address}</span>
-        </div>
+        </a>
       )}
+
+      {links.map((link) => (
+        <a
+          key={link.id || link.url}
+          href={link.url}
+          style={linkStyle}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {React.createElement(getIconForLinkType(link.type), { size: 16 })}
+          <span>{link.label || link.title}</span>
+        </a>
+      ))}
     </div>
   );
 };

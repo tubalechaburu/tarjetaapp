@@ -14,9 +14,12 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   onChange,
   brandColors,
 }) => {
+  // Color purposes
+  const colorPurposes = ["Fondo", "Texto", "Resaltar"];
+
   return (
     <div className="space-y-2">
-      <Label>Colores de la tarjeta (máximo 3)</Label>
+      <Label>Colores de la tarjeta</Label>
       <div className="grid grid-cols-3 gap-4">
         {[0, 1, 2].map((index) => (
           <div key={index} className="space-y-2">
@@ -25,19 +28,20 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
                 className="w-6 h-6 rounded border"
                 style={{ backgroundColor: selectedColors[index] || "#ffffff" }}
               />
-              <Input
-                type="color"
-                value={selectedColors[index] || "#ffffff"}
-                onChange={(e) => onChange(index, e.target.value)}
-                className="w-full h-10"
-              />
+              <span className="text-sm font-medium">{colorPurposes[index]}</span>
             </div>
+            <Input
+              type="color"
+              value={selectedColors[index] || "#ffffff"}
+              onChange={(e) => onChange(index, e.target.value)}
+              className="w-full h-10"
+            />
             <div className="flex flex-wrap gap-1">
               {brandColors.map((color) => (
                 <button
                   key={color.hex}
                   type="button"
-                  className="w-6 h-6 rounded-full border border-gray-300 flex-shrink-0"
+                  className="w-8 h-8 rounded border border-gray-300 flex-shrink-0"
                   style={{ backgroundColor: color.hex }}
                   onClick={() => onChange(index, color.hex)}
                   title={color.name}
@@ -48,7 +52,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
         ))}
       </div>
       <p className="text-sm text-gray-500">
-        Selecciona hasta 3 colores para personalizar tu tarjeta
+        Selecciona colores para personalizar tu tarjeta
       </p>
     </div>
   );

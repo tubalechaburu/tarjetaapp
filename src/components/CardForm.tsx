@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,11 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const [links, setLinks] = useState<CardLink[]>(initialData?.links || []);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl || null);
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
-  const [selectedColors, setSelectedColors] = useState<string[]>(initialData?.themeColors || [BRAND_COLORS[0].hex, BRAND_COLORS[1].hex, BRAND_COLORS[2].hex]);
+  
+  // Update color definitions - first color is background, second is text, third is highlight
+  const [selectedColors, setSelectedColors] = useState<string[]>(
+    initialData?.themeColors || [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
+  );
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<BusinessCard>({
     defaultValues: initialData || {
@@ -38,14 +41,14 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       name: "",
       jobTitle: "",
       company: "",
-      email: "tubal@tubalechaburu.com", // Valor predeterminado como solicitado
+      email: "tubal@tubalechaburu.com",
       phone: "",
       website: "",
       address: "",
       avatarUrl: "",
       logoUrl: "",
       createdAt: Date.now(),
-      themeColors: [BRAND_COLORS[0].hex, BRAND_COLORS[1].hex, BRAND_COLORS[2].hex]
+      themeColors: [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
     }
   });
 
@@ -118,7 +121,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       <div className="space-y-4">
         <BasicInfoFields register={register} errors={errors} />
 
-        {/* Selector de colores */}
+        {/* Selector de colores con propósitos definidos */}
         <ColorSelector 
           selectedColors={selectedColors} 
           onChange={handleColorChange} 
