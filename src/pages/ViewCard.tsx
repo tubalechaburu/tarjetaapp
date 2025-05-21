@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
+import Footer from "@/components/Footer";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -171,6 +172,7 @@ const ViewCard = () => {
         <Link to="/">
           <Button>Volver al inicio</Button>
         </Link>
+        <Footer />
       </div>
     );
   }
@@ -264,6 +266,7 @@ const ViewCard = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

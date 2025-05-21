@@ -8,6 +8,7 @@ import CardPreview from "@/components/CardPreview";
 import { ArrowLeft, Share2, Download, MessageCircle, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Footer from "@/components/Footer";
 
 const ShareCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -144,6 +145,7 @@ const ShareCard = () => {
             </Link>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -199,6 +201,7 @@ const ShareCard = () => {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

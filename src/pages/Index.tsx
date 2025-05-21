@@ -11,6 +11,7 @@ import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { SuperAdminPanel } from "@/components/SuperAdminPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { BusinessCardList } from "@/components/BusinessCardList";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const { user, userRole, isSuperAdmin } = useAuth();
@@ -71,6 +72,7 @@ const Index = () => {
       <SuperAdminPanel isSuperAdmin={isSuperAdmin()} />
       <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <BusinessCardList cards={myCards} loading={loading} />
+      <Footer />
     </div>
   );
 };
