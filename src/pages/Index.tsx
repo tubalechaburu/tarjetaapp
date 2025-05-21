@@ -11,7 +11,7 @@ import {
   LogIn,
   Trash2,
   QrCode, 
-  Card as CardIcon,
+  CreditCard as CardIcon,
   Search
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";

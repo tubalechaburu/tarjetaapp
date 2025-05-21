@@ -32,15 +32,14 @@ const LinkTypeOptions = [
 
 const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
   const addLink = () => {
-    setLinks([
-      ...links,
-      {
-        id: uuidv4(),
-        type: "website",
-        url: "",
-        label: "Sitio web"
-      }
-    ]);
+    const newLink: CardLink = {
+      id: uuidv4(),
+      type: "website",
+      url: "",
+      label: "Sitio web"
+    };
+    
+    setLinks([...links, newLink]);
   };
 
   const removeLink = (id: string) => {
@@ -52,11 +51,13 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
       links.map(link => {
         if (link.id === id) {
           if (field === "type") {
+            // Verificar que el tipo sea válido
+            const validType = value as CardLink["type"];
             // Si el tipo cambia, actualizar también la etiqueta
             const typeOption = LinkTypeOptions.find(opt => opt.value === value);
             return {
               ...link,
-              [field]: value,
+              [field]: validType,
               label: typeOption?.label || link.label
             };
           }
