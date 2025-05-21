@@ -12,10 +12,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   url, 
   size = 200 
 }) => {
+  // Ensure URL is absolute
+  const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+  
   return (
     <Card className="flex flex-col items-center p-4 bg-white">
       <CardContent className="pt-4">
-        <QRCodeSVG value={url} size={size} />
+        <QRCodeSVG value={fullUrl} size={size} />
       </CardContent>
     </Card>
   );

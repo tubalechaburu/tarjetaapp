@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CreateCard from "./pages/CreateCard";
 import ViewCard from "./pages/ViewCard";
+import ShareCard from "./pages/ShareCard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/create" element={<CreateCard />} />
           <Route path="/card/:id" element={<ViewCard />} />
+          <Route path="/share/:id" element={<ShareCard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

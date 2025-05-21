@@ -15,6 +15,10 @@ const ViewCard = () => {
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"preview" | "qrcode">("preview");
+  
+  // Generate the shareable URL for this card
+  const cardShareUrl = id ? `/share/${id}` : '';
+  const fullShareUrl = `${window.location.origin}${cardShareUrl}`;
 
   useEffect(() => {
     const fetchCard = async () => {
@@ -54,22 +58,20 @@ const ViewCard = () => {
   };
 
   const shareCard = async () => {
-    const shareUrl = window.location.href;
-    
-    if (navigator.share) {
-      try {
+    try {
+      if (navigator.share) {
         await navigator.share({
           title: `Tarjeta de ${card?.name}`,
           text: `Información de contacto de ${card?.name} - ${card?.jobTitle} en ${card?.company}`,
-          url: shareUrl
+          url: fullShareUrl
         });
-      } catch (error) {
-        console.error("Error sharing:", error);
-        toast.error("No se pudo compartir la tarjeta");
+      } else {
+        navigator.clipboard.writeText(fullShareUrl);
+        toast.success("URL copiada al portapapeles");
       }
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast.success("URL copiada al portapapeles");
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast.error("No se pudo compartir la tarjeta");
     }
   };
 
@@ -135,7 +137,11 @@ const ViewCard = () => {
             <p className="mb-4 text-muted-foreground">
               Comparte tu tarjeta digital escaneando este código QR
             </p>
-            <QRCodeGenerator url={window.location.href} size={200} />
+            <QRCodeGenerator url={cardShareUrl} size={200} />
+            
+            <div className="mt-4 p-3 bg-muted rounded-md">
+              <p className="text-sm break-all">{fullShareUrl}</p>
+            </div>
             
             <div className="mt-6 flex justify-center gap-3">
               <Button onClick={shareCard} className="gap-1">
