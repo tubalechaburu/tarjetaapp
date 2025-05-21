@@ -6,12 +6,22 @@ import { getCardById, deleteCard, saveCard } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import CardPreview from "@/components/CardPreview";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
-import { ArrowLeft, Share2, Trash2, QrCode } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Share2, 
+  Trash2, 
+  QrCode, 
+  Pencil, 
+  Download, 
+  MessageCircle 
+} from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/providers/AuthProvider";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"preview" | "qrcode">("preview");
@@ -81,6 +91,12 @@ const ViewCard = () => {
     }
   };
 
+  const handleEdit = () => {
+    if (id) {
+      navigate(`/edit/${id}`);
+    }
+  };
+
   const shareCard = async () => {
     try {
       // Ensure the card exists in Supabase before sharing
@@ -106,6 +122,37 @@ const ViewCard = () => {
       console.error("Error sharing:", error);
       toast.error("No se pudo compartir la tarjeta");
     }
+  };
+
+  // Generar vCard para descargar contacto
+  const generateVCard = () => {
+    if (!card) return;
+    
+    const vcard = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${card.name}`,
+      card.jobTitle ? `TITLE:${card.jobTitle}` : "",
+      card.company ? `ORG:${card.company}` : "",
+      card.email ? `EMAIL:${card.email}` : "",
+      card.phone ? `TEL:${card.phone}` : "",
+      card.website ? `URL:${card.website}` : "",
+      card.address ? `ADR:;;${card.address};;;` : "",
+      "END:VCARD"
+    ].filter(Boolean).join("\n");
+
+    const blob = new Blob([vcard], { type: "text/vcard" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${card.name.replace(/\s+/g, "_")}.vcf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const isOwner = () => {
+    if (!card || !user) return false;
+    return user.id === card.userId || !card.userId;
   };
 
   if (loading) {
@@ -140,9 +187,16 @@ const ViewCard = () => {
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Tarjeta de {card?.name}</h1>
-          <Button variant="destructive" size="icon" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {isOwner() && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="icon" onClick={handleEdit}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button variant="destructive" size="icon" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center gap-2 mb-6">
@@ -164,7 +218,32 @@ const ViewCard = () => {
         </div>
 
         {activeTab === "preview" ? (
-          <CardPreview card={card} />
+          <>
+            <CardPreview card={card} />
+            
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <Button onClick={shareCard} className="gap-1">
+                <Share2 className="h-4 w-4" />
+                Compartir
+              </Button>
+              
+              <Button onClick={generateVCard} variant="outline" className="gap-1">
+                <Download className="h-4 w-4" />
+                Guardar contacto
+              </Button>
+              
+              {card.phone && (
+                <Button 
+                  variant="outline" 
+                  className="gap-1"
+                  onClick={() => window.open(`https://wa.me/${card.phone.replace(/\D/g, "")}`, "_blank")}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </Button>
+              )}
+            </div>
+          </>
         ) : (
           <div className="text-center">
             <p className="mb-4 text-muted-foreground">

@@ -7,26 +7,33 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CreateCard from "./pages/CreateCard";
 import ViewCard from "./pages/ViewCard";
+import EditCard from "./pages/EditCard";
 import ShareCard from "./pages/ShareCard";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import AuthProvider from "./providers/AuthProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/create" element={<CreateCard />} />
-          <Route path="/card/:id" element={<ViewCard />} />
-          <Route path="/share/:id" element={<ShareCard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/create" element={<CreateCard />} />
+            <Route path="/card/:id" element={<ViewCard />} />
+            <Route path="/edit/:id" element={<EditCard />} />
+            <Route path="/share/:id" element={<ShareCard />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

@@ -1,14 +1,16 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BusinessCard } from "@/types";
+import { BusinessCard, CardLink } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import { saveCard } from "@/utils/storage";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import LinksForm from "./LinksForm";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface CardFormProps {
   initialData?: BusinessCard;
@@ -16,6 +18,9 @@ interface CardFormProps {
 
 const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [links, setLinks] = useState<CardLink[]>(initialData?.links || []);
+  
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<BusinessCard>({
     defaultValues: initialData || {
       id: uuidv4(),
@@ -33,10 +38,26 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
 
   const onSubmit = async (data: BusinessCard) => {
     try {
+      // Asegurarse de que haya al menos un enlace (si es obligatorio)
+      if (links.length === 0) {
+        toast.error("Añade al menos un enlace a tu tarjeta");
+        return;
+      }
+
+      // Validar si hay enlaces sin URL
+      const invalidLinks = links.filter(link => !link.url.trim());
+      if (invalidLinks.length > 0) {
+        toast.error("Todos los enlaces deben tener una URL");
+        return;
+      }
+
+      // Guardar la tarjeta con los enlaces
       await saveCard({
         ...data,
-        userId: "anonymous" // Podríamos implementar autenticación después
+        links: links,
+        userId: user?.id || "anonymous" // Usar el ID del usuario si está autenticado
       });
+      
       toast.success("Tarjeta guardada exitosamente");
       navigate(`/card/${data.id}`);
     } catch (error) {
@@ -60,28 +81,6 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         </div>
 
         <div>
-          <Label htmlFor="jobTitle">Puesto *</Label>
-          <Input
-            id="jobTitle"
-            {...register("jobTitle", { required: "El puesto es obligatorio" })}
-          />
-          {errors.jobTitle && (
-            <p className="text-red-500 text-sm mt-1">{errors.jobTitle.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="company">Empresa *</Label>
-          <Input
-            id="company"
-            {...register("company", { required: "La empresa es obligatoria" })}
-          />
-          {errors.company && (
-            <p className="text-red-500 text-sm mt-1">{errors.company.message}</p>
-          )}
-        </div>
-
-        <div>
           <Label htmlFor="email">Correo electrónico *</Label>
           <Input
             id="email"
@@ -100,30 +99,38 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         </div>
 
         <div>
-          <Label htmlFor="phone">Teléfono *</Label>
+          <Label htmlFor="jobTitle">Puesto</Label>
           <Input
-            id="phone"
-            {...register("phone", { required: "El teléfono es obligatorio" })}
+            id="jobTitle"
+            {...register("jobTitle")}
           />
-          {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
-          )}
         </div>
 
         <div>
-          <Label htmlFor="website">Sitio web (opcional)</Label>
-          <Input id="website" {...register("website")} />
+          <Label htmlFor="company">Empresa</Label>
+          <Input
+            id="company"
+            {...register("company")}
+          />
         </div>
 
         <div>
-          <Label htmlFor="address">Dirección (opcional)</Label>
+          <Label htmlFor="phone">Teléfono</Label>
+          <Input id="phone" {...register("phone")} />
+        </div>
+
+        <div>
+          <Label htmlFor="address">Dirección</Label>
           <Input id="address" {...register("address")} />
         </div>
 
         <div>
-          <Label htmlFor="avatarUrl">URL de imagen de perfil (opcional)</Label>
+          <Label htmlFor="avatarUrl">URL de imagen de perfil</Label>
           <Input id="avatarUrl" {...register("avatarUrl")} />
         </div>
+
+        {/* Formulario de enlaces */}
+        <LinksForm links={links} setLinks={setLinks} />
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">

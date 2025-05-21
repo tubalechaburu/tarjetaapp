@@ -5,17 +5,15 @@ import { Button } from "@/components/ui/button";
 import { getCardById } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import CardPreview from "@/components/CardPreview";
-import { ArrowLeft, Share2, Download } from "lucide-react";
+import { ArrowLeft, Share2, Download, MessageCircle, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
 
 const ShareCard = () => {
   const { id } = useParams<{ id: string }>();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showQR, setShowQR] = useState(false);
   
   // Generate the shareable URL for this card
   const fullShareUrl = window.location.href;
@@ -76,6 +74,32 @@ const ShareCard = () => {
       console.error("Error sharing:", error);
       toast.error("No se pudo compartir la tarjeta");
     }
+  };
+
+  // Generar vCard para descargar contacto
+  const generateVCard = () => {
+    if (!card) return;
+    
+    const vcard = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${card.name}`,
+      card.jobTitle ? `TITLE:${card.jobTitle}` : "",
+      card.company ? `ORG:${card.company}` : "",
+      card.email ? `EMAIL:${card.email}` : "",
+      card.phone ? `TEL:${card.phone}` : "",
+      card.website ? `URL:${card.website}` : "",
+      card.address ? `ADR:;;${card.address};;;` : "",
+      "END:VCARD"
+    ].filter(Boolean).join("\n");
+
+    const blob = new Blob([vcard], { type: "text/vcard" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${card.name.replace(/\s+/g, "_")}.vcf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -139,39 +163,41 @@ const ShareCard = () => {
             Tarjeta de contacto de {card.name}
           </h1>
           <p className="text-muted-foreground">
-            {card.jobTitle} en {card.company}
+            {card.jobTitle} {card.company ? `en ${card.company}` : ''}
           </p>
         </div>
 
-        {showQR ? (
-          <div className="space-y-4">
-            <p className="text-center text-muted-foreground">
-              Comparte esta tarjeta escaneando el código QR
-            </p>
-            <QRCodeGenerator url={window.location.href} size={200} />
+        <CardPreview card={card} actions={true} />
+        
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <Button onClick={shareCard} className="gap-1">
+            <Share2 className="h-4 w-4" />
+            Compartir
+          </Button>
+          
+          <Button onClick={generateVCard} variant="outline" className="gap-1">
+            <Download className="h-4 w-4" />
+            Guardar contacto
+          </Button>
+          
+          {card.phone && (
             <Button 
-              onClick={() => setShowQR(false)} 
               variant="outline" 
-              className="w-full mt-4"
+              className="gap-1"
+              onClick={() => window.open(`https://wa.me/${card.phone.replace(/\D/g, "")}`, "_blank")}
             >
-              Ver tarjeta
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp
             </Button>
-          </div>
-        ) : (
-          <>
-            <CardPreview card={card} />
-            <div className="mt-6 flex justify-center gap-2">
-              <Button onClick={shareCard} className="gap-1">
-                <Share2 className="h-4 w-4" />
-                Compartir
-              </Button>
-              <Button onClick={() => setShowQR(true)} variant="outline" className="gap-1">
-                <Download className="h-4 w-4" />
-                Mostrar QR
-              </Button>
-            </div>
-          </>
-        )}
+          )}
+          
+          <Link to="/create" className="mt-4 w-full">
+            <Button variant="default" className="w-full gap-1">
+              <Link2 className="h-4 w-4" />
+              Crea tu propia tarjeta
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
