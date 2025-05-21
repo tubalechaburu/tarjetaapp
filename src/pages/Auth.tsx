@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AuthFormValues {
   email: string;
@@ -34,6 +35,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("login");
   const [forgotPassword, setForgotPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginForm = useForm<AuthFormValues>({
     defaultValues: {
@@ -49,7 +51,8 @@ const Auth = () => {
       password: "",
       fullName: "",
       acceptTerms: false
-    }
+    },
+    mode: "onChange" // Validar al cambiar los campos
   });
 
   const forgotPasswordForm = useForm<Pick<AuthFormValues, "email">>({
@@ -65,15 +68,20 @@ const Auth = () => {
 
   const handleLoginSubmit = async (data: AuthFormValues) => {
     try {
+      setIsSubmitting(true);
       await signIn(data.email, data.password);
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error en login:", error);
+      toast.error(error.message || "Error al iniciar sesión. Por favor, inténtalo de nuevo.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRegisterSubmit = async (data: AuthFormValues) => {
-    if (!data.acceptTerms) {
+    // Verificación explícita del checkbox
+    if (data.acceptTerms !== true) {
       registerForm.setError("acceptTerms", {
         type: "manual",
         message: "Debes aceptar los términos y condiciones"
@@ -82,23 +90,33 @@ const Auth = () => {
     }
 
     try {
+      setIsSubmitting(true);
       await signUp(data.email, data.password, {
         full_name: data.fullName
       });
+      toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
       setActiveTab("login");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error en registro:", error);
+      toast.error(error.message || "Error al registrarse. Por favor, inténtalo de nuevo.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleForgotPasswordSubmit = async (data: Pick<AuthFormValues, "email">) => {
     try {
+      setIsSubmitting(true);
       // Aquí iría la lógica para enviar el correo de recuperación
       console.log("Enviar recuperación a:", data.email);
+      toast.success("Instrucciones de recuperación enviadas a tu correo.");
       setForgotPassword(false);
       setActiveTab("login");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al solicitar recuperación:", error);
+      toast.error(error.message || "Error al solicitar recuperación de contraseña.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -150,8 +168,11 @@ const Auth = () => {
                 )}
               </div>
               <div className="flex flex-col space-y-2">
-                <Button type="submit" disabled={forgotPasswordForm.formState.isSubmitting}>
-                  {forgotPasswordForm.formState.isSubmitting 
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting 
                     ? "Enviando..." 
                     : "Enviar instrucciones"}
                 </Button>
@@ -243,7 +264,9 @@ const Auth = () => {
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id="remember" 
-                      {...loginForm.register("rememberMe")} 
+                      onCheckedChange={(checked) => {
+                        loginForm.setValue("rememberMe", checked === true);
+                      }}
                     />
                     <label
                       htmlFor="remember"
@@ -256,9 +279,9 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={loginForm.formState.isSubmitting}
+                    disabled={isSubmitting}
                   >
-                    {loginForm.formState.isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
+                    {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
                   </Button>
                 </form>
               </TabsContent>
@@ -339,37 +362,46 @@ const Auth = () => {
                     )}
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-2">
                     <Checkbox 
                       id="terms" 
-                      {...registerForm.register("acceptTerms")}
+                      onCheckedChange={(checked) => {
+                        registerForm.setValue("acceptTerms", checked === true);
+                        // Limpiar el error si se marca el checkbox
+                        if (checked) {
+                          registerForm.clearErrors("acceptTerms");
+                        }
+                      }}
+                      aria-invalid={registerForm.formState.errors.acceptTerms ? "true" : "false"}
                     />
-                    <label
-                      htmlFor="terms"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Acepto los{" "}
-                      <Link to="/terms" className="text-primary hover:underline">
-                        términos y condiciones
-                      </Link>
-                      {" "}y la{" "}
-                      <Link to="/privacy" className="text-primary hover:underline">
-                        política de privacidad
-                      </Link>
-                    </label>
+                    <div>
+                      <label
+                        htmlFor="terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Acepto los{" "}
+                        <Link to="/terms" className="text-primary hover:underline">
+                          términos y condiciones
+                        </Link>
+                        {" "}y la{" "}
+                        <Link to="/privacy" className="text-primary hover:underline">
+                          política de privacidad
+                        </Link>
+                      </label>
+                      {registerForm.formState.errors.acceptTerms && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {registerForm.formState.errors.acceptTerms.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {registerForm.formState.errors.acceptTerms && (
-                    <p className="text-sm text-red-500">
-                      {registerForm.formState.errors.acceptTerms.message}
-                    </p>
-                  )}
                   
                   <Button 
                     type="submit" 
-                    className="w-full"
-                    disabled={registerForm.formState.isSubmitting}
+                    className="w-full mt-4"
+                    disabled={isSubmitting}
                   >
-                    {registerForm.formState.isSubmitting ? "Registrando..." : "Registrarse"}
+                    {isSubmitting ? "Registrando..." : "Registrarse"}
                   </Button>
                 </form>
               </TabsContent>
