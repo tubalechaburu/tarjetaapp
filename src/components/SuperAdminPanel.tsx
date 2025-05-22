@@ -1,12 +1,16 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Shield, User } from "lucide-react";
+import { Shield, User, ChevronDown, ChevronUp } from "lucide-react";
+import { UsersTable } from "@/components/admin/UsersTable";
 
 interface SuperAdminPanelProps {
   isSuperAdmin: boolean;
 }
 
 export const SuperAdminPanel = ({ isSuperAdmin }: SuperAdminPanelProps) => {
+  const [showUsers, setShowUsers] = useState(false);
+
   if (!isSuperAdmin) {
     return null;
   }
@@ -21,11 +25,24 @@ export const SuperAdminPanel = ({ isSuperAdmin }: SuperAdminPanelProps) => {
         Tienes acceso completo como superadministrador del sistema.
       </p>
       <div className="flex flex-wrap gap-2 mt-3">
-        <Button variant="outline" size="sm" className="gap-1">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-1"
+          onClick={() => setShowUsers(!showUsers)}
+        >
           <User className="h-4 w-4" />
           Gestionar Usuarios
+          {showUsers ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
         </Button>
       </div>
+
+      {showUsers && (
+        <div className="mt-4">
+          <h3 className="text-md font-semibold mb-2">Usuarios registrados</h3>
+          <UsersTable />
+        </div>
+      )}
     </div>
   );
 };
