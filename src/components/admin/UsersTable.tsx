@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Shield, UserX, UserCheck } from "lucide-react";
+import { UserRole } from "@/types";
 
 export const UsersTable = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -53,7 +54,7 @@ export const UsersTable = () => {
         const roleName = userRoles.length > 0 ? userRoles[0].role : 'user';
         return {
           ...user,
-          role: roleName
+          role: roleName as UserRole
         };
       });
       
@@ -71,7 +72,7 @@ export const UsersTable = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, role: string) => {
+  const updateUserRole = async (userId: string, role: UserRole) => {
     try {
       // Verificamos si ya existe un rol para este usuario
       const { data: existingRole } = await supabase
@@ -92,7 +93,10 @@ export const UsersTable = () => {
         // Creamos un nuevo registro de rol
         const { error } = await supabase
           .from('user_roles')
-          .insert({ user_id: userId, role });
+          .insert({
+            user_id: userId,
+            role
+          });
           
         if (error) throw error;
       }
