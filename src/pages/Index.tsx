@@ -8,13 +8,12 @@ import { useAuth } from "@/providers/AuthProvider";
 // Imported components
 import { Header } from "@/components/Header";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
-import { SuperAdminPanel } from "@/components/SuperAdminPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { BusinessCardList } from "@/components/BusinessCardList";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  const { user, userRole, isSuperAdmin } = useAuth();
+  const { user, userRole } = useAuth();
   const [cards, setCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
@@ -69,7 +68,6 @@ const Index = () => {
     <div className="container mx-auto px-4 py-8">
       <Header />
       <ConnectionStatus connectionStatus={connectionStatus} />
-      <SuperAdminPanel />
       <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <BusinessCardList cards={myCards} loading={loading} />
       <Footer />

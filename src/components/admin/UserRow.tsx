@@ -1,85 +1,119 @@
-
+import { useState } from "react";
 import { UserRole } from "@/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { Shield, UserCheck } from "lucide-react";
 import { updateUserRole } from "@/utils/userRoleUtils";
-import { useToast } from "@/components/ui/use-toast";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { toast } from "sonner";
+import { UserCardsSection } from "@/components/admin/UserCardsSection";
 
 interface UserRowProps {
   user: {
     id: string;
     full_name?: string;
+    avatar_url?: string;
     updated_at?: string;
-    role?: UserRole;
+    role: UserRole;
   };
-  onRoleUpdate: () => void;
+  onRefresh: () => void;
 }
 
-export const UserRow = ({ user, onRoleUpdate }: UserRowProps) => {
-  const { toast } = useToast();
-
-  const handleRoleUpdate = async (userId: string, role: UserRole) => {
+export const UserRow = ({ user, onRefresh }: UserRowProps) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [showCards, setShowCards] = useState(false);
+  
+  const handleRoleChange = async (newRole: UserRole) => {
     try {
+      setIsUpdating(true);
       await updateUserRole(
-        userId, 
-        role,
+        user.id, 
+        newRole,
         () => {
-          toast({
-            title: "Rol actualizado",
-            description: `Usuario actualizado a ${role}`,
-          });
-          onRoleUpdate();
+          toast.success(`Rol actualizado a ${newRole}`);
+          onRefresh();
         },
-        (error: any) => {
-          toast({
-            title: "Error al actualizar rol",
-            description: error.message,
-            variant: "destructive"
-          });
+        (error) => {
+          toast.error(`Error al actualizar rol: ${error.message}`);
         }
       );
-    } catch (error) {
-      console.error("Error in role update:", error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   return (
-    <TableRow key={user.id}>
-      <TableCell className="font-mono text-xs">{user.id}</TableCell>
-      <TableCell>{user.full_name || 'Sin nombre'}</TableCell>
-      <TableCell>
-        {user.updated_at ? new Date(user.updated_at).toLocaleString() : 'N/A'}
-      </TableCell>
-      <TableCell>
-        <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
-          <Shield className="h-3 w-3 mr-1" />
-          {user.role || 'user'}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <div className="flex gap-2">
+    <>
+      <TableRow key={user.id}>
+        <TableCell>{user.full_name || 'Sin nombre'}</TableCell>
+        <TableCell>{user.id}</TableCell>
+        <TableCell>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                disabled={isUpdating}
+              >
+                {user.role || 'user'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56">
+              <div className="grid gap-2">
+                <h4 className="font-medium leading-none mb-2">Cambiar rol</h4>
+                <Button 
+                  variant={user.role === 'user' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="justify-start"
+                  onClick={() => handleRoleChange('user')}
+                  disabled={isUpdating}
+                >
+                  Usuario
+                </Button>
+                <Button 
+                  variant={user.role === 'admin' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="justify-start"
+                  onClick={() => handleRoleChange('admin')}
+                  disabled={isUpdating}
+                >
+                  Administrador
+                </Button>
+                <Button 
+                  variant={user.role === 'superadmin' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="justify-start"
+                  onClick={() => handleRoleChange('superadmin')}
+                  disabled={isUpdating}
+                >
+                  Superadmin
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </TableCell>
+        <TableCell>
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm"
-            onClick={() => handleRoleUpdate(user.id, 'admin')}
-            disabled={user.role === 'admin'}
+            onClick={() => setShowCards(!showCards)}
+            className="gap-1"
           >
-            <UserCheck className="h-3.5 w-3.5 mr-1" />
-            Admin
+            {showCards ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            Tarjetas
           </Button>
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={() => handleRoleUpdate(user.id, 'superadmin')}
-            disabled={user.role === 'superadmin'}
-          >
-            <Shield className="h-3.5 w-3.5 mr-1" />
-            SuperAdmin
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
+        </TableCell>
+      </TableRow>
+      {showCards && (
+        <TableRow>
+          <TableCell colSpan={4} className="bg-muted/30 p-0">
+            <div className="p-4">
+              <UserCardsSection userId={user.id} />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 };

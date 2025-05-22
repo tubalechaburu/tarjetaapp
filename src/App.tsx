@@ -11,6 +11,9 @@ import EditCard from "./pages/EditCard";
 import ShareCard from "./pages/ShareCard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import AuthProvider from "./providers/AuthProvider";
 
 const queryClient = new QueryClient();
@@ -29,6 +32,9 @@ const App = () => (
             <Route path="/edit/:id" element={<EditCard />} />
             <Route path="/share/:id" element={<ShareCard />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

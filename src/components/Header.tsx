@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { LogOut, Plus, User, Settings } from "lucide-react";
+import { LogOut, Plus, User, Settings, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -64,14 +64,29 @@ export const Header = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configuración</span>
-                </DropdownMenuItem>
+                <Link to="/profile">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link to="/settings">
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configuración</span>
+                  </DropdownMenuItem>
+                </Link>
+                {userRole === 'superadmin' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <Link to="/admin">
+                      <DropdownMenuItem>
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        <span>Panel de Administración</span>
+                      </DropdownMenuItem>
+                    </Link>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
