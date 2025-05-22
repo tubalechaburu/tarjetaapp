@@ -36,6 +36,7 @@ export const checkSupabaseConnection = async () => {
 // Funciones para verificar y obtener roles
 export const getUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
+    // Ejecutamos la función RPC de Supabase
     const { data, error } = await supabase
       .rpc('get_user_role', { _user_id: userId });
     
@@ -44,6 +45,7 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
       return null;
     }
     
+    console.log("User role loaded:", data);
     return data as UserRole || null;
   } catch (e) {
     console.error("Failed to get user role:", e);
@@ -53,6 +55,7 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
 
 export const hasRole = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
+    // Ejecutamos la función RPC de Supabase
     const { data, error } = await supabase
       .rpc('has_role', { _user_id: userId, _role: role });
     

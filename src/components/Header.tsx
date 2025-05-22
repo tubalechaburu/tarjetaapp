@@ -37,7 +37,7 @@ export const Header = () => {
         {user ? (
           <div className="flex items-center gap-2">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger className="outline-none">
                 <Button variant="ghost" className="h-8 p-1 flex items-center gap-2 rounded-full relative">
                   <Avatar className="h-8 w-8">
                     {user.user_metadata?.avatar_url ? (
@@ -54,7 +54,7 @@ export const Header = () => {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 z-50">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">Mi cuenta</p>
