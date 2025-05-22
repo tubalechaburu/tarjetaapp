@@ -7,10 +7,11 @@ import { UsersSection } from "@/components/admin/UsersSection";
 
 export const SuperAdminPanel = () => {
   const [showUsers, setShowUsers] = useState(false);
-  const { isSuperAdmin } = useAuth();
+  const { userRole } = useAuth();
 
-  // Si no es superadmin, no mostramos el panel
-  if (!isSuperAdmin()) {
+  // Verificar explícitamente si el rol es superadmin
+  if (userRole !== 'superadmin') {
+    console.log("No es superadmin, rol actual:", userRole);
     return null;
   }
 

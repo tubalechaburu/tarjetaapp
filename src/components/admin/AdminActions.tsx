@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { User, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -12,7 +11,7 @@ export const AdminActions = ({ showUsers, setShowUsers }: AdminActionsProps) => 
   return (
     <div className="flex flex-wrap gap-2 mt-3">
       <Button 
-        variant="outline" 
+        variant={showUsers ? "default" : "outline"}
         size="sm" 
         className="gap-1"
         onClick={() => setShowUsers(!showUsers)}
