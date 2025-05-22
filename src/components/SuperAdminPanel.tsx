@@ -3,15 +3,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, User, ChevronDown, ChevronUp } from "lucide-react";
 import { UsersTable } from "@/components/admin/UsersTable";
+import { useAuth } from "@/providers/AuthProvider";
 
-interface SuperAdminPanelProps {
-  isSuperAdmin: boolean;
-}
-
-export const SuperAdminPanel = ({ isSuperAdmin }: SuperAdminPanelProps) => {
+export const SuperAdminPanel = () => {
   const [showUsers, setShowUsers] = useState(false);
+  const { isSuperAdmin } = useAuth();
 
-  if (!isSuperAdmin) {
+  // Si no es superadmin, no mostramos el panel
+  if (!isSuperAdmin()) {
     return null;
   }
 

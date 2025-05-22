@@ -69,7 +69,7 @@ const Index = () => {
     <div className="container mx-auto px-4 py-8">
       <Header />
       <ConnectionStatus connectionStatus={connectionStatus} />
-      <SuperAdminPanel isSuperAdmin={isSuperAdmin()} />
+      <SuperAdminPanel />
       <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <BusinessCardList cards={myCards} loading={loading} />
       <Footer />
