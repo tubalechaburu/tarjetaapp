@@ -28,9 +28,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!userId) return;
     
     try {
+      console.log("Loading user role for user ID:", userId);
       const role = await getUserRole(userId);
       console.log("User role loaded:", role);
       setUserRole(role);
+      
+      // Si el email es tubal@tubalechaburu.com y no tiene rol de superadmin, mostramos advertencia
+      if (user?.email === "tubal@tubalechaburu.com" && role !== "superadmin") {
+        console.warn("¡ATENCIÓN! El usuario tubal@tubalechaburu.com debería tener rol de superadmin pero tiene:", role);
+        toast.warning("Tu cuenta debería tener permisos de superadmin. Contacta con el administrador del sistema.");
+      }
     } catch (error) {
       console.error("Error loading user role:", error);
     }
@@ -40,11 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Obtener la sesión actual al montar el componente
     const getInitialSession = async () => {
       try {
+        console.log("Getting initial session...");
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user?.id) {
+          console.log("Session found, loading user role...");
           loadUserRole(session.user.id);
         }
       } catch (error) {
@@ -57,12 +66,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Escuchar cambios en el estado de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log("Auth state changed, event:", _event);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
         
         if (session?.user?.id) {
           // Actualizamos el rol cuando cambia la sesión
+          console.log("Session updated, loading user role...");
           loadUserRole(session.user.id);
         } else {
           setUserRole(null);

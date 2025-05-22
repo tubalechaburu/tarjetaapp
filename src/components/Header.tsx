@@ -27,6 +27,9 @@ export const Header = () => {
     }
   };
 
+  console.log("Header rendered - Current user role:", userRole);
+  console.log("User info:", user);
+
   return (
     <div className="flex justify-between items-center mb-6">
       <h1 className="text-3xl font-bold">Mis Tarjetas Digitales</h1>
@@ -35,7 +38,7 @@ export const Header = () => {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 p-1 flex items-center gap-2 rounded-full">
+                <Button variant="ghost" className="h-8 p-1 flex items-center gap-2 rounded-full relative">
                   <Avatar className="h-8 w-8">
                     {user.user_metadata?.avatar_url ? (
                       <AvatarImage src={user.user_metadata.avatar_url} alt={user.email || ''} />

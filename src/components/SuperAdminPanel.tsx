@@ -1,17 +1,26 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminActions } from "@/components/admin/AdminActions";
 import { UsersSection } from "@/components/admin/UsersSection";
+import { toast } from "sonner";
 
 export const SuperAdminPanel = () => {
   const [showUsers, setShowUsers] = useState(false);
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
+  
+  useEffect(() => {
+    console.log("SuperAdminPanel - Current role:", userRole);
+    console.log("SuperAdminPanel - User:", user);
+    
+    if (user && userRole !== 'superadmin') {
+      toast.error(`Necesitas permisos de superadmin para acceder a este panel. Rol actual: ${userRole || 'no asignado'}`);
+    }
+  }, [user, userRole]);
 
-  // Verificar explícitamente si el rol es superadmin
-  if (userRole !== 'superadmin') {
-    console.log("No es superadmin, rol actual:", userRole);
+  // No renderizar el panel si el usuario no está autenticado o no es superadmin
+  if (!user || userRole !== 'superadmin') {
     return null;
   }
 
