@@ -51,8 +51,10 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   if (card.logo) {
     if (typeof card.logo === 'string') {
       logoUrl = card.logo;
-    } else if (typeof card.logo === 'object' && card.logo.value) {
-      logoUrl = card.logo.value;
+    } else if (typeof card.logo === 'object') {
+      // Type assertion to handle the object case safely
+      const logoObj = card.logo as { value?: string };
+      logoUrl = logoObj.value || "";
     }
   }
   
