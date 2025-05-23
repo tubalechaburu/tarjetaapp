@@ -2,34 +2,83 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { BusinessCard } from "@/types";
 
 interface BasicInfoFieldsProps {
   register: UseFormRegister<BusinessCard>;
   errors: FieldErrors<BusinessCard>;
+  visibleFields: Record<string, boolean>;
+  onFieldVisibilityChange: (fieldName: string, isVisible: boolean) => void;
 }
 
-const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ register, errors }) => {
+const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ 
+  register, 
+  errors, 
+  visibleFields, 
+  onFieldVisibilityChange 
+}) => {
+  const FieldWithVisibility = ({ 
+    id, 
+    label, 
+    required = false, 
+    type = "text", 
+    children, 
+    error 
+  }: {
+    id: string;
+    label: string;
+    required?: boolean;
+    type?: string;
+    children: React.ReactNode;
+    error?: string;
+  }) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label htmlFor={id}>{label} {required && "*"}</Label>
+        <div className="flex items-center space-x-2">
+          <Label htmlFor={`visibility-${id}`} className="text-sm text-muted-foreground">
+            Mostrar
+          </Label>
+          <Switch
+            id={`visibility-${id}`}
+            checked={visibleFields[id] ?? true}
+            onCheckedChange={(checked) => onFieldVisibilityChange(id, checked)}
+          />
+        </div>
+      </div>
+      {children}
+      {error && (
+        <p className="text-red-500 text-sm">{error}</p>
+      )}
+    </div>
+  );
+
   return (
-    <>
-      <div>
-        <Label htmlFor="name">Nombre completo *</Label>
+    <div className="space-y-4">
+      <FieldWithVisibility
+        id="name"
+        label="Nombre completo"
+        required
+        error={errors.name?.message}
+      >
         <Input
           id="name"
           {...register("name", { required: "El nombre es obligatorio" })}
         />
-        {errors.name && (
-          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-        )}
-      </div>
+      </FieldWithVisibility>
 
-      <div>
-        <Label htmlFor="email">Correo electrónico *</Label>
+      <FieldWithVisibility
+        id="email"
+        label="Correo electrónico"
+        required
+        error={errors.email?.message}
+      >
         <Input
           id="email"
           type="email"
-          defaultValue="tubal@tubalechaburu.com"
           {...register("email", {
             required: "El correo es obligatorio",
             pattern: {
@@ -38,31 +87,61 @@ const BasicInfoFields: React.FC<BasicInfoFieldsProps> = ({ register, errors }) =
             },
           })}
         />
-        {errors.email && (
-          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-        )}
-      </div>
+      </FieldWithVisibility>
 
-      <div>
-        <Label htmlFor="jobTitle">Puesto</Label>
+      <FieldWithVisibility
+        id="description"
+        label="Descripción profesional"
+        error={errors.description?.message}
+      >
+        <Textarea
+          id="description"
+          placeholder="Describe tu perfil profesional, servicios o competencias"
+          {...register("description")}
+          className="min-h-[100px]"
+        />
+      </FieldWithVisibility>
+
+      <FieldWithVisibility
+        id="jobTitle"
+        label="Puesto"
+        error={errors.jobTitle?.message}
+      >
         <Input id="jobTitle" {...register("jobTitle")} />
-      </div>
+      </FieldWithVisibility>
 
-      <div>
-        <Label htmlFor="company">Empresa</Label>
+      <FieldWithVisibility
+        id="company"
+        label="Empresa"
+        error={errors.company?.message}
+      >
         <Input id="company" {...register("company")} />
-      </div>
+      </FieldWithVisibility>
 
-      <div>
-        <Label htmlFor="phone">Teléfono</Label>
+      <FieldWithVisibility
+        id="phone"
+        label="Teléfono"
+        error={errors.phone?.message}
+      >
         <Input id="phone" {...register("phone")} />
-      </div>
+      </FieldWithVisibility>
 
-      <div>
-        <Label htmlFor="address">Dirección</Label>
+      <FieldWithVisibility
+        id="website"
+        label="Sitio web"
+        error={errors.website?.message}
+      >
+        <Input id="website" {...register("website")} />
+      </FieldWithVisibility>
+
+      <FieldWithVisibility
+        id="address"
+        label="Dirección"
+        error={errors.address?.message}
+      >
         <Input id="address" {...register("address")} />
-      </div>
-    </>
+      </FieldWithVisibility>
+    </div>
   );
 };
 
