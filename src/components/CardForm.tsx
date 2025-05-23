@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,8 @@ interface CardFormProps {
   initialData?: BusinessCard;
 }
 
-// Define brand colors for initialization
-const DEFAULT_COLORS = ["#dd8d0a", "#000000", "#dd8d0a"];
+// Define brand colors for initialization - black, white, and orange
+const DEFAULT_COLORS = ["#000000", "#ffffff", "#dd8d0a"];
 
 const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
@@ -56,7 +55,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       name: "",
       jobTitle: "",
       company: "",
-      email: "tubal@tubalechaburu.com",
+      email: "",
       phone: "",
       website: "",
       address: "",
