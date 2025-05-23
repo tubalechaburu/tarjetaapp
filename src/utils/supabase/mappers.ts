@@ -46,9 +46,17 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   
   console.log("Mapped theme colors:", themeColors);
   
-  // Handle logo field which is stored as base64 or URL
-  const logoUrl = card.logo || "";
-  console.log("Mapped logoUrl:", logoUrl ? logoUrl.substring(0, 50) + "..." : "empty");
+  // Handle logo field - ensure we properly extract the logo data
+  let logoUrl = "";
+  if (card.logo) {
+    if (typeof card.logo === 'string') {
+      logoUrl = card.logo;
+    } else if (typeof card.logo === 'object' && card.logo.value) {
+      logoUrl = card.logo.value;
+    }
+  }
+  
+  console.log("Mapped logoUrl:", logoUrl ? "Logo data present" : "No logo data");
   
   return {
     id: card.id,
@@ -61,7 +69,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
-    logoUrl: logoUrl, // Direct mapping without empty string check
+    logoUrl: logoUrl,
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -123,7 +131,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
   
   console.log("Preparing card for Supabase with theme:", theme);
   console.log("Original card colors:", card.themeColors);
-  console.log("Sending logoUrl to Supabase:", card.logoUrl ? card.logoUrl.substring(0, 50) + "..." : "null");
+  console.log("Sending logoUrl to Supabase:", card.logoUrl ? "Logo data present" : "No logo data");
     
   return {
     id: card.id,
@@ -133,7 +141,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    logo: card.logoUrl || null, // Always pass the full logo data, don't check if empty
+    logo: card.logoUrl || null,
     description: card.description || null,
     links: links,
     user_id: userId,

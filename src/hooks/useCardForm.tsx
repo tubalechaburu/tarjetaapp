@@ -88,10 +88,26 @@ export const useCardForm = (initialData?: BusinessCard) => {
     setValue('themeColors', selectedColors, { shouldDirty: true });
   }, [selectedColors, setValue]);
 
+  // Update form when logos/avatars change
+  useEffect(() => {
+    if (avatarPreview) {
+      setValue('avatarUrl', avatarPreview, { shouldDirty: true });
+    }
+  }, [avatarPreview, setValue]);
+
+  useEffect(() => {
+    if (logoPreview) {
+      console.log("Setting logoUrl in form:", logoPreview ? "Logo present" : "No logo");
+      setValue('logoUrl', logoPreview, { shouldDirty: true });
+    }
+  }, [logoPreview, setValue]);
+
   // Also update form on initial load
   useEffect(() => {
     setValue('themeColors', selectedColors, { shouldDirty: true });
     setValue('visibleFields', visibleFields, { shouldDirty: true });
+    if (avatarPreview) setValue('avatarUrl', avatarPreview, { shouldDirty: true });
+    if (logoPreview) setValue('logoUrl', logoPreview, { shouldDirty: true });
   }, []);
 
   const handleColorChange = (index: number, color: string) => {
@@ -116,23 +132,26 @@ export const useCardForm = (initialData?: BusinessCard) => {
         return;
       }
 
-      // Remove validation for empty links - allow saving even with empty URLs
-      console.log("Submitting with selectedColors state:", selectedColors);
-      console.log("Submitting with form data colors:", data.themeColors);
+      console.log("Submitting form data:", data);
+      console.log("Logo data being submitted:", data.logoUrl ? "Logo present" : "No logo");
+      console.log("Avatar data being submitted:", data.avatarUrl ? "Avatar present" : "No avatar");
 
-      // Prepare final data with latest colors from state (more reliable)
+      // Prepare final data ensuring all state is included
       const finalData = {
         ...data,
         links: links,
-        themeColors: selectedColors, // Use the state value to ensure latest colors
+        themeColors: selectedColors,
         visibleFields: visibleFields,
         userId: user?.id || "anonymous",
+        // Ensure logo and avatar are included from current state
+        avatarUrl: avatarPreview || data.avatarUrl || "",
+        logoUrl: logoPreview || data.logoUrl || "",
         // Keep ID if editing
         id: initialData?.id || data.id
       };
 
       console.log("Final data being saved:", finalData);
-      console.log("Final theme colors:", finalData.themeColors);
+      console.log("Final logo URL:", finalData.logoUrl ? "Logo present" : "No logo");
       
       await saveCard(finalData);
       

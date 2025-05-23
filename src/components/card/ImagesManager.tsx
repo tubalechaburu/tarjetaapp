@@ -27,8 +27,9 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
+        console.log("Avatar loaded:", result.substring(0, 50) + "...");
         setAvatarPreview(result);
-        setValue('avatarUrl', result, { shouldDirty: true, shouldTouch: true });
+        setValue('avatarUrl', result, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -40,9 +41,9 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        console.log("Logo loaded as base64:", result.substring(0, 50) + "...");
+        console.log("Logo loaded successfully:", result.substring(0, 50) + "...");
         setLogoPreview(result);
-        setValue('logoUrl', result, { shouldDirty: true, shouldTouch: true });
+        setValue('logoUrl', result, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -57,10 +58,6 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
         preview={avatarPreview}
         onChange={handleAvatarChange}
       />
-      <input
-        type="hidden"
-        {...register("avatarUrl")}
-      />
 
       <ImageUploader
         id="logo-upload"
@@ -68,10 +65,6 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
         description="Sube el logo de tu empresa para tu tarjeta"
         preview={logoPreview}
         onChange={handleLogoChange}
-      />
-      <input
-        type="hidden"
-        {...register("logoUrl")}
       />
     </>
   );
