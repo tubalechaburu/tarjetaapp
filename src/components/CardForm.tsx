@@ -7,14 +7,13 @@ import { v4 as uuidv4 } from "uuid";
 import { saveCard } from "@/utils/storage";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import LinksForm from "./LinksForm";
 import { useAuth } from "@/providers/AuthProvider";
 import BasicInfoFields from "./card/BasicInfoFields";
-import ImageUploader from "./card/ImageUploader";
-import ColorSelector from "./card/ColorSelector";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import FieldVisibility from "./card/FieldVisibility";
+import LinkManager from "./card/LinkManager";
+import ThemeManager from "./card/ThemeManager";
+import ImagesManager from "./card/ImagesManager";
+import DescriptionField from "./card/DescriptionField";
 
 interface CardFormProps {
   initialData?: BusinessCard;
@@ -83,32 +82,6 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     }
   });
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setAvatarPreview(result);
-        setValue('avatarUrl', result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setLogoPreview(result);
-        setValue('logoUrl', result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleColorChange = (index: number, color: string) => {
     const newColors = [...selectedColors];
     newColors[index] = color;
@@ -157,19 +130,11 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       <div className="space-y-4">
         <BasicInfoFields register={register} errors={errors} />
         
-        <div>
-          <Label htmlFor="description">Descripción</Label>
-          <Textarea
-            id="description"
-            placeholder="Describe tu perfil profesional, servicios o competencias"
-            className="min-h-[100px]"
-            {...register("description")}
-          />
-        </div>
+        <DescriptionField register={register} />
 
-        <ColorSelector 
+        <ThemeManager 
           selectedColors={selectedColors} 
-          onChange={handleColorChange} 
+          onColorChange={handleColorChange} 
           brandColors={BRAND_COLORS} 
         />
         
@@ -178,31 +143,16 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
           onChange={handleFieldVisibilityChange} 
         />
 
-        <ImageUploader
-          id="avatar-upload"
-          label="Imagen de perfil"
-          description="Sube una foto de perfil para tu tarjeta"
-          preview={avatarPreview}
-          onChange={handleAvatarChange}
-        />
-        <input
-          type="hidden"
-          {...register("avatarUrl")}
+        <ImagesManager
+          register={register}
+          setValue={setValue}
+          avatarPreview={avatarPreview}
+          logoPreview={logoPreview}
+          setAvatarPreview={setAvatarPreview}
+          setLogoPreview={setLogoPreview}
         />
 
-        <ImageUploader
-          id="logo-upload"
-          label="Logo de empresa"
-          description="Sube el logo de tu empresa para tu tarjeta"
-          preview={logoPreview}
-          onChange={handleLogoChange}
-        />
-        <input
-          type="hidden"
-          {...register("logoUrl")}
-        />
-
-        <LinksForm links={links} setLinks={setLinks} />
+        <LinkManager links={links} setLinks={setLinks} />
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
