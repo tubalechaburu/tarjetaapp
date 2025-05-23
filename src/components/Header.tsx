@@ -16,7 +16,7 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 
 export const Header = () => {
-  const { user, signOut, userRole } = useAuth();
+  const { user, signOut, userRole, isSuperAdmin } = useAuth();
 
   // Función para obtener el color del badge según el rol
   const getRoleBadgeVariant = (role: string | null) => {
@@ -70,13 +70,15 @@ export const Header = () => {
                     <span>Perfil</span>
                   </DropdownMenuItem>
                 </Link>
-                <Link to="/settings">
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Configuración</span>
-                  </DropdownMenuItem>
-                </Link>
-                {userRole === 'superadmin' && (
+                {isSuperAdmin() && (
+                  <Link to="/settings">
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Configuración</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
+                {isSuperAdmin() && (
                   <>
                     <DropdownMenuSeparator />
                     <Link to="/admin">
