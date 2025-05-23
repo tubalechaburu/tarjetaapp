@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCardById } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import { toast } from "sonner";
@@ -10,8 +9,11 @@ import { useAuth } from "@/providers/AuthProvider";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/navigation/BackButton";
 import CardActions from "@/components/card/CardActions";
-import PreviewTab from "@/components/card/PreviewTab";
-import QRCodeTab from "@/components/card/QRCodeTab";
+import PreviewContent from "@/components/card/PreviewContent";
+import PreviewActions from "@/components/card/PreviewActions";
+import QRCodeDisplay from "@/components/qr/QRCodeDisplay";
+import { downloadSvgAsPng } from "@/utils/qrDownloader";
+import { Download } from "lucide-react";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +21,7 @@ const ViewCard = () => {
   const { user } = useAuth();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"preview" | "qr">('preview');
+  const [qrRef, setQrRef] = useState<SVGSVGElement | null>(null);
   
   // Generate the shareable URL for this card
   const cardShareUrl = id ? `/share/${id}` : '';
@@ -90,6 +92,21 @@ const ViewCard = () => {
     }
   };
 
+  const handleDownloadQR = async () => {
+    if (!card) return;
+    const filename = `QR_${card.name.replace(/\s+/g, '_')}.png`;
+    try {
+      await downloadSvgAsPng(qrRef, 200, filename);
+    } catch (error) {
+      console.error("Error al descargar el QR:", error);
+      toast.error("Error al descargar el código QR");
+    }
+  };
+
+  const handleQRRef = (ref: SVGSVGElement | null) => {
+    setQrRef(ref);
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
@@ -123,29 +140,38 @@ const ViewCard = () => {
           onDelete={() => navigate("/")}
         />
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "preview" | "qr")} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="preview">Vista previa</TabsTrigger>
-            <TabsTrigger value="qr">Código QR</TabsTrigger>
-          </TabsList>
+        {/* Contenido de la tarjeta */}
+        <div className="space-y-6">
+          <PreviewContent 
+            card={card}
+          />
           
-          <TabsContent value="preview">
-            <PreviewTab 
-              card={card} 
-              onShare={handleShare} 
-              shareUrl={cardShareUrl}
-              fullShareUrl={fullShareUrl}
-            />
-          </TabsContent>
+          <PreviewActions 
+            card={card}
+            onShare={handleShare}
+          />
           
-          <TabsContent value="qr">
-            <QRCodeTab 
-              shareUrl={cardShareUrl}
-              fullShareUrl={fullShareUrl}
-              onShare={handleShare}
-            />
-          </TabsContent>
-        </Tabs>
+          {/* QR Code section */}
+          <div className="mt-8 pt-4 border-t border-gray-200">
+            <h3 className="text-lg font-medium mb-3 text-center">Código QR</h3>
+            <div className="flex flex-col items-center space-y-4">
+              <QRCodeDisplay 
+                url={fullShareUrl} 
+                size={200} 
+                onSvgRef={handleQRRef} 
+              />
+              
+              <Button 
+                onClick={handleDownloadQR} 
+                variant="outline" 
+                className="flex items-center gap-2 mt-4"
+              >
+                <Download className="h-4 w-4" />
+                Descargar código QR
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
       <Footer />
     </div>

@@ -1,15 +1,22 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 interface QRCodeDisplayProps {
   url: string;
   size: number;
+  onSvgRef?: (ref: SVGSVGElement | null) => void;
 }
 
-const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ url, size }) => {
+const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ url, size, onSvgRef }) => {
   const qrRef = useRef<SVGSVGElement>(null);
   
+  useEffect(() => {
+    if (onSvgRef && qrRef.current) {
+      onSvgRef(qrRef.current);
+    }
+  }, [onSvgRef, qrRef.current]);
+
   return (
     <div className="bg-white p-4 rounded-lg border-2 border-gray-200 qr-code-container">
       <QRCodeSVG 
