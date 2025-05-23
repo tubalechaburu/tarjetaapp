@@ -12,11 +12,16 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ url, size, onSvgRef }) =>
   const qrRef = useRef<SVGSVGElement>(null);
   
   useEffect(() => {
-    if (qrRef.current && onSvgRef) {
-      console.log("QRCodeDisplay: SVG element is available, setting reference");
-      onSvgRef(qrRef.current);
-    }
-  }, [onSvgRef]); // Run this effect when onSvgRef changes
+    // Use a small delay to ensure the SVG is fully rendered
+    const timer = setTimeout(() => {
+      if (qrRef.current && onSvgRef) {
+        console.log("QRCodeDisplay: SVG element is available, setting reference");
+        onSvgRef(qrRef.current);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [url, onSvgRef]); // React to URL changes and callback changes
 
   return (
     <div className="bg-white p-4 rounded-lg border-2 border-gray-200 qr-code-container">
