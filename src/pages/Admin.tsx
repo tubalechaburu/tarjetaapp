@@ -3,8 +3,7 @@ import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { AdminActions } from "@/components/admin/AdminActions";
-import { UsersSection } from "@/components/admin/UsersSection";
+import { UsersManagementTable } from "@/components/admin/UsersManagementTable";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 
@@ -30,8 +29,7 @@ const Admin = () => {
       <Header />
       <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg">
         <AdminHeader />
-        <AdminActions showUsers={true} setShowUsers={() => {}} />
-        <UsersSection visible={true} />
+        <UsersManagementTable />
       </div>
     </div>
   );

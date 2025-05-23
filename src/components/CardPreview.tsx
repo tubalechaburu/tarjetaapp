@@ -72,13 +72,13 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
               {card.company}
             </p>
             
-            {/* Logo de empresa */}
+            {/* Logo de empresa - Fixed display */}
             {card.logoUrl && (
-              <div className="mt-2 p-1 rounded-md bg-white/80 max-h-16 flex items-center justify-center">
+              <div className="mt-2 p-2 rounded-md bg-white max-h-20 flex items-center justify-center">
                 <img 
                   src={card.logoUrl} 
                   alt={`Logo de ${card.company}`} 
-                  className="max-h-14 max-w-32 object-contain"
+                  className="max-h-16 max-w-32 object-contain"
                 />
               </div>
             )}

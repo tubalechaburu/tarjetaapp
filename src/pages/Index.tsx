@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards } from "@/utils/storage";
@@ -41,11 +40,26 @@ const Index = () => {
       try {
         setLoading(true);
         const fetchedCards = await getCards();
-        setCards(fetchedCards);
+        
+        // Remove duplicates by keeping only the latest card per user
+        const uniqueCards = fetchedCards.reduce((acc: BusinessCard[], card) => {
+          const existingIndex = acc.findIndex(c => c.userId === card.userId);
+          if (existingIndex >= 0) {
+            // Keep the one with the latest createdAt timestamp
+            if (card.createdAt > acc[existingIndex].createdAt) {
+              acc[existingIndex] = card;
+            }
+          } else {
+            acc.push(card);
+          }
+          return acc;
+        }, []);
+        
+        setCards(uniqueCards);
         
         // Find user's card
         if (user) {
-          const foundUserCard = fetchedCards.find(card => card.userId === user.id);
+          const foundUserCard = uniqueCards.find(card => card.userId === user.id);
           setUserCard(foundUserCard || null);
         }
       } catch (error) {
@@ -65,6 +79,8 @@ const Index = () => {
       try {
         await deleteCard(userCard.id!);
         setUserCard(null);
+        // Also update the cards array
+        setCards(prev => prev.filter(card => card.id !== userCard.id));
         toast.success("Tarjeta eliminada correctamente");
       } catch (error) {
         console.error("Error al eliminar la tarjeta:", error);
@@ -159,6 +175,17 @@ const Index = () => {
                       <div className="flex items-center gap-2">
                         <span>{userCard.email || '-'}</span>
                         {userCard.visibleFields?.email ? (
+                          <Eye className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <EyeOff className="h-3 w-3 text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Descripción:</span>
+                      <div className="flex items-center gap-2">
+                        <span>{userCard.description || '-'}</span>
+                        {userCard.visibleFields?.description ? (
                           <Eye className="h-3 w-3 text-green-600" />
                         ) : (
                           <EyeOff className="h-3 w-3 text-gray-400" />
@@ -299,13 +326,32 @@ const Index = () => {
                         <p className="text-sm text-muted-foreground">{card.email}</p>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigate(`/card/${card.id}`)}
-                    >
-                      Ver tarjeta
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => navigate(`/card/${card.id}`)}
+                      >
+                        Ver tarjeta
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={async () => {
+                          if (confirm("¿Eliminar esta tarjeta?")) {
+                            try {
+                              await deleteCard(card.id!);
+                              setCards(prev => prev.filter(c => c.id !== card.id));
+                              toast.success("Tarjeta eliminada");
+                            } catch (error) {
+                              toast.error("Error al eliminar la tarjeta");
+                            }
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
