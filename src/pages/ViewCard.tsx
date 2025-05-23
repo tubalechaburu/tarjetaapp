@@ -12,8 +12,8 @@ import CardActions from "@/components/card/CardActions";
 import PreviewContent from "@/components/card/PreviewContent";
 import PreviewActions from "@/components/card/PreviewActions";
 import QRCodeDisplay from "@/components/qr/QRCodeDisplay";
-import { downloadSvgAsPng } from "@/utils/qrDownloader";
-import { Download } from "lucide-react";
+import { downloadSvgAsPng, createAndDownloadShortcut } from "@/utils/qrDownloader";
+import { Download, Share2, Copy } from "lucide-react";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -93,17 +93,41 @@ const ViewCard = () => {
   };
 
   const handleDownloadQR = async () => {
-    if (!card) return;
+    if (!card || !qrRef) {
+      toast.error("Error: No se puede acceder al código QR");
+      return;
+    }
+    
+    console.log("Attempting to download QR code...");
+    console.log("QR ref available:", !!qrRef);
+    console.log("Card name:", card.name);
+    
     const filename = `QR_${card.name.replace(/\s+/g, '_')}.png`;
     try {
-      await downloadSvgAsPng(qrRef, 200, filename);
+      await downloadSvgAsPng(qrRef, 400, filename);
     } catch (error) {
       console.error("Error al descargar el QR:", error);
       toast.error("Error al descargar el código QR");
     }
   };
 
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(fullShareUrl);
+      toast.success("URL copiada al portapapeles");
+    } catch (error) {
+      console.error("Error copying URL:", error);
+      toast.error("No se pudo copiar la URL");
+    }
+  };
+
+  const handleDownloadShortcut = () => {
+    if (!card) return;
+    createAndDownloadShortcut(fullShareUrl, card.name);
+  };
+
   const handleQRRef = (ref: SVGSVGElement | null) => {
+    console.log("QR ref received:", !!ref);
     setQrRef(ref);
   };
 
@@ -161,14 +185,37 @@ const ViewCard = () => {
                 onSvgRef={handleQRRef} 
               />
               
-              <Button 
-                onClick={handleDownloadQR} 
-                variant="outline" 
-                className="flex items-center gap-2 mt-4"
-              >
-                <Download className="h-4 w-4" />
-                Descargar código QR
-              </Button>
+              {/* QR and sharing actions */}
+              <div className="flex flex-col w-full gap-2">
+                <Button 
+                  onClick={handleDownloadQR} 
+                  variant="default" 
+                  className="flex items-center gap-2 w-full"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar código QR
+                </Button>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={handleCopyUrl} 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copiar URL
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleDownloadShortcut} 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Acceso directo
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

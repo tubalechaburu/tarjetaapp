@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 /**
@@ -10,12 +9,16 @@ export const downloadSvgAsPng = async (
   filename: string
 ): Promise<void> => {
   if (!svgElement) {
+    console.error("No SVG element provided");
     toast.error("Error al generar el código QR");
     return;
   }
   
   try {
     console.log("Iniciando descarga del QR code...");
+    console.log("SVG element found:", !!svgElement);
+    console.log("Size:", size, "Filename:", filename);
+    
     // Create a canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -33,48 +36,54 @@ export const downloadSvgAsPng = async (
     // Convert SVG to string
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgElement);
-    console.log("SVG serializado correctamente");
+    console.log("SVG serializado correctamente, length:", svgString.length);
     
     // Create data URL from SVG
     const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+    console.log("SVG data URL created");
     
     // Create a new image and draw to canvas when loaded
     const img = new Image();
     
     // Create a promise to handle the image loading
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       img.onload = () => {
-        console.log("Imagen cargada en canvas");
-        // Scale the context for better resolution
-        ctx.scale(scale, scale);
-        
-        // Clear canvas with white background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, size, size);
-        
-        // Draw the image
-        ctx.drawImage(img, 0, 0, size, size);
-        
-        // Convert to blob and download
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const downloadUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.download = filename;
-            a.href = downloadUrl;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(downloadUrl);
-            console.log("QR descargado correctamente");
-            toast.success("Código QR descargado correctamente");
-            resolve();
-          } else {
-            console.error("Error al crear blob");
-            toast.error("Error al crear la imagen");
-            reject(new Error("Failed to create blob"));
-          }
-        }, 'image/png');
+        try {
+          console.log("Imagen cargada en canvas");
+          // Scale the context for better resolution
+          ctx.scale(scale, scale);
+          
+          // Clear canvas with white background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+          
+          // Draw the image
+          ctx.drawImage(img, 0, 0, size, size);
+          
+          // Convert to blob and download
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const downloadUrl = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.download = filename;
+              a.href = downloadUrl;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(downloadUrl);
+              console.log("QR descargado correctamente");
+              toast.success("Código QR descargado correctamente");
+              resolve();
+            } else {
+              console.error("Error al crear blob");
+              toast.error("Error al crear la imagen");
+              reject(new Error("Failed to create blob"));
+            }
+          }, 'image/png');
+        } catch (error) {
+          console.error("Error during canvas operations:", error);
+          reject(error);
+        }
       };
       
       img.onerror = (e) => {
@@ -88,6 +97,7 @@ export const downloadSvgAsPng = async (
   } catch (error) {
     console.error("Error downloading QR code:", error);
     toast.error("Error al descargar el código QR");
+    throw error;
   }
 };
 
