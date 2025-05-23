@@ -1,17 +1,14 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Share2, Download } from "lucide-react";
 import { BusinessCard } from "@/types";
-import CardPreview from "@/components/CardPreview";
-import { downloadVCard } from "@/utils/linkUtils";
-import QRCodeTab from "@/components/card/QRCodeTab"; // Import QR code component
+import PreviewContent from "./PreviewContent";
+import PreviewActions from "./PreviewActions";
 
 interface PreviewTabProps {
   card: BusinessCard;
   onShare: () => void;
-  shareUrl: string; // Add this prop
-  fullShareUrl: string; // Add this prop
+  shareUrl: string;
+  fullShareUrl: string;
 }
 
 const PreviewTab: React.FC<PreviewTabProps> = ({ 
@@ -22,26 +19,17 @@ const PreviewTab: React.FC<PreviewTabProps> = ({
 }) => {
   return (
     <>
-      <CardPreview card={card} />
-      
-      {/* Embed QR Code directly in the preview tab */}
-      <QRCodeTab 
+      <PreviewContent 
+        card={card}
         shareUrl={shareUrl}
         fullShareUrl={fullShareUrl}
         onShare={onShare}
       />
       
-      <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <Button onClick={onShare} className="gap-1">
-          <Share2 className="h-4 w-4" />
-          Compartir
-        </Button>
-        
-        <Button onClick={() => downloadVCard(card)} variant="outline" className="gap-1">
-          <Download className="h-4 w-4" />
-          Guardar contacto
-        </Button>
-      </div>
+      <PreviewActions 
+        card={card}
+        onShare={onShare}
+      />
     </>
   );
 };

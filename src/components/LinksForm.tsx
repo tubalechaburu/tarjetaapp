@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CardLink } from "@/types";
 import { v4 as uuidv4 } from "uuid";
@@ -22,12 +23,12 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
     );
     
     // Default to 'other' if all specific types are used
-    const newType = availableType ? availableType.value : 'other';
+    const newType: CardLink["type"] = availableType ? availableType.value : 'other';
     const typeLabel = LinkTypeOptions.find(opt => opt.value === newType)?.label || 'Otro enlace';
     
     const newLink: CardLink = {
       id: uuidv4(),
-      type: newType as CardLink["type"],
+      type: newType,
       url: "",
       title: typeLabel,
       label: typeLabel
