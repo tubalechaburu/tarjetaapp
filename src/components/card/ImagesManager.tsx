@@ -28,7 +28,7 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
       reader.onloadend = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
-        setValue('avatarUrl', result);
+        setValue('avatarUrl', result, { shouldDirty: true, shouldTouch: true });
       };
       reader.readAsDataURL(file);
     }
@@ -40,8 +40,9 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
+        console.log("Logo loaded as base64:", result.substring(0, 50) + "...");
         setLogoPreview(result);
-        setValue('logoUrl', result);
+        setValue('logoUrl', result, { shouldDirty: true, shouldTouch: true });
       };
       reader.readAsDataURL(file);
     }

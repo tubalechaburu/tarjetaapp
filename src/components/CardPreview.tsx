@@ -22,10 +22,10 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   useEffect(() => {
     console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
     console.log("Card theme colors from props:", card.themeColors);
-    console.log("Card logo URL:", card.logoUrl);
-    console.log("Card logoUrl exists:", !!card.logoUrl);
-    console.log("Card logoUrl not empty:", card.logoUrl !== "");
-    console.log("Card logoUrl is valid:", card.logoUrl && card.logoUrl.trim() !== "");
+    console.log("Card has logoUrl:", !!card.logoUrl);
+    if (card.logoUrl) {
+      console.log("Logo preview (first 50 chars):", card.logoUrl.substring(0, 50) + "...");
+    }
   }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl]);
   
   // Get visibility settings with defaults
@@ -59,16 +59,16 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Show logo if it exists and is not empty */}
-          {card.logoUrl && card.logoUrl.trim() !== "" && (
+          {/* Logo de empresa - Show logo if it exists */}
+          {card.logoUrl && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
                 src={card.logoUrl} 
                 alt={`Logo de ${card.company || 'empresa'}`} 
                 className="max-h-14 max-w-14 object-contain"
-                onLoad={() => console.log('Logo loaded successfully:', card.logoUrl)}
+                onLoad={() => console.log('Logo loaded successfully')}
                 onError={(e) => {
-                  console.error('Error loading logo:', card.logoUrl);
+                  console.error('Error loading logo');
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />

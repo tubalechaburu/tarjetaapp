@@ -46,9 +46,9 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   
   console.log("Mapped theme colors:", themeColors);
   
-  // Fix: Handle logo field properly - it can be a base64 string or URL
-  const logoUrl = card.logo && typeof card.logo === 'string' && card.logo.trim() !== "" ? card.logo : "";
-  console.log("Mapped logoUrl:", logoUrl);
+  // Handle logo field which is stored as base64 or URL
+  const logoUrl = card.logo || "";
+  console.log("Mapped logoUrl:", logoUrl ? logoUrl.substring(0, 50) + "..." : "empty");
   
   return {
     id: card.id,
@@ -61,7 +61,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
-    logoUrl: logoUrl, // Properly map the logo field (can be base64 or URL)
+    logoUrl: logoUrl, // Direct mapping without empty string check
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -123,7 +123,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
   
   console.log("Preparing card for Supabase with theme:", theme);
   console.log("Original card colors:", card.themeColors);
-  console.log("Sending logoUrl to Supabase:", card.logoUrl);
+  console.log("Sending logoUrl to Supabase:", card.logoUrl ? card.logoUrl.substring(0, 50) + "..." : "null");
     
   return {
     id: card.id,
@@ -133,7 +133,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    logo: card.logoUrl && card.logoUrl.trim() !== "" ? card.logoUrl : null, // Handle base64 or URL
+    logo: card.logoUrl || null, // Always pass the full logo data, don't check if empty
     description: card.description || null,
     links: links,
     user_id: userId,
