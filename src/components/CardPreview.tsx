@@ -59,16 +59,16 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Show logo if it exists */}
-          {card.logoUrl && (
+          {/* Logo de empresa - Show logo if it exists and has valid data */}
+          {card.logoUrl && card.logoUrl.trim() !== "" && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
                 src={card.logoUrl} 
                 alt={`Logo de ${card.company || 'empresa'}`} 
                 className="max-h-14 max-w-14 object-contain"
-                onLoad={() => console.log('Logo loaded successfully')}
+                onLoad={() => console.log('Logo displayed successfully in card preview')}
                 onError={(e) => {
-                  console.error('Error loading logo');
+                  console.error('Error displaying logo in card preview');
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />

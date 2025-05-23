@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { BusinessCard, CardLink } from "@/types";
@@ -91,23 +92,35 @@ export const useCardForm = (initialData?: BusinessCard) => {
   // Update form when logos/avatars change
   useEffect(() => {
     if (avatarPreview) {
+      console.log("Updating avatarUrl in form:", avatarPreview ? "Avatar present" : "No avatar");
       setValue('avatarUrl', avatarPreview, { shouldDirty: true });
     }
   }, [avatarPreview, setValue]);
 
   useEffect(() => {
     if (logoPreview) {
-      console.log("Setting logoUrl in form:", logoPreview ? "Logo present" : "No logo");
+      console.log("Updating logoUrl in form:", logoPreview ? "Logo present" : "No logo");
       setValue('logoUrl', logoPreview, { shouldDirty: true });
     }
   }, [logoPreview, setValue]);
 
-  // Also update form on initial load
+  // Initialize form with initial data on mount
   useEffect(() => {
-    setValue('themeColors', selectedColors, { shouldDirty: true });
-    setValue('visibleFields', visibleFields, { shouldDirty: true });
-    if (avatarPreview) setValue('avatarUrl', avatarPreview, { shouldDirty: true });
-    if (logoPreview) setValue('logoUrl', logoPreview, { shouldDirty: true });
+    if (initialData) {
+      console.log("Initializing form with data:", initialData);
+      setValue('themeColors', selectedColors, { shouldDirty: true });
+      setValue('visibleFields', visibleFields, { shouldDirty: true });
+      if (initialData.avatarUrl) {
+        console.log("Setting initial avatar:", initialData.avatarUrl ? "Avatar present" : "No avatar");
+        setValue('avatarUrl', initialData.avatarUrl, { shouldDirty: true });
+        setAvatarPreview(initialData.avatarUrl);
+      }
+      if (initialData.logoUrl) {
+        console.log("Setting initial logo:", initialData.logoUrl ? "Logo present" : "No logo");
+        setValue('logoUrl', initialData.logoUrl, { shouldDirty: true });
+        setLogoPreview(initialData.logoUrl);
+      }
+    }
   }, []);
 
   const handleColorChange = (index: number, color: string) => {
@@ -150,8 +163,8 @@ export const useCardForm = (initialData?: BusinessCard) => {
         id: initialData?.id || data.id
       };
 
-      console.log("Final data being saved:", finalData);
-      console.log("Final logo URL:", finalData.logoUrl ? "Logo present" : "No logo");
+      console.log("Final data being saved - Logo:", finalData.logoUrl ? "Logo present" : "No logo");
+      console.log("Final data being saved - Avatar:", finalData.avatarUrl ? "Avatar present" : "No avatar");
       
       await saveCard(finalData);
       

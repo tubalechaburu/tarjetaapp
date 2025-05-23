@@ -41,9 +41,13 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        console.log("Logo loaded successfully:", result.substring(0, 50) + "...");
+        console.log("Logo loaded successfully - base64 data:", result.substring(0, 100) + "...");
         setLogoPreview(result);
         setValue('logoUrl', result, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+        console.log("Logo set in form successfully");
+      };
+      reader.onerror = () => {
+        console.error("Error reading logo file");
       };
       reader.readAsDataURL(file);
     }
