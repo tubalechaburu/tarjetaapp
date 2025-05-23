@@ -73,7 +73,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
               {card.company}
             </p>
             
-            {/* Logo de empresa - Corregido para mostrar desde logoUrl */}
+            {/* Logo de empresa - Ensure it displays correctly */}
             {card.logoUrl && (
               <div className="mt-3 p-3 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm">
                 <img 
@@ -84,12 +84,12 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
                     display: 'block',
                     margin: '0 auto'
                   }}
+                  onLoad={() => {
+                    console.log('Logo loaded successfully:', card.logoUrl);
+                  }}
                   onError={(e) => {
                     console.error('Error loading logo:', card.logoUrl);
                     (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                  onLoad={() => {
-                    console.log('Logo loaded successfully:', card.logoUrl);
                   }}
                 />
               </div>

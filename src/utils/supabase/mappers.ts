@@ -56,7 +56,8 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
-    logoUrl: "", // Use empty string as default for logoUrl since it doesn't exist in SupabaseBusinessCard
+    // Fix: Use logo property if it exists, otherwise empty string
+    logoUrl: card.logo || "", 
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -81,11 +82,11 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
   // Ensure user ID is not undefined
   const userId = card.userId || "00000000-0000-0000-0000-000000000000";
   
-  // Prepare links for Supabase - incluir TODOS los enlaces
+  // Prepare links for Supabase - include ALL links
   const links = [];
   
-  // Add website as link if it exists
-  if (card.website) {
+  // Add website as link if it exists and no website link is in card.links
+  if (card.website && (!card.links || !card.links.some(link => link.type === 'website'))) {
     links.push({ 
       id: uuidv4(),
       type: "website", 
@@ -94,9 +95,8 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     });
   }
   
-  // Add additional links if they exist
+  // Add all links from card.links regardless of type
   if (card.links && card.links.length > 0) {
-    // Include ALL links, not just filtered ones
     links.push(...card.links.map(link => ({
       id: link.id || uuidv4(),
       type: link.type,
@@ -119,6 +119,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
   
   console.log("Preparing card for Supabase with theme:", theme);
   console.log("Original card colors:", card.themeColors);
+  console.log("Sending logoUrl to Supabase:", card.logoUrl);
     
   return {
     id: card.id,

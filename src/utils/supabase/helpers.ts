@@ -9,7 +9,7 @@ export const handleSupabaseError = (error: any, fallbackMessage: string): boolea
 
 export const handleSupabaseSuccess = (data: any, message: string): void => {
   console.log("Supabase operation successful:", data);
-  toast.success("Se ha guardado la tarjeta");
+  toast.success(message);
 };
 
 export const isEmptyData = (data: any): boolean => {

@@ -60,6 +60,7 @@ export interface SupabaseBusinessCard {
   email?: string;
   phone?: string;
   photo: string;
+  logo?: string; // Add logo field to the type
   description?: string;
   created_at: string;
   user_id: string;

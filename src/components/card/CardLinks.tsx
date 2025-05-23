@@ -33,13 +33,23 @@ const CardLinks: React.FC<CardLinksProps> = ({
     textDecoration: "none",
   };
 
-  // Filter out duplicate website links
-  const filteredLinks = links.filter((link, index, self) => {
-    if (link.type === 'website' && website) {
-      return false; // Skip if we already have a website property
-    }
-    return index === self.findIndex(l => l.type === link.type) || link.type === 'other';
-  });
+  // Do not filter out links, show all of them
+  // We'll just handle website specially if it exists separately
+  const websiteFromProperty = website ? (
+    <a
+      href={website.startsWith("http") ? website : `https://${website}`}
+      style={linkStyle}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Globe size={16} />
+      <span>{website}</span>
+    </a>
+  ) : null;
+
+  // Get website link from links array if it exists
+  const websiteLinkIndex = links.findIndex(link => link.type === 'website');
+  const hasWebsiteInLinks = websiteLinkIndex !== -1;
 
   return (
     <div className="space-y-1">
@@ -80,17 +90,8 @@ const CardLinks: React.FC<CardLinksProps> = ({
         </>
       )}
 
-      {website && (
-        <a
-          href={website.startsWith("http") ? website : `https://${website}`}
-          style={linkStyle}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Globe size={16} />
-          <span>{website}</span>
-        </a>
-      )}
+      {/* Show website from property if it exists and there's no website in links */}
+      {!hasWebsiteInLinks && websiteFromProperty}
 
       {address && (
         <a
@@ -104,19 +105,18 @@ const CardLinks: React.FC<CardLinksProps> = ({
         </a>
       )}
 
-      {filteredLinks.map((link) => (
+      {/* Show all links from links array */}
+      {links.map((link) => (
         <a
           key={link.id || link.url}
-          href={link.url}
+          href={link.url.startsWith("http") ? link.url : `https://${link.url}`}
           style={linkStyle}
           target="_blank"
           rel="noopener noreferrer"
         >
           {React.createElement(getLinkIcon(link.type), { size: 16 })}
           <span>
-            {link.type === "calendar" 
-              ? "Reservar cita" 
-              : (link.label || link.title)}
+            {link.label || link.title || link.type}
           </span>
         </a>
       ))}
