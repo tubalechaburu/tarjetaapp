@@ -19,11 +19,11 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
     
     // Find first available type that's not 'other' (since 'other' can have multiple)
     const availableType = LinkTypeOptions.find(option => 
-      option.value === 'other' || !usedTypes.includes(option.value)
+      option.value === 'other' || !usedTypes.includes(option.value as CardLink["type"])
     );
     
     // Default to 'other' if all specific types are used
-    const newType: CardLink["type"] = availableType ? availableType.value : 'other';
+    const newType: CardLink["type"] = availableType ? (availableType.value as CardLink["type"]) : 'other';
     const typeLabel = LinkTypeOptions.find(opt => opt.value === newType)?.label || 'Otro enlace';
     
     const newLink: CardLink = {
