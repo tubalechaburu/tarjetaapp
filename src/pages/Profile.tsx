@@ -14,9 +14,22 @@ import { ExternalLink, Edit, Plus } from "lucide-react";
 import { mapSupabaseToBusinessCard } from "@/utils/supabase/mappers";
 import { toast } from "sonner";
 
+// Definir el tipo del perfil completo
+interface UserProfile {
+  id: string;
+  full_name?: string;
+  avatar_url?: string;
+  phone?: string;
+  website?: string;
+  linkedin?: string;
+  company?: string;
+  job_title?: string;
+  updated_at?: string;
+}
+
 const Profile = () => {
   const { user, isSuperAdmin } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [cards, setCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -46,14 +59,15 @@ const Profile = () => {
 
       if (error && error.code !== 'PGRST116') throw error;
       
-      setProfile(data);
+      const profileData = data as UserProfile;
+      setProfile(profileData);
       setFormData({
-        full_name: data?.full_name || '',
-        phone: data?.phone || '',
-        website: data?.website || '',
-        linkedin: data?.linkedin || '',
-        company: data?.company || '',
-        job_title: data?.job_title || ''
+        full_name: profileData?.full_name || '',
+        phone: profileData?.phone || '',
+        website: profileData?.website || '',
+        linkedin: profileData?.linkedin || '',
+        company: profileData?.company || '',
+        job_title: profileData?.job_title || ''
       });
     } catch (error) {
       console.error('Error fetching profile:', error);

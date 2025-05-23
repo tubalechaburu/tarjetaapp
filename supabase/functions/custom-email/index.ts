@@ -1,5 +1,4 @@
 
-// Custom email templates for authentication emails
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
@@ -9,107 +8,265 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("Custom email function called with method:", req.method);
+  
   // Handle CORS preflight request
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // This will be called by Supabase Auth when a new user signs up
-    // You can customize the HTML for the email here
-    const { type, email } = await req.json();
+    const body = await req.json();
+    console.log("Request body:", body);
+    
+    const { type, email, token, token_hash, redirect_to, site_url } = body;
 
-    if (type !== "signup") {
+    // Support multiple email types
+    if (!["signup", "recovery", "email_change"].includes(type)) {
+      console.log("Unsupported email type:", type);
       return new Response(
-        JSON.stringify({ error: "Only signup emails are supported" }),
+        JSON.stringify({ error: `Email type '${type}' is not supported` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create a Supabase client for admin operations
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-    );
+    // Create confirmation URL
+    const confirmationUrl = token_hash 
+      ? `${site_url || window.location.origin}/auth/confirm?token_hash=${token_hash}&type=${type}&redirect_to=${redirect_to || '/'}`
+      : `${site_url || window.location.origin}/auth/confirm?token=${token}&type=${type}&redirect_to=${redirect_to || '/'}`;
 
-    // Example: Customize the email template based on type
+    // Get email subject and content based on type
+    let subject = "";
+    let greeting = "";
+    let mainMessage = "";
+    let buttonText = "";
+
+    switch (type) {
+      case "signup":
+        subject = "¡Bienvenido a TarjetaApp! Confirma tu cuenta";
+        greeting = "¡Bienvenido a TarjetaApp!";
+        mainMessage = "Gracias por registrarte en TarjetaApp. Para activar tu cuenta, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo:";
+        buttonText = "Confirmar mi cuenta";
+        break;
+      case "recovery":
+        subject = "Restablecer contraseña - TarjetaApp";
+        greeting = "Restablece tu contraseña";
+        mainMessage = "Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para crear una nueva contraseña:";
+        buttonText = "Restablecer contraseña";
+        break;
+      case "email_change":
+        subject = "Confirmar cambio de email - TarjetaApp";
+        greeting = "Confirma tu nuevo email";
+        mainMessage = "Por favor, confirma tu nueva dirección de correo electrónico haciendo clic en el botón de abajo:";
+        buttonText = "Confirmar nuevo email";
+        break;
+    }
+
+    // Enhanced email template
     const template = `
     <!DOCTYPE html>
-    <html>
+    <html lang="es">
     <head>
       <meta charset="utf-8">
-      <title>Confirma tu cuenta en TarjetaApp</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         body {
-          font-family: Arial, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
           line-height: 1.6;
           color: #333;
-          max-width: 600px;
-          margin: 0 auto;
+          background-color: #f6f9fc;
+          margin: 0;
           padding: 20px;
         }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+          overflow: hidden;
+        }
         .header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
           text-align: center;
-          padding: 20px 0;
-          border-bottom: 1px solid #eee;
+          padding: 40px 20px;
         }
         .logo {
-          max-width: 150px;
+          font-size: 28px;
+          font-weight: bold;
+          margin-bottom: 8px;
+        }
+        .subtitle {
+          opacity: 0.9;
+          font-size: 16px;
         }
         .content {
-          padding: 20px 0;
+          padding: 40px 30px;
+          text-align: center;
+        }
+        .greeting {
+          font-size: 24px;
+          font-weight: 600;
+          color: #2d3748;
+          margin-bottom: 20px;
+        }
+        .message {
+          font-size: 16px;
+          color: #4a5568;
+          margin-bottom: 30px;
+          line-height: 1.7;
         }
         .button {
           display: inline-block;
-          background-color: #3b82f6;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           text-decoration: none;
-          padding: 10px 20px;
-          border-radius: 4px;
+          padding: 16px 32px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 16px;
           margin: 20px 0;
+          transition: transform 0.2s ease;
+        }
+        .button:hover {
+          transform: translateY(-2px);
+        }
+        .link-section {
+          background-color: #f7fafc;
+          padding: 20px;
+          margin: 30px 0;
+          border-radius: 8px;
+          border-left: 4px solid #667eea;
+        }
+        .link-text {
+          font-size: 14px;
+          color: #718096;
+          margin-bottom: 10px;
+        }
+        .copy-link {
+          font-size: 12px;
+          color: #667eea;
+          word-break: break-all;
+          background-color: #edf2f7;
+          padding: 10px;
+          border-radius: 4px;
         }
         .footer {
-          border-top: 1px solid #eee;
-          padding-top: 20px;
+          background-color: #f7fafc;
+          padding: 30px;
           text-align: center;
-          font-size: 12px;
-          color: #666;
+          border-top: 1px solid #e2e8f0;
+        }
+        .footer-text {
+          font-size: 14px;
+          color: #718096;
+          margin-bottom: 10px;
+        }
+        .footer-link {
+          color: #667eea;
+          text-decoration: none;
+        }
+        .security-note {
+          background-color: #fef5e7;
+          border: 1px solid #f6e05e;
+          border-radius: 6px;
+          padding: 15px;
+          margin-top: 20px;
+          text-align: left;
+        }
+        .security-note-title {
+          font-weight: 600;
+          color: #744210;
+          margin-bottom: 5px;
+        }
+        .security-note-text {
+          font-size: 14px;
+          color: #744210;
+        }
+        @media (max-width: 600px) {
+          .container {
+            margin: 0;
+            border-radius: 0;
+          }
+          .content {
+            padding: 30px 20px;
+          }
+          .header {
+            padding: 30px 20px;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>¡Bienvenido a TarjetaApp!</h1>
-      </div>
-      <div class="content">
-        <p>Hola,</p>
-        <p>Gracias por registrarte en TarjetaApp. Para activar tu cuenta, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo:</p>
-        <p style="text-align: center;">
-          <a href="{{.ConfirmationURL}}" class="button">Confirmar mi cuenta</a>
-        </p>
-        <p>O copia y pega el siguiente enlace en tu navegador:</p>
-        <p>{{.ConfirmationURL}}</p>
-        <p>Si no te registraste en TarjetaApp, puedes ignorar este mensaje.</p>
-      </div>
-      <div class="footer">
-        <p>&copy; 2025 TarjetaApp - Todos los derechos reservados.</p>
+      <div class="container">
+        <div class="header">
+          <div class="logo">📱 TarjetaApp</div>
+          <div class="subtitle">Tu plataforma de tarjetas digitales</div>
+        </div>
+        
+        <div class="content">
+          <h1 class="greeting">${greeting}</h1>
+          <p class="message">${mainMessage}</p>
+          
+          <a href="${confirmationUrl}" class="button">${buttonText}</a>
+          
+          <div class="link-section">
+            <p class="link-text">O copia y pega el siguiente enlace en tu navegador:</p>
+            <div class="copy-link">${confirmationUrl}</div>
+          </div>
+          
+          <div class="security-note">
+            <div class="security-note-title">🔒 Nota de seguridad</div>
+            <div class="security-note-text">
+              Si no realizaste esta acción, puedes ignorar este mensaje de forma segura. 
+              Este enlace expirará en 24 horas por motivos de seguridad.
+            </div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p class="footer-text">
+            Este correo fue enviado por <strong>TarjetaApp</strong><br>
+            La plataforma líder en tarjetas de presentación digitales
+          </p>
+          <p class="footer-text">
+            <a href="mailto:soporte@tarjetaapp.com" class="footer-link">¿Necesitas ayuda?</a> • 
+            <a href="#" class="footer-link">Política de Privacidad</a>
+          </p>
+          <p class="footer-text" style="margin-top: 15px; font-size: 12px;">
+            &copy; 2025 TarjetaApp - Todos los derechos reservados.
+          </p>
+        </div>
       </div>
     </body>
     </html>
     `;
 
-    // Log that we received this request - for debugging
-    console.log(`Custom email template generated for ${email}`);
+    console.log(`Custom email template generated for ${email} (type: ${type})`);
 
     return new Response(
-      JSON.stringify({ template }),
+      JSON.stringify({ 
+        subject,
+        template,
+        success: true 
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error handling request:", error);
+    console.error("Error handling custom email request:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: "Error interno del servidor al generar el email personalizado"
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
