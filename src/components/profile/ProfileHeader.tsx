@@ -7,6 +7,7 @@ import { BusinessCard } from "@/types";
 interface ProfileHeaderProps {
   userCard: BusinessCard | null;
   editing: boolean;
+  saving?: boolean;
   onEditToggle: () => void;
   onSave: () => void;
 }
@@ -14,6 +15,7 @@ interface ProfileHeaderProps {
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   userCard,
   editing,
+  saving = false,
   onEditToggle,
   onSave,
 }) => {
@@ -32,8 +34,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <Button 
           variant={editing ? "default" : "outline"} 
           onClick={editing ? onSave : onEditToggle}
+          disabled={saving}
         >
-          {editing ? "Guardar" : "Editar"}
+          {saving ? "Guardando..." : editing ? "Guardar" : "Editar"}
         </Button>
       </div>
     </CardHeader>

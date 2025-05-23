@@ -37,6 +37,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   onProfileUpdated 
 }) => {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { userCard, formData, setFormData } = useProfileData(userId, profile);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -48,23 +49,51 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   const handleSaveProfile = async () => {
+    if (saving) return; // Prevent multiple submissions
+    
+    setSaving(true);
+    console.log("Saving profile with data:", formData);
+    
     try {
-      const { error } = await supabase
+      // Prepare the profile data
+      const profileData = {
+        id: userId,
+        full_name: formData.full_name || null,
+        phone: formData.phone || null,
+        website: formData.website || null,
+        linkedin: formData.linkedin || null,
+        company: formData.company || null,
+        job_title: formData.job_title || null,
+        email: formData.email || null,
+        description: formData.description || null,
+        address: formData.address || null,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log("Upserting profile data:", profileData);
+
+      const { data, error } = await supabase
         .from('profiles')
-        .upsert({
-          id: userId,
-          ...formData,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(profileData, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log("Profile saved successfully:", data);
       toast.success('Perfil actualizado correctamente');
       setEditing(false);
       onProfileUpdated();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error('Error al actualizar el perfil');
+      toast.error(error.message || 'Error al actualizar el perfil');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -73,6 +102,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       <ProfileHeader
         userCard={userCard}
         editing={editing}
+        saving={saving}
         onEditToggle={() => setEditing(true)}
         onSave={handleSaveProfile}
       />
