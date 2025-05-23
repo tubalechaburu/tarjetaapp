@@ -18,30 +18,49 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   const textColor = card.themeColors?.[1] || "#000000";
   const accentColor = card.themeColors?.[2] || "#dd8d0a";
   
+  // Get visibility settings with defaults
+  const visibleFields = card.visibleFields || {
+    name: true,
+    jobTitle: true,
+    company: true,
+    email: true,
+    phone: true,
+    website: true,
+    address: true,
+    description: true,
+  };
+  
   return (
     <Card 
       className="w-full max-w-md mx-auto shadow-lg"
       style={{ backgroundColor: bgColor, color: textColor }}
     >
       <CardHeader className="flex flex-col items-center pb-2">
-        <Avatar className="h-24 w-24 mb-2" style={{ borderColor: accentColor, borderWidth: '2px' }}>
-          {card.avatarUrl ? (
-            <AvatarImage src={card.avatarUrl} alt={card.name} />
-          ) : (
-            <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
-              {getInitials(card.name)}
-            </AvatarFallback>
-          )}
-        </Avatar>
-        <CardTitle className="text-xl font-bold text-center" style={{ color: textColor }}>
-          {card.name}
-        </CardTitle>
-        {card.jobTitle && (
+        {visibleFields.name && (
+          <Avatar className="h-24 w-24 mb-2" style={{ borderColor: accentColor, borderWidth: '2px' }}>
+            {card.avatarUrl ? (
+              <AvatarImage src={card.avatarUrl} alt={card.name} />
+            ) : (
+              <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
+                {getInitials(card.name)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+        )}
+        
+        {visibleFields.name && (
+          <CardTitle className="text-xl font-bold text-center" style={{ color: textColor }}>
+            {card.name}
+          </CardTitle>
+        )}
+        
+        {visibleFields.jobTitle && card.jobTitle && (
           <p className="text-center" style={{ color: textColor, opacity: 0.8 }}>
             {card.jobTitle}
           </p>
         )}
-        {card.company && (
+        
+        {visibleFields.company && card.company && (
           <div className="flex flex-col items-center">
             <p className="font-semibold text-center" style={{ color: accentColor }}>
               {card.company}
@@ -59,13 +78,22 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             )}
           </div>
         )}
+        
+        {/* Descripción profesional */}
+        {visibleFields.description && card.description && (
+          <div className="mt-3 text-center px-2">
+            <p className="text-sm whitespace-pre-wrap" style={{ color: textColor }}>
+              {card.description}
+            </p>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-2">
         <CardLinks 
-          email={card.email} 
-          phone={card.phone} 
-          website={card.website} 
-          address={card.address} 
+          email={visibleFields.email ? card.email : undefined} 
+          phone={visibleFields.phone ? card.phone : undefined} 
+          website={visibleFields.website ? card.website : undefined} 
+          address={visibleFields.address ? card.address : undefined} 
           links={card.links} 
           accentColor={accentColor}
           textColor={textColor}

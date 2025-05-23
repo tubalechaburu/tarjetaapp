@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BusinessCard, SupabaseBusinessCard } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -24,6 +25,9 @@ interface UserProfile {
   linkedin?: string;
   company?: string;
   job_title?: string;
+  email?: string;
+  description?: string;
+  address?: string;
   updated_at?: string;
 }
 
@@ -39,7 +43,10 @@ const Profile = () => {
     website: '',
     linkedin: '',
     company: '',
-    job_title: ''
+    job_title: '',
+    email: '',
+    description: '',
+    address: ''
   });
 
   useEffect(() => {
@@ -67,7 +74,10 @@ const Profile = () => {
         website: profileData?.website || '',
         linkedin: profileData?.linkedin || '',
         company: profileData?.company || '',
-        job_title: profileData?.job_title || ''
+        job_title: profileData?.job_title || '',
+        email: profileData?.email || user?.email || '',
+        description: profileData?.description || '',
+        address: profileData?.address || ''
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -116,6 +126,14 @@ const Profile = () => {
     }
   };
 
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
   if (!user) {
     return <Navigate to="/auth" />;
   }
@@ -148,7 +166,12 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" value={user.email} disabled />
+                <Input 
+                  id="email" 
+                  value={formData.email}
+                  onChange={handleFormChange}
+                  disabled={!editing || !isSuperAdmin} // Only superadmin can change email 
+                />
               </div>
               
               <div>
@@ -156,47 +179,7 @@ const Profile = () => {
                 <Input 
                   id="full_name" 
                   value={formData.full_name}
-                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                  disabled={!editing}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="phone">Teléfono</Label>
-                <Input 
-                  id="phone" 
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  disabled={!editing}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="website">Sitio web</Label>
-                <Input 
-                  id="website" 
-                  value={formData.website}
-                  onChange={(e) => setFormData({...formData, website: e.target.value})}
-                  disabled={!editing}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <Input 
-                  id="linkedin" 
-                  value={formData.linkedin}
-                  onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
-                  disabled={!editing}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="company">Empresa</Label>
-                <Input 
-                  id="company" 
-                  value={formData.company}
-                  onChange={(e) => setFormData({...formData, company: e.target.value})}
+                  onChange={handleFormChange}
                   disabled={!editing}
                 />
               </div>
@@ -206,8 +189,69 @@ const Profile = () => {
                 <Input 
                   id="job_title" 
                   value={formData.job_title}
-                  onChange={(e) => setFormData({...formData, job_title: e.target.value})}
+                  onChange={handleFormChange}
                   disabled={!editing}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="company">Empresa</Label>
+                <Input 
+                  id="company" 
+                  value={formData.company}
+                  onChange={handleFormChange}
+                  disabled={!editing}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input 
+                  id="phone" 
+                  value={formData.phone}
+                  onChange={handleFormChange}
+                  disabled={!editing}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="website">Sitio web</Label>
+                <Input 
+                  id="website" 
+                  value={formData.website}
+                  onChange={handleFormChange}
+                  disabled={!editing}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="linkedin">LinkedIn</Label>
+                <Input 
+                  id="linkedin" 
+                  value={formData.linkedin}
+                  onChange={handleFormChange}
+                  disabled={!editing}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="address">Dirección</Label>
+                <Input 
+                  id="address" 
+                  value={formData.address}
+                  onChange={handleFormChange}
+                  disabled={!editing}
+                />
+              </div>
+              
+              <div className="col-span-2">
+                <Label htmlFor="description">Descripción profesional</Label>
+                <Textarea 
+                  id="description" 
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  disabled={!editing}
+                  className="min-h-[100px]"
                 />
               </div>
             </div>

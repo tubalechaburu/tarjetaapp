@@ -41,12 +41,14 @@ export interface BusinessCard {
   phone: string;
   website: string;
   address: string;
+  description?: string;
   avatarUrl: string;
   logoUrl?: string;
   createdAt?: number;
   userId?: string;
   links?: CardLink[];
   themeColors?: string[]; // Array de colores personalizados
+  visibleFields?: Record<string, boolean>; // Control de campos visibles
 }
 
 // Add the SupabaseBusinessCard interface for Supabase data mapping
@@ -58,6 +60,7 @@ export interface SupabaseBusinessCard {
   email?: string;
   phone?: string;
   photo: string;
+  description?: string;
   created_at: string;
   user_id: string;
   links?: {
@@ -66,4 +69,5 @@ export interface SupabaseBusinessCard {
     url?: string;
     label?: string;
   }[];
+  visible_fields?: Record<string, boolean>;
 }

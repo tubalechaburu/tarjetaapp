@@ -36,36 +36,49 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       // Create canvas with proper size (just the QR code, no extra space)
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        toast.error("Error al crear el código QR");
+        return;
+      }
+      
+      // Create a new Image object for loading the SVG
       const img = new Image();
       
-      // Set canvas size to exactly the QR code size
-      canvas.width = size;
-      canvas.height = size;
+      // Set canvas size exactly to the QR code size plus margin
+      const qrSize = size;
+      canvas.width = qrSize;
+      canvas.height = qrSize;
       
+      // Convert SVG to a data URL
       const svgData = new XMLSerializer().serializeToString(svgClone);
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
       
       img.onload = () => {
-        if (ctx) {
-          // Fill with white background
-          ctx.fillStyle = "white";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // Draw the QR code
-          ctx.drawImage(img, 0, 0, size, size);
-          
-          // Convert to PNG and download
-          const pngFile = canvas.toDataURL("image/png");
-          const downloadLink = document.createElement("a");
-          
-          downloadLink.download = `QR Tarjeta virtual ${cardName}.png`;
-          downloadLink.href = pngFile;
-          downloadLink.click();
-          
-          toast.success("Código QR descargado correctamente");
-        }
+        // Fill with white background
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the QR code centered on the canvas
+        ctx.drawImage(img, 0, 0, qrSize, qrSize);
+        
+        // Convert to PNG and download
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        
+        downloadLink.download = `QR Tarjeta virtual ${cardName}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+        
+        // Clean up
+        URL.revokeObjectURL(svgUrl);
+        
+        toast.success("Código QR descargado correctamente");
       };
       
-      img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+      // Set the source of the image to the SVG URL
+      img.src = svgUrl;
     } catch (error) {
       console.error("Error downloading QR code:", error);
       toast.error("Error al descargar el código QR");
@@ -87,39 +100,64 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       // Get card name
       const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
       
-      // Create desktop shortcut content
-      const shortcutContent = `[InternetShortcut]
-URL=${fullUrl}
-IconFile=favicon.ico
-IconIndex=0`;
-      
-      const blob = new Blob([shortcutContent], { type: 'application/x-url' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Tarjeta virtual ${cardName}.url`;
-      
-      // For mobile devices, try to use the Web Share API first
-      if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        navigator.share({
-          title: `Tarjeta virtual ${cardName}`,
-          url: fullUrl
-        }).then(() => {
-          toast.success("Enlace compartido");
-        }).catch(() => {
-          // Fallback to download
+      // Create desktop shortcut content based on platform
+      if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        // Mobile device: use Web Share API
+        if (navigator.share) {
+          navigator.share({
+            title: `Tarjeta virtual ${cardName}`,
+            url: fullUrl
+          }).then(() => {
+            toast.success("Enlace compartido");
+          }).catch((err) => {
+            console.error("Error sharing:", err);
+            toast.error("Error al compartir");
+          });
+        } else {
+          // Fallback for mobile devices without Web Share API
+          window.open(fullUrl, '_blank');
+          toast.success("Enlace abierto en nueva pestaña");
+        }
+      } else {
+        // Desktop: create and download .url file
+        let shortcutContent = '';
+        
+        // Check if it's Windows or other platform
+        const isWindows = navigator.userAgent.indexOf('Windows') !== -1;
+        
+        if (isWindows) {
+          // Windows .url format
+          shortcutContent = `[InternetShortcut]\nURL=${fullUrl}`;
+          const blob = new Blob([shortcutContent], { type: 'application/x-url' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Tarjeta virtual ${cardName}.url`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           window.URL.revokeObjectURL(url);
-          toast.success("Acceso directo descargado");
-        });
-      } else {
-        // Desktop: download the .url file
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        } else {
+          // macOS .webloc format
+          shortcutContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>URL</key>
+  <string>${fullUrl}</string>
+</dict>
+</plist>`;
+          const blob = new Blob([shortcutContent], { type: 'application/xml' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Tarjeta virtual ${cardName}.webloc`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }
+        
         toast.success("Acceso directo descargado");
       }
     } catch (error) {

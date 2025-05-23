@@ -12,6 +12,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import BasicInfoFields from "./card/BasicInfoFields";
 import ImageUploader from "./card/ImageUploader";
 import ColorSelector from "./card/ColorSelector";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import FieldVisibility from "./card/FieldVisibility";
 
 interface CardFormProps {
   initialData?: BusinessCard;
@@ -31,11 +34,25 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl || null);
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
   
-  // Fix: Initialize with existing colors if available
+  // Initialize with existing colors if available
   const [selectedColors, setSelectedColors] = useState<string[]>(
     initialData?.themeColors && initialData.themeColors.length === 3 
       ? initialData.themeColors 
       : [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
+  );
+  
+  // Field visibility state
+  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(
+    initialData?.visibleFields || {
+      name: true,
+      jobTitle: true,
+      company: true,
+      email: true,
+      phone: true,
+      website: true,
+      address: true,
+      description: true,
+    }
   );
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<BusinessCard>({
@@ -50,8 +67,19 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       address: "",
       avatarUrl: "",
       logoUrl: "",
+      description: "",
       createdAt: Date.now(),
-      themeColors: [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
+      themeColors: [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex],
+      visibleFields: {
+        name: true,
+        jobTitle: true,
+        company: true,
+        email: true,
+        phone: true,
+        website: true,
+        address: true,
+        description: true,
+      }
     }
   });
 
@@ -87,6 +115,12 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     setSelectedColors(newColors);
     setValue('themeColors', newColors);
   };
+  
+  const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
+    const updatedVisibility = { ...visibleFields, [fieldName]: isVisible };
+    setVisibleFields(updatedVisibility);
+    setValue('visibleFields', updatedVisibility);
+  };
 
   const onSubmit = async (data: BusinessCard) => {
     try {
@@ -102,6 +136,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         ...data,
         links: links,
         themeColors: selectedColors,
+        visibleFields: visibleFields,
         userId: user?.id || "anonymous",
         // Mantener el ID si estamos editando
         id: initialData?.id || data.id
@@ -121,11 +156,26 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-4">
         <BasicInfoFields register={register} errors={errors} />
+        
+        <div>
+          <Label htmlFor="description">Descripción</Label>
+          <Textarea
+            id="description"
+            placeholder="Describe tu perfil profesional, servicios o competencias"
+            className="min-h-[100px]"
+            {...register("description")}
+          />
+        </div>
 
         <ColorSelector 
           selectedColors={selectedColors} 
           onChange={handleColorChange} 
           brandColors={BRAND_COLORS} 
+        />
+        
+        <FieldVisibility 
+          visibleFields={visibleFields} 
+          onChange={handleFieldVisibilityChange} 
         />
 
         <ImageUploader
