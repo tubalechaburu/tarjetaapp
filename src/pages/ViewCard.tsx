@@ -93,8 +93,14 @@ const ViewCard = () => {
   };
 
   const handleDownloadQR = async () => {
-    if (!card || !qrRef) {
-      toast.error("Error: No se puede acceder al código QR");
+    if (!card) {
+      toast.error("Error: No hay datos de la tarjeta");
+      return;
+    }
+    
+    if (!qrRef) {
+      toast.error("Error: El código QR no está disponible. Espera un momento e inténtalo de nuevo.");
+      console.error("QR reference not available");
       return;
     }
     
@@ -127,7 +133,7 @@ const ViewCard = () => {
   };
 
   const handleQRRef = (ref: SVGSVGElement | null) => {
-    console.log("QR ref received:", !!ref);
+    console.log("QR ref received in ViewCard:", !!ref);
     setQrRef(ref);
   };
 
@@ -191,6 +197,7 @@ const ViewCard = () => {
                   onClick={handleDownloadQR} 
                   variant="default" 
                   className="flex items-center gap-2 w-full"
+                  disabled={!qrRef}
                 >
                   <Download className="h-4 w-4" />
                   Descargar código QR

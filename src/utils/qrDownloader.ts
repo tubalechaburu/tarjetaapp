@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 /**
@@ -10,7 +11,7 @@ export const downloadSvgAsPng = async (
 ): Promise<void> => {
   if (!svgElement) {
     console.error("No SVG element provided");
-    toast.error("Error al generar el código QR");
+    toast.error("Error: No se puede acceder al código QR");
     return;
   }
   
@@ -19,7 +20,14 @@ export const downloadSvgAsPng = async (
     console.log("SVG element found:", !!svgElement);
     console.log("Size:", size, "Filename:", filename);
     
-    // Create a canvas
+    // Clone the SVG to avoid modifying the original
+    const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+    
+    // Set explicit dimensions on the cloned SVG
+    clonedSvg.setAttribute('width', size.toString());
+    clonedSvg.setAttribute('height', size.toString());
+    
+    // Create a canvas with higher resolution
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -28,18 +36,22 @@ export const downloadSvgAsPng = async (
       return;
     }
     
-    // Set canvas dimensions with better resolution
+    // Set canvas dimensions with scale for better quality
     const scale = 2;
     canvas.width = size * scale;
     canvas.height = size * scale;
     
+    // Scale the context
+    ctx.scale(scale, scale);
+    
     // Convert SVG to string
     const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgElement);
+    const svgString = serializer.serializeToString(clonedSvg);
     console.log("SVG serializado correctamente, length:", svgString.length);
     
-    // Create data URL from SVG
-    const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+    // Create data URL from SVG with proper encoding
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const svgDataUrl = URL.createObjectURL(svgBlob);
     console.log("SVG data URL created");
     
     // Create a new image and draw to canvas when loaded
@@ -50,8 +62,6 @@ export const downloadSvgAsPng = async (
       img.onload = () => {
         try {
           console.log("Imagen cargada en canvas");
-          // Scale the context for better resolution
-          ctx.scale(scale, scale);
           
           // Clear canvas with white background
           ctx.fillStyle = '#ffffff';
@@ -59,6 +69,9 @@ export const downloadSvgAsPng = async (
           
           // Draw the image
           ctx.drawImage(img, 0, 0, size, size);
+          
+          // Clean up the object URL
+          URL.revokeObjectURL(svgDataUrl);
           
           // Convert to blob and download
           canvas.toBlob((blob) => {
@@ -79,19 +92,23 @@ export const downloadSvgAsPng = async (
               toast.error("Error al crear la imagen");
               reject(new Error("Failed to create blob"));
             }
-          }, 'image/png');
+          }, 'image/png', 1.0);
         } catch (error) {
           console.error("Error during canvas operations:", error);
+          toast.error("Error al procesar el código QR");
           reject(error);
         }
       };
       
       img.onerror = (e) => {
         console.error("Error al cargar la imagen:", e);
+        URL.revokeObjectURL(svgDataUrl);
         toast.error("Error al procesar el código QR");
         reject(new Error("Failed to load image"));
       };
       
+      // Set crossOrigin before setting src
+      img.crossOrigin = 'anonymous';
       img.src = svgDataUrl;
     });
   } catch (error) {
