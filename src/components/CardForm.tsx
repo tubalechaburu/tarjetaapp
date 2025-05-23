@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ interface CardFormProps {
   initialData?: BusinessCard;
 }
 
-// Define brand colors
+// Define brand colors (not passed to ThemeManager anymore, but kept for initialization)
 const BRAND_COLORS = [
   { name: "Dorado", hex: "#dd8d0a" },
   { name: "Blanco", hex: "#ffffff" },
@@ -146,7 +147,6 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         <ThemeManager 
           selectedColors={selectedColors} 
           onColorChange={handleColorChange} 
-          brandColors={BRAND_COLORS} 
         />
         
         <FieldVisibility 
