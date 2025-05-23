@@ -43,7 +43,7 @@ export interface BusinessCard {
   address: string;
   description?: string;
   avatarUrl: string;
-  logoUrl?: string;
+  logoUrl?: string; // Can be base64 string or URL
   createdAt?: number;
   userId?: string;
   links?: CardLink[];
@@ -60,7 +60,7 @@ export interface SupabaseBusinessCard {
   email?: string;
   phone?: string;
   photo: string;
-  logo?: string; // Logo field is now properly defined
+  logo?: string; // Can be base64 string or URL
   description?: string;
   created_at: string;
   user_id: string;

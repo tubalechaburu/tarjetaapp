@@ -25,6 +25,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     console.log("Card logo URL:", card.logoUrl);
     console.log("Card logoUrl exists:", !!card.logoUrl);
     console.log("Card logoUrl not empty:", card.logoUrl !== "");
+    console.log("Card logoUrl is valid:", card.logoUrl && card.logoUrl.trim() !== "");
   }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl]);
   
   // Get visibility settings with defaults
@@ -58,7 +59,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Positioned next to the avatar - Fixed condition */}
+          {/* Logo de empresa - Show logo if it exists and is not empty */}
           {card.logoUrl && card.logoUrl.trim() !== "" && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 

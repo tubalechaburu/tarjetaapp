@@ -46,8 +46,8 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   
   console.log("Mapped theme colors:", themeColors);
   
-  // Fix: Ensure logoUrl is properly mapped from Supabase logo field
-  const logoUrl = card.logo && card.logo.trim() !== "" ? card.logo : "";
+  // Fix: Handle logo field properly - it can be a base64 string or URL
+  const logoUrl = card.logo && typeof card.logo === 'string' && card.logo.trim() !== "" ? card.logo : "";
   console.log("Mapped logoUrl:", logoUrl);
   
   return {
@@ -61,7 +61,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
-    logoUrl: logoUrl, // Properly map the logo field
+    logoUrl: logoUrl, // Properly map the logo field (can be base64 or URL)
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -133,7 +133,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    logo: card.logoUrl && card.logoUrl.trim() !== "" ? card.logoUrl : null, // Ensure we don't send empty strings
+    logo: card.logoUrl && card.logoUrl.trim() !== "" ? card.logoUrl : null, // Handle base64 or URL
     description: card.description || null,
     links: links,
     user_id: userId,
