@@ -1,242 +1,160 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { UserRole } from "@/types";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table"
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { Search, User } from "lucide-react";
+import { Download, ChevronDown, ChevronUp } from "lucide-react";
+import { UserCardsSection } from "@/components/admin/UserCardsSection";
 
-interface UserProfile {
-  id: string;
-  email?: string;
-  full_name?: string;
-  avatar_url?: string;
-  phone?: string;
-  website?: string;
-  linkedin?: string;
-  company?: string;
-  job_title?: string;
-  created_at?: string;
-  last_sign_in_at?: string;
-  role?: string;
-  cards_count?: number;
-}
-
-export const AllUsersTable: React.FC = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+export const AllUsersTable = () => {
+  const { toast } = useToast();
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
-  const loadUsers = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       
-      // Get all auth users
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        toast.error('Error al cargar usuarios');
-        return;
-      }
-
-      // Get all profiles
-      const { data: profiles, error: profilesError } = await supabase
+      // Get users from profiles table
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*');
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
-
-      // Get all user roles
-      const { data: userRoles, error: rolesError } = await supabase
+        .select(`
+          id,
+          full_name,
+          email,
+          avatar_url,
+          updated_at
+        `);
+      
+      if (error) throw error;
+      
+      // Get user roles
+      const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
-
-      if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
-      }
-
-      // Get cards count for each user
-      const { data: cardsData, error: cardsError } = await supabase
-        .from('cards')
-        .select('user_id');
-
-      if (cardsError) {
-        console.error('Error fetching cards:', cardsError);
-      }
-
-      // Count cards per user
-      const cardsCount = cardsData?.reduce((acc, card) => {
-        acc[card.user_id] = (acc[card.user_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Combine all data
-      const combinedUsers: UserProfile[] = authUsers.users.map(authUser => {
-        const profile = profiles?.find(p => p.id === authUser.id);
-        const userRole = userRoles?.find(r => r.user_id === authUser.id);
         
+      if (rolesError) throw rolesError;
+      
+      // Combine data
+      const usersWithRoles = data.map(user => {
+        const userRoles = rolesData?.filter(role => role.user_id === user.id) || [];
+        const roleName = userRoles.length > 0 ? userRoles[0].role : 'user';
         return {
-          id: authUser.id,
-          email: authUser.email,
-          full_name: profile?.full_name || authUser.user_metadata?.full_name,
-          avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url,
-          phone: profile?.phone || authUser.user_metadata?.phone,
-          website: profile?.website || authUser.user_metadata?.website,
-          linkedin: profile?.linkedin || authUser.user_metadata?.linkedin,
-          company: profile?.company || authUser.user_metadata?.company,
-          job_title: profile?.job_title || authUser.user_metadata?.job_title,
-          created_at: authUser.created_at,
-          last_sign_in_at: authUser.last_sign_in_at,
-          role: userRole?.role || 'user',
-          cards_count: cardsCount[authUser.id] || 0
+          ...user,
+          role: roleName as UserRole,
+          email: user.email || user.id // Use profile email or fallback to ID
         };
       });
-
-      console.log('Loaded users:', combinedUsers);
-      setUsers(combinedUsers);
-    } catch (error) {
-      console.error('Error loading users:', error);
-      toast.error('Error al cargar usuarios');
+      
+      setUsers(usersWithRoles);
+      setError(null);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      setError(error.message);
+      toast({
+        title: "Error al cargar usuarios",
+        description: error.message,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadUsers();
+    fetchUsers();
   }, []);
 
-  // Filter users based on search term
-  const filteredUsers = users.filter(user => 
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.company?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'superadmin':
-        return 'bg-red-500 text-white';
-      case 'admin':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
-    }
+  const exportAllUsers = () => {
+    const exportData = users.map(user => ({
+      name: user.full_name || 'Sin nombre',
+      email: user.email,
+      role: user.role,
+      updated_at: user.updated_at
+    }));
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'todos_los_usuarios.json';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="text-center">Cargando usuarios...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <div>Cargando usuarios...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Todos los Usuarios ({users.length})
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          <Search className="h-4 w-4" />
-          <Input
-            placeholder="Buscar usuarios..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-          <Button onClick={loadUsers} variant="outline">
-            Actualizar
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {filteredUsers.map((user) => (
-            <div key={user.id} className="border rounded-lg p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {user.avatar_url ? (
-                    <img 
-                      src={user.avatar_url} 
-                      alt={user.full_name || 'Usuario'} 
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-5 w-5 text-gray-500" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-semibold">{user.full_name || 'Sin nombre'}</h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getRoleBadgeColor(user.role || 'user')}>
-                    {user.role || 'user'}
-                  </Badge>
-                  <Badge variant="outline">
-                    {user.cards_count} tarjeta{user.cards_count !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Cargo:</span>
-                  <p className="text-gray-600">{user.job_title || 'No especificado'}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Empresa:</span>
-                  <p className="text-gray-600">{user.company || 'No especificada'}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Teléfono:</span>
-                  <p className="text-gray-600">{user.phone || 'No especificado'}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Registro:</span>
-                  <p className="text-gray-600">
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'No disponible'}
-                  </p>
-                </div>
-              </div>
-              
-              {user.website && (
-                <div>
-                  <span className="font-medium text-sm">Sitio web:</span>
-                  <p className="text-sm text-blue-600">{user.website}</p>
-                </div>
+    <div className="container mx-auto space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Todos los usuarios ({users.length})</h3>
+        <Button onClick={exportAllUsers} variant="outline" className="gap-1">
+          <Download className="h-4 w-4" />
+          Exportar todos
+        </Button>
+      </div>
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Rol</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <>
+              <TableRow key={user.id}>
+                <TableCell>{user.full_name || "Sin nombre"}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.role}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
+                    className="gap-1"
+                  >
+                    {expandedUser === user.id ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                    Ver tarjetas
+                  </Button>
+                </TableCell>
+              </TableRow>
+              {expandedUser === user.id && (
+                <TableRow>
+                  <TableCell colSpan={4} className="bg-muted/30">
+                    <UserCardsSection userId={user.id} userEmail={user.email} />
+                  </TableCell>
+                </TableRow>
               )}
-              
-              {user.linkedin && (
-                <div>
-                  <span className="font-medium text-sm">LinkedIn:</span>
-                  <p className="text-sm text-blue-600">{user.linkedin}</p>
-                </div>
-              )}
-            </div>
+            </>
           ))}
-          
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No se encontraron usuarios
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </TableBody>
+      </Table>
+    </div>
   );
 };

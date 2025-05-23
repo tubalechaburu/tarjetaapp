@@ -23,7 +23,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   
   console.log("QR Code generated for URL:", fullUrl);
   
-  const downloadQRCode = () => {
+  const downloadQRCode = async () => {
     if (!qrRef.current) {
       toast.error("Error al generar el código QR");
       return;
@@ -45,11 +45,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       canvas.width = size;
       canvas.height = size;
       
-      // Create an image from the SVG
+      // Serialize the SVG
       const svgData = new XMLSerializer().serializeToString(qrRef.current);
-      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(svgBlob);
       
+      // Create an image element
       const img = new Image();
       
       img.onload = () => {
@@ -65,27 +64,28 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           if (blob) {
             const downloadUrl = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.download = `QR Tarjeta virtual ${cardName}.png`;
+            link.download = `QR_Tarjeta_${cardName}.png`;
             link.href = downloadUrl;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(downloadUrl);
             toast.success("Código QR descargado correctamente");
+          } else {
+            toast.error("Error al generar el archivo PNG");
           }
-        }, "image/png");
-        
-        // Clean up
-        URL.revokeObjectURL(url);
+        }, "image/png", 1.0);
       };
       
       img.onerror = () => {
         console.error("Error loading SVG image");
-        toast.error("Error al generar el código QR");
-        URL.revokeObjectURL(url);
+        toast.error("Error al procesar el código QR");
       };
       
-      img.src = url;
+      // Convert SVG to data URL
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      img.src = svgUrl;
       
     } catch (error) {
       console.error("Error downloading QR code:", error);
@@ -140,7 +140,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `Tarjeta virtual ${cardName}.url`;
+          a.download = `Tarjeta_virtual_${cardName}.url`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -159,7 +159,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `Tarjeta virtual ${cardName}.webloc`;
+          a.download = `Tarjeta_virtual_${cardName}.webloc`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
