@@ -81,7 +81,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     }
   });
 
-  // Update form values when selectedColors change
+  // Update form values when selectedColors change - critical for saving
   useEffect(() => {
     setValue('themeColors', selectedColors);
     console.log("CardForm: Colors updated in form", selectedColors);
@@ -114,14 +114,14 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       // Log colors before submitting to verify they're correct
       console.log("Submitting with colors:", selectedColors);
 
-      // Preparar los datos finales con los colores actualizados
+      // Prepare final data with latest colors
       const finalData = {
         ...data,
         links: links,
         themeColors: selectedColors, // Use the state value to ensure latest colors
         visibleFields: visibleFields,
         userId: user?.id || "anonymous",
-        // Mantener el ID si estamos editando
+        // Keep ID if editing
         id: initialData?.id || data.id
       };
 
