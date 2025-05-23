@@ -23,6 +23,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
     console.log("Card theme colors from props:", card.themeColors);
     console.log("Card logo URL:", card.logoUrl);
+    console.log("Card logoUrl exists:", !!card.logoUrl);
+    console.log("Card logoUrl not empty:", card.logoUrl !== "");
   }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl]);
   
   // Get visibility settings with defaults
@@ -56,12 +58,12 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Positioned next to the avatar */}
-          {card.logoUrl && card.logoUrl !== "" && visibleFields.company && (
+          {/* Logo de empresa - Positioned next to the avatar - Fixed condition */}
+          {card.logoUrl && card.logoUrl.trim() !== "" && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
                 src={card.logoUrl} 
-                alt={`Logo de ${card.company}`} 
+                alt={`Logo de ${card.company || 'empresa'}`} 
                 className="max-h-14 max-w-14 object-contain"
                 onLoad={() => console.log('Logo loaded successfully:', card.logoUrl)}
                 onError={(e) => {

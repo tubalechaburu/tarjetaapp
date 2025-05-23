@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
  */
 export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessCard => {
   console.log("Mapping Supabase card:", card);
+  console.log("Logo field from Supabase:", card.logo);
   
   // Map links with correct format
   let links: CardLink[] = [];
@@ -45,6 +46,10 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   
   console.log("Mapped theme colors:", themeColors);
   
+  // Fix: Ensure logoUrl is properly mapped from Supabase logo field
+  const logoUrl = card.logo && card.logo.trim() !== "" ? card.logo : "";
+  console.log("Mapped logoUrl:", logoUrl);
+  
   return {
     id: card.id,
     name: card.name,
@@ -56,8 +61,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
-    // Fix: Use logo property if it exists, otherwise empty string
-    logoUrl: card.logo || "", 
+    logoUrl: logoUrl, // Properly map the logo field
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -129,7 +133,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    logo: card.logoUrl || null, // Send logoUrl as logo field to Supabase
+    logo: card.logoUrl && card.logoUrl.trim() !== "" ? card.logoUrl : null, // Ensure we don't send empty strings
     description: card.description || null,
     links: links,
     user_id: userId,
