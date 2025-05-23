@@ -43,7 +43,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
       style={{ backgroundColor: bgColor, color: textColor }}
     >
       <CardHeader className="flex flex-col items-center pb-2">
-        <div className="flex items-center gap-4 mb-2">
+        <div className="flex items-center justify-center gap-4 mb-2">
           {visibleFields.name && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
@@ -56,16 +56,14 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Show next to avatar if it exists */}
-          {card.logoUrl && visibleFields.company && (
-            <div className="w-16 h-16 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
+          {/* Logo de empresa - Positioned next to the avatar */}
+          {card.logoUrl && card.logoUrl !== "" && visibleFields.company && (
+            <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
                 src={card.logoUrl} 
                 alt={`Logo de ${card.company}`} 
-                className="max-h-12 max-w-12 object-contain"
-                onLoad={() => {
-                  console.log('Logo loaded successfully:', card.logoUrl);
-                }}
+                className="max-h-14 max-w-14 object-contain"
+                onLoad={() => console.log('Logo loaded successfully:', card.logoUrl)}
                 onError={(e) => {
                   console.error('Error loading logo:', card.logoUrl);
                   (e.target as HTMLImageElement).style.display = 'none';
