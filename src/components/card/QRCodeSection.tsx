@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,9 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => 
 
   const handleQRRef = (ref: SVGSVGElement | null) => {
     console.log("QR ref received in QRCodeSection:", !!ref);
-    setQrRef(ref);
+    if (ref) {
+      setQrRef(ref);
+    }
   };
 
   const handleDownloadQR = async () => {
@@ -59,6 +61,16 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => 
     if (!card) return;
     createAndDownloadShortcut(fullShareUrl, card.name);
   };
+
+  // Force re-render after a short delay to ensure QR code is available
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // This will trigger a re-render
+      setQrRef(prevRef => prevRef);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="mt-8 pt-4 border-t border-gray-200">

@@ -19,7 +19,7 @@ export const downloadSvgAsPng = async (
     console.log("SVG element found:", !!svgElement);
     console.log("Size:", size, "Filename:", filename);
     
-    // Clone the SVG to avoid modifying the original
+    // Create a deep clone of the SVG element to avoid modifying the original
     const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
     
     // Set explicit dimensions on the cloned SVG
@@ -40,26 +40,21 @@ export const downloadSvgAsPng = async (
     canvas.width = size * scale;
     canvas.height = size * scale;
     
-    // Scale the context
-    ctx.scale(scale, scale);
-    
     // Fill white background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Convert SVG to string
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(clonedSvg);
     console.log("SVG serializado correctamente, length:", svgString.length);
     
-    // Create a new image
-    const img = new Image();
-    img.width = size;
-    img.height = size;
-    
-    // Create a DataURL for the SVG to avoid CORS issues
+    // Create a blob from the SVG string and convert to URL
     const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(svgBlob);
+    
+    // Create a new image
+    const img = new Image();
     
     // Create a promise to handle the image loading
     return new Promise<void>((resolve, reject) => {
@@ -67,13 +62,14 @@ export const downloadSvgAsPng = async (
         try {
           console.log("Imagen cargada en canvas");
           
-          // Draw the image to canvas
+          // Draw the image to canvas with scaling
+          ctx.scale(scale, scale);
           ctx.drawImage(img, 0, 0, size, size);
           
           // Clean up object URL
           URL.revokeObjectURL(url);
           
-          // Convert to PNG and download
+          // Convert canvas to blob and download
           canvas.toBlob((blob) => {
             if (blob) {
               // Create download link
