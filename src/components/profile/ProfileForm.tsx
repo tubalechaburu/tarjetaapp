@@ -1,14 +1,12 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BusinessCard, SupabaseBusinessCard } from "@/types";
-import { mapSupabaseToBusinessCard } from "@/utils/supabase/mappers";
+import ProfileHeader from "./ProfileHeader";
+import ProfileFormData from "./ProfileFormData";
+import UserCardInfo from "./UserCardInfo";
+import { useProfileData } from "./useProfileData";
 
 interface UserProfile {
   id: string;
@@ -39,74 +37,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   onProfileUpdated 
 }) => {
   const [editing, setEditing] = useState(false);
-  const [userCard, setUserCard] = useState<BusinessCard | null>(null);
-  const [formData, setFormData] = useState({
-    full_name: '',
-    phone: '',
-    website: '',
-    linkedin: '',
-    company: '',
-    job_title: '',
-    email: '',
-    description: '',
-    address: ''
-  });
-
-  // Cargar datos del perfil y de la tarjeta del usuario
-  useEffect(() => {
-    const loadUserData = async () => {
-      // Cargar tarjeta del usuario
-      try {
-        const { data: cardData, error: cardError } = await supabase
-          .from('cards')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (cardError) {
-          console.error('Error loading user card:', cardError);
-        } else if (cardData) {
-          const mappedCard = mapSupabaseToBusinessCard(cardData as unknown as SupabaseBusinessCard);
-          setUserCard(mappedCard);
-          
-          // Extraer LinkedIn de los enlaces de la tarjeta
-          const linkedinLink = mappedCard.links?.find(link => link.type === 'linkedin')?.url || '';
-          
-          // Si hay tarjeta, usar sus datos como base
-          setFormData({
-            full_name: mappedCard.name || profile?.full_name || '',
-            phone: mappedCard.phone || profile?.phone || '',
-            website: mappedCard.website || profile?.website || '',
-            linkedin: linkedinLink || profile?.linkedin || '',
-            company: mappedCard.company || profile?.company || '',
-            job_title: mappedCard.jobTitle || profile?.job_title || '',
-            email: mappedCard.email || profile?.email || '',
-            description: mappedCard.description || profile?.description || '',
-            address: mappedCard.address || profile?.address || ''
-          });
-        } else {
-          // Si no hay tarjeta, usar solo datos del perfil
-          setFormData({
-            full_name: profile?.full_name || '',
-            phone: profile?.phone || '',
-            website: profile?.website || '',
-            linkedin: profile?.linkedin || '',
-            company: profile?.company || '',
-            job_title: profile?.job_title || '',
-            email: profile?.email || '',
-            description: profile?.description || '',
-            address: profile?.address || ''
-          });
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      }
-    };
-
-    if (userId) {
-      loadUserData();
-    }
-  }, [userId, profile]);
+  const { userCard, formData, setFormData } = useProfileData(userId, profile);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -139,139 +70,21 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Información Personal</CardTitle>
-        <div className="flex gap-2">
-          {userCard && (
-            <Button 
-              variant="outline" 
-              onClick={() => window.open(`/card/${userCard.id}`, '_blank')}
-            >
-              Ver tarjeta
-            </Button>
-          )}
-          <Button 
-            variant={editing ? "default" : "outline"} 
-            onClick={() => editing ? handleSaveProfile() : setEditing(true)}
-          >
-            {editing ? "Guardar" : "Editar"}
-          </Button>
-        </div>
-      </CardHeader>
+      <ProfileHeader
+        userCard={userCard}
+        editing={editing}
+        onEditToggle={() => setEditing(true)}
+        onSave={handleSaveProfile}
+      />
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              value={formData.email}
-              onChange={handleFormChange}
-              disabled={!editing || !isSuperAdmin}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="full_name">Nombre completo</Label>
-            <Input 
-              id="full_name" 
-              value={formData.full_name}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="job_title">Cargo</Label>
-            <Input 
-              id="job_title" 
-              value={formData.job_title}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="company">Empresa</Label>
-            <Input 
-              id="company" 
-              value={formData.company}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="phone">Teléfono</Label>
-            <Input 
-              id="phone" 
-              value={formData.phone}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="website">Sitio web</Label>
-            <Input 
-              id="website" 
-              value={formData.website}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="linkedin">LinkedIn</Label>
-            <Input 
-              id="linkedin" 
-              value={formData.linkedin}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="address">Dirección</Label>
-            <Input 
-              id="address" 
-              value={formData.address}
-              onChange={handleFormChange}
-              disabled={!editing}
-            />
-          </div>
-          
-          <div className="col-span-2">
-            <Label htmlFor="description">Descripción profesional</Label>
-            <Textarea 
-              id="description" 
-              value={formData.description}
-              onChange={handleFormChange}
-              disabled={!editing}
-              className="min-h-[100px]"
-            />
-          </div>
-        </div>
+        <ProfileFormData
+          formData={formData}
+          editing={editing}
+          isSuperAdmin={isSuperAdmin}
+          onChange={handleFormChange}
+        />
         
-        {userCard && (
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              Los datos mostrados se sincronizan con tu tarjeta digital: <strong>{userCard.name}</strong>
-            </p>
-            {userCard.links && userCard.links.length > 0 && (
-              <div className="mt-2">
-                <p className="text-xs text-muted-foreground">Enlaces adicionales:</p>
-                <ul className="text-xs space-y-1">
-                  {userCard.links.map((link, index) => (
-                    <li key={index} className="flex justify-between">
-                      <span>{link.label || link.type}:</span>
-                      <span className="truncate max-w-48">{link.url}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
+        {userCard && <UserCardInfo userCard={userCard} />}
       </CardContent>
     </Card>
   );
