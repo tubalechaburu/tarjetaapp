@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { BusinessCard } from "@/types";
+import { BusinessCard, SupabaseBusinessCard } from "@/types";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { mapSupabaseToBusinessCard } from "@/utils/supabase/mappers";
 
 interface UserCardsSectionProps {
   userId: string;
@@ -26,7 +27,12 @@ export const UserCardsSection = ({ userId }: UserCardsSectionProps) => {
           
         if (error) throw error;
         
-        setCards(data || []);
+        // Map the Supabase data to BusinessCard format before setting state
+        const mappedCards = data ? data.map((card) => 
+          mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard)
+        ) : [];
+        
+        setCards(mappedCards);
       } catch (error) {
         console.error('Error fetching user cards:', error);
       } finally {
