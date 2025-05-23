@@ -33,68 +33,60 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       // Get card name from the document or URL
       const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
       
-      // Get SVG data
-      const svgData = new XMLSerializer().serializeToString(qrRef.current);
-      
-      // Create canvas
+      // Create a canvas to convert SVG to PNG
       const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      
       const ctx = canvas.getContext("2d");
+      
       if (!ctx) {
         toast.error("Error al crear el código QR");
         return;
       }
       
-      // Create image
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Create an image from the SVG
+      const svgData = new XMLSerializer().serializeToString(qrRef.current);
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      
       const img = new Image();
       
       img.onload = () => {
-        // Fill with white background
+        // Fill canvas with white background
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Draw the SVG image
         ctx.drawImage(img, 0, 0, size, size);
         
-        // Convert to PNG and download
-        const link = document.createElement("a");
-        link.download = `QR Tarjeta virtual ${cardName}.png`;
-        link.href = canvas.toDataURL("image/png");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.download = `QR Tarjeta virtual ${cardName}.png`;
+            link.href = downloadUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+            toast.success("Código QR descargado correctamente");
+          }
+        }, "image/png");
         
-        toast.success("Código QR descargado correctamente");
+        // Clean up
+        URL.revokeObjectURL(url);
       };
       
-      // Set source of image
-      const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
+      img.onerror = () => {
+        console.error("Error loading SVG image");
+        toast.error("Error al generar el código QR");
+        URL.revokeObjectURL(url);
+      };
+      
       img.src = url;
       
-      // Clean up URL object when done
-      img.onload = function() {
-        URL.revokeObjectURL(url);
-        
-        // Fill with white background
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw the SVG image
-        ctx.drawImage(img, 0, 0, size, size);
-        
-        // Convert to PNG and download
-        const link = document.createElement("a");
-        link.download = `QR Tarjeta virtual ${cardName}.png`;
-        link.href = canvas.toDataURL("image/png");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success("Código QR descargado correctamente");
-      };
     } catch (error) {
       console.error("Error downloading QR code:", error);
       toast.error("Error al descargar el código QR");

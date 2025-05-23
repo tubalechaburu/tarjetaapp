@@ -43,17 +43,37 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
       style={{ backgroundColor: bgColor, color: textColor }}
     >
       <CardHeader className="flex flex-col items-center pb-2">
-        {visibleFields.name && (
-          <Avatar className="h-24 w-24 mb-2" style={{ borderColor: accentColor, borderWidth: '2px' }}>
-            {card.avatarUrl ? (
-              <AvatarImage src={card.avatarUrl} alt={card.name} />
-            ) : (
-              <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
-                {getInitials(card.name)}
-              </AvatarFallback>
-            )}
-          </Avatar>
-        )}
+        <div className="flex items-center gap-4 mb-2">
+          {visibleFields.name && (
+            <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
+              {card.avatarUrl ? (
+                <AvatarImage src={card.avatarUrl} alt={card.name} />
+              ) : (
+                <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
+                  {getInitials(card.name)}
+                </AvatarFallback>
+              )}
+            </Avatar>
+          )}
+          
+          {/* Logo de empresa - Show next to avatar if it exists */}
+          {card.logoUrl && visibleFields.company && (
+            <div className="w-16 h-16 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
+              <img 
+                src={card.logoUrl} 
+                alt={`Logo de ${card.company}`} 
+                className="max-h-12 max-w-12 object-contain"
+                onLoad={() => {
+                  console.log('Logo loaded successfully:', card.logoUrl);
+                }}
+                onError={(e) => {
+                  console.error('Error loading logo:', card.logoUrl);
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+        </div>
         
         {visibleFields.name && (
           <CardTitle className="text-xl font-bold text-center" style={{ color: textColor }}>
@@ -68,33 +88,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
         )}
         
         {visibleFields.company && card.company && (
-          <div className="flex flex-col items-center">
-            <p className="font-semibold text-center" style={{ color: accentColor }}>
-              {card.company}
-            </p>
-            
-            {/* Logo de empresa - Ensure it displays correctly */}
-            {card.logoUrl && (
-              <div className="mt-3 p-3 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm">
-                <img 
-                  src={card.logoUrl} 
-                  alt={`Logo de ${card.company}`} 
-                  className="max-h-12 max-w-24 object-contain"
-                  style={{ 
-                    display: 'block',
-                    margin: '0 auto'
-                  }}
-                  onLoad={() => {
-                    console.log('Logo loaded successfully:', card.logoUrl);
-                  }}
-                  onError={(e) => {
-                    console.error('Error loading logo:', card.logoUrl);
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <p className="font-semibold text-center" style={{ color: accentColor }}>
+            {card.company}
+          </p>
         )}
         
         {/* Descripción profesional */}

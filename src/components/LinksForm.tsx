@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from "uuid";
 import LinksHeader from "./card/LinksHeader";
 import LinksList from "./card/LinksList";
 import { LinkTypeOptions } from "./card/LinkTypeSelector";
-import { toast } from "sonner";
 
 interface LinksFormProps {
   links: CardLink[];
@@ -46,15 +45,8 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
       links.map(link => {
         if (link.id === id) {
           if (field === "type") {
-            // Allow changing to any type if it's not already used or if it's 'other'
+            // Allow changing to any type
             const validType = value as CardLink["type"];
-            const isTypeUsed = links.some(l => l.id !== id && l.type === validType);
-            
-            // If the type is already used and it's not 'other', prevent the change
-            if (isTypeUsed && validType !== 'other') {
-              toast.error(`Ya existe un enlace de tipo ${validType}`);
-              return link;
-            }
             
             // Type change is valid, update label and title too
             const typeOption = LinkTypeOptions.find(opt => opt.value === value);

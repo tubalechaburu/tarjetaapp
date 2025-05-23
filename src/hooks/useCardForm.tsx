@@ -116,14 +116,7 @@ export const useCardForm = (initialData?: BusinessCard) => {
         return;
       }
 
-      // Validar si hay enlaces sin URL
-      const invalidLinks = links.filter(link => !link.url.trim());
-      if (invalidLinks.length > 0) {
-        toast.error("Todos los enlaces deben tener una URL");
-        return;
-      }
-
-      // Log colors before submitting to verify they're correct
+      // Remove validation for empty links - allow saving even with empty URLs
       console.log("Submitting with selectedColors state:", selectedColors);
       console.log("Submitting with form data colors:", data.themeColors);
 
