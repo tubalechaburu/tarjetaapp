@@ -56,7 +56,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
-    logoUrl: card.logo || "", // Añadir soporte para logo
+    logoUrl: "", // Use empty string as default for logoUrl since it doesn't exist in SupabaseBusinessCard
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -128,7 +128,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    logo: card.logoUrl || null, // Añadir soporte para logo
+    logo: card.logoUrl || null, // Send logoUrl as logo field to Supabase
     description: card.description || null,
     links: links,
     user_id: userId,
