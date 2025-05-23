@@ -25,6 +25,21 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     const websiteLink = card.links.find(link => link.type === "website");
     website = websiteLink?.url || "";
   }
+
+  // Extract theme colors from Supabase theme object
+  let themeColors: string[] = ["#dd8d0a", "#000000", "#dd8d0a"]; // Default colors
+  
+  if (card.theme && typeof card.theme === 'object') {
+    const theme = card.theme as any;
+    if (theme.colors && Array.isArray(theme.colors) && theme.colors.length === 3) {
+      themeColors = theme.colors;
+    } else if (theme.background && theme.text && theme.accent) {
+      // Legacy format support
+      themeColors = [theme.background, theme.text, theme.accent];
+    }
+  }
+  
+  console.log("Mapped theme colors:", themeColors);
   
   return {
     id: card.id,
@@ -38,7 +53,18 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     avatarUrl: card.photo || "",
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
-    links: links
+    links: links,
+    themeColors: themeColors,
+    visibleFields: card.visible_fields || {
+      name: true,
+      jobTitle: true,
+      company: true,
+      email: true,
+      phone: true,
+      website: true,
+      address: true,
+      description: true,
+    }
   };
 };
 
@@ -70,8 +96,16 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     );
     links.push(...additionalLinks);
   }
+
+  // Prepare theme with custom colors
+  const theme = {
+    colors: card.themeColors || ["#dd8d0a", "#000000", "#dd8d0a"],
+    background: (card.themeColors && card.themeColors[0]) || "#dd8d0a",
+    text: (card.themeColors && card.themeColors[1]) || "#000000",
+    accent: (card.themeColors && card.themeColors[2]) || "#dd8d0a"
+  };
   
-  console.log("Preparing card for Supabase:", card.id, "with user ID:", userId);
+  console.log("Preparing card for Supabase with theme:", theme);
     
   return {
     id: card.id,
@@ -83,10 +117,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     photo: card.avatarUrl || null,
     links: links,
     user_id: userId,
-    theme: {
-      text: "#FFFFFF",
-      accent: "#9061F9",
-      background: "#121212"
-    }
+    theme: theme,
+    visible_fields: card.visibleFields
   };
 };

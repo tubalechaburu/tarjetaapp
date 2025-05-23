@@ -19,12 +19,8 @@ interface CardFormProps {
   initialData?: BusinessCard;
 }
 
-// Define brand colors (not passed to ThemeManager anymore, but kept for initialization)
-const BRAND_COLORS = [
-  { name: "Dorado", hex: "#dd8d0a" },
-  { name: "Blanco", hex: "#ffffff" },
-  { name: "Negro", hex: "#000000" },
-];
+// Define brand colors for initialization
+const DEFAULT_COLORS = ["#dd8d0a", "#000000", "#dd8d0a"];
 
 const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
@@ -37,7 +33,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const [selectedColors, setSelectedColors] = useState<string[]>(
     initialData?.themeColors && initialData.themeColors.length === 3 
       ? [...initialData.themeColors] // Create a new array to ensure reactivity
-      : [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
+      : [...DEFAULT_COLORS]
   );
   
   // Field visibility state
@@ -68,7 +64,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       logoUrl: "",
       description: "",
       createdAt: Date.now(),
-      themeColors: [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex],
+      themeColors: [...DEFAULT_COLORS],
       visibleFields: {
         name: true,
         jobTitle: true,
@@ -84,17 +80,16 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
 
   // Update form values when selectedColors change - critical for saving
   useEffect(() => {
+    console.log("CardForm: Setting form colors to", selectedColors);
     setValue('themeColors', selectedColors);
-    console.log("CardForm: Colors updated in form", selectedColors);
   }, [selectedColors, setValue]);
 
   const handleColorChange = (index: number, color: string) => {
     console.log("CardForm: Color change requested", index, color);
     const newColors = [...selectedColors];
     newColors[index] = color;
+    console.log("CardForm: New colors array", newColors);
     setSelectedColors(newColors);
-    // Explicitly update the form value to ensure it's saved
-    setValue('themeColors', newColors);
   };
   
   const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
@@ -113,9 +108,10 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       }
 
       // Log colors before submitting to verify they're correct
-      console.log("Submitting with colors:", selectedColors);
+      console.log("Submitting with selectedColors state:", selectedColors);
+      console.log("Submitting with form data colors:", data.themeColors);
 
-      // Prepare final data with latest colors
+      // Prepare final data with latest colors from state (more reliable)
       const finalData = {
         ...data,
         links: links,
@@ -126,7 +122,9 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         id: initialData?.id || data.id
       };
 
-      console.log("Saving card with data:", finalData);
+      console.log("Final data being saved:", finalData);
+      console.log("Final theme colors:", finalData.themeColors);
+      
       await saveCard(finalData);
       
       toast.success("Tarjeta guardada correctamente");
@@ -136,6 +134,8 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       toast.error("Error al guardar la tarjeta");
     }
   };
+
+  console.log("CardForm render - selectedColors:", selectedColors);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

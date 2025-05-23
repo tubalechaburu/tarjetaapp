@@ -20,6 +20,13 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
     { name: "Resaltar", description: "Color de acentos y elementos destacados" }
   ];
 
+  const handleColorChange = (index: number, color: string) => {
+    console.log("ColorSelector: Color change", index, color);
+    onChange(index, color);
+  };
+
+  console.log("ColorSelector render with colors:", selectedColors);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center">
@@ -47,7 +54,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
               <Input
                 type="color"
                 value={selectedColors[index] || "#ffffff"}
-                onChange={(e) => onChange(index, e.target.value)}
+                onChange={(e) => handleColorChange(index, e.target.value)}
                 className="w-12 h-8 p-0 border-0 cursor-pointer"
               />
             </div>
