@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { BusinessCard, CardLink } from "@/types";
@@ -33,10 +32,10 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl || null);
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
   
-  // Initialize with existing colors if available
+  // Initialize with existing colors if available, with a proper fallback
   const [selectedColors, setSelectedColors] = useState<string[]>(
     initialData?.themeColors && initialData.themeColors.length === 3 
-      ? initialData.themeColors 
+      ? [...initialData.themeColors] // Create a new array to ensure reactivity
       : [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
   );
   
@@ -82,10 +81,18 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
     }
   });
 
+  // Update form values when selectedColors change
+  useEffect(() => {
+    setValue('themeColors', selectedColors);
+    console.log("CardForm: Colors updated in form", selectedColors);
+  }, [selectedColors, setValue]);
+
   const handleColorChange = (index: number, color: string) => {
+    console.log("CardForm: Color change requested", index, color);
     const newColors = [...selectedColors];
     newColors[index] = color;
     setSelectedColors(newColors);
+    // Explicitly update the form value to ensure it's saved
     setValue('themeColors', newColors);
   };
   
@@ -104,17 +111,21 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         return;
       }
 
+      // Log colors before submitting to verify they're correct
+      console.log("Submitting with colors:", selectedColors);
+
       // Preparar los datos finales con los colores actualizados
       const finalData = {
         ...data,
         links: links,
-        themeColors: selectedColors,
+        themeColors: selectedColors, // Use the state value to ensure latest colors
         visibleFields: visibleFields,
         userId: user?.id || "anonymous",
         // Mantener el ID si estamos editando
         id: initialData?.id || data.id
       };
 
+      console.log("Saving card with data:", finalData);
       await saveCard(finalData);
       
       toast.success("Tarjeta guardada correctamente");

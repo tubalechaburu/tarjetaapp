@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,10 +13,16 @@ interface CardPreviewProps {
 }
 
 const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
-  // Use themeColors array from the card data
+  // Use themeColors array from the card data with safe fallbacks
   const bgColor = card.themeColors?.[0] || "#ffffff";
   const textColor = card.themeColors?.[1] || "#000000";
   const accentColor = card.themeColors?.[2] || "#dd8d0a";
+  
+  // Log colors for debugging
+  useEffect(() => {
+    console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
+    console.log("Card theme colors:", card.themeColors);
+  }, [bgColor, textColor, accentColor, card.themeColors]);
   
   // Get visibility settings with defaults
   const visibleFields = card.visibleFields || {
