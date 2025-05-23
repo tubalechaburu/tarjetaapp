@@ -1,11 +1,13 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { UsersManagementTable } from "@/components/admin/UsersManagementTable";
+import { AllUsersTable } from "@/components/admin/AllUsersTable";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Admin = () => {
   const { user, userRole } = useAuth();
@@ -29,7 +31,21 @@ const Admin = () => {
       <Header />
       <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg">
         <AdminHeader />
-        <UsersManagementTable />
+        
+        <Tabs defaultValue="users" className="mt-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
+            <TabsTrigger value="all-users">Todos los Usuarios</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="users" className="mt-6">
+            <UsersManagementTable />
+          </TabsContent>
+          
+          <TabsContent value="all-users" className="mt-6">
+            <AllUsersTable />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
