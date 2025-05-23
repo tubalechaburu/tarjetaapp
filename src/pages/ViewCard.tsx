@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ const ViewCard = () => {
   const { user } = useAuth();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"preview" | "qrcode">("preview");
+  const [activeTab, setActiveTab] = useState<"preview">('preview');
   
   // Generate the shareable URL for this card
   const cardShareUrl = id ? `/share/${id}` : '';
@@ -82,7 +81,7 @@ const ViewCard = () => {
         });
       } else {
         await navigator.clipboard.writeText(fullShareUrl);
-        toast.success("URL copiada al portapapeles");
+        toast.success("Tarjeta guardada correctamente");
       }
     } catch (error) {
       console.error("Error sharing:", error);
@@ -123,17 +122,12 @@ const ViewCard = () => {
           onDelete={() => navigate("/")}
         />
 
-        <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-
-        {activeTab === "preview" ? (
-          <PreviewTab card={card} onShare={handleShare} />
-        ) : (
-          <QRCodeTab 
-            shareUrl={cardShareUrl} 
-            fullShareUrl={fullShareUrl} 
-            onShare={handleShare}
-          />
-        )}
+        <PreviewTab 
+          card={card} 
+          onShare={handleShare} 
+          shareUrl={cardShareUrl}
+          fullShareUrl={fullShareUrl}
+        />
       </div>
       <Footer />
     </div>

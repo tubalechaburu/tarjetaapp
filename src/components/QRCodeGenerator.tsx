@@ -3,7 +3,7 @@ import React, { useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Link2, Copy } from "lucide-react";
+import { Download, Copy } from "lucide-react";
 import { svgToPng, ensureAbsoluteUrl } from "@/utils/qrUtils";
 import { toast } from "sonner";
 
@@ -41,23 +41,24 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     }
   };
 
-  const downloadDirectLink = () => {
-    // Crear un archivo de texto con el enlace directo
-    const linkContent = `Enlace directo a la tarjeta digital:
-${fullUrl}
-
-Comparte este enlace para que otros puedan ver tu tarjeta de contacto.`;
+  const downloadShortcut = () => {
+    // Create desktop shortcut file
+    const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
+    const shortcutContent = `[InternetShortcut]
+URL=${fullUrl}
+IconFile=favicon.ico
+IconIndex=0`;
     
-    const blob = new Blob([linkContent], { type: 'text/plain' });
+    const blob = new Blob([shortcutContent], { type: 'application/x-url' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `enlace-tarjeta-${new Date().getTime()}.txt`;
+    a.download = `Tarjeta virtual - ${cardName}.url`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    toast.success("Enlace directo descargado");
+    toast.success("Acceso directo descargado");
   };
   
   return (
@@ -69,7 +70,7 @@ Comparte este enlace para que otros puedan ver tu tarjeta de contacto.`;
           </p>
         </div>
         
-        <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+        <div className="bg-white p-4 rounded-lg border-2 border-gray-200 qr-code-container">
           <QRCodeSVG 
             ref={qrRef} 
             value={fullUrl} 
@@ -108,23 +109,14 @@ Comparte este enlace para que otros puedan ver tu tarjeta de contacto.`;
             </Button>
             
             <Button 
-              onClick={downloadDirectLink} 
+              onClick={downloadShortcut} 
               variant="outline" 
               className="flex items-center gap-2"
             >
-              <Link2 className="h-4 w-4" />
-              Descargar enlace
+              <Download className="h-4 w-4" />
+              Acceso directo
             </Button>
           </div>
-        </div>
-        
-        <div className="text-center space-y-1">
-          <p className="text-xs text-gray-500">
-            El código QR y el enlace llevan directamente a tu tarjeta
-          </p>
-          <p className="text-xs text-gray-400">
-            Funciona sin necesidad de apps adicionales
-          </p>
         </div>
       </CardContent>
     </Card>

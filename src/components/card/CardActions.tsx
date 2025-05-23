@@ -51,8 +51,11 @@ const CardActions: React.FC<CardActionsProps> = ({
       if (card) {
         try {
           await saveCard(card);
+          // Only show one success message
+          toast.success("Tarjeta guardada correctamente");
         } catch (error) {
           console.error("Error ensuring card exists in Supabase:", error);
+          toast.error("Error al guardar la tarjeta");
         }
       }
       
@@ -64,7 +67,6 @@ const CardActions: React.FC<CardActionsProps> = ({
         });
       } else {
         await navigator.clipboard.writeText(shareUrl);
-        toast.success("URL copiada al portapapeles");
       }
     } catch (error) {
       console.error("Error sharing:", error);

@@ -13,7 +13,7 @@ interface CardPreviewProps {
 }
 
 const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
-  // Set default colors if not provided
+  // Use themeColors array from the card data
   const bgColor = card.themeColors?.[0] || "#ffffff";
   const textColor = card.themeColors?.[1] || "#000000";
   const accentColor = card.themeColors?.[2] || "#dd8d0a";

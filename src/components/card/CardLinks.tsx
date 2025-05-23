@@ -2,7 +2,7 @@
 import React from "react";
 import { CardLink } from "@/types";
 import { getLinkIcon } from "@/utils/linkUtils";
-import { ExternalLink, Mail, Phone, MapPin, Globe } from "lucide-react";
+import { ExternalLink, Mail, Phone, MapPin, Globe, MessageCircle } from "lucide-react";
 
 interface CardLinksProps {
   email?: string;
@@ -33,6 +33,14 @@ const CardLinks: React.FC<CardLinksProps> = ({
     textDecoration: "none",
   };
 
+  // Filter out duplicate website links
+  const filteredLinks = links.filter((link, index, self) => {
+    if (link.type === 'website' && website) {
+      return false; // Skip if we already have a website property
+    }
+    return index === self.findIndex(l => l.type === link.type) || link.type === 'other';
+  });
+
   return (
     <div className="space-y-1">
       {email && (
@@ -48,15 +56,28 @@ const CardLinks: React.FC<CardLinksProps> = ({
       )}
 
       {phone && (
-        <a
-          href={`tel:${phone}`}
-          style={linkStyle}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Phone size={16} />
-          <span>{phone}</span>
-        </a>
+        <>
+          <a
+            href={`tel:${phone}`}
+            style={linkStyle}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Phone size={16} />
+            <span>{phone}</span>
+          </a>
+          
+          {/* WhatsApp link for phone numbers */}
+          <a
+            href={`https://wa.me/${phone.replace(/\D/g, "")}`}
+            style={linkStyle}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageCircle size={16} />
+            <span>WhatsApp</span>
+          </a>
+        </>
       )}
 
       {website && (
@@ -83,7 +104,7 @@ const CardLinks: React.FC<CardLinksProps> = ({
         </a>
       )}
 
-      {links.map((link) => (
+      {filteredLinks.map((link) => (
         <a
           key={link.id || link.url}
           href={link.url}
@@ -92,7 +113,11 @@ const CardLinks: React.FC<CardLinksProps> = ({
           rel="noopener noreferrer"
         >
           {React.createElement(getLinkIcon(link.type), { size: 16 })}
-          <span>{link.label || link.title}</span>
+          <span>
+            {link.type === "calendar" 
+              ? "Reservar cita" 
+              : (link.label || link.title)}
+          </span>
         </a>
       ))}
     </div>

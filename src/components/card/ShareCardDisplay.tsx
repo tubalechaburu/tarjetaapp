@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BusinessCard } from "@/types";
 import CardPreview from "@/components/CardPreview";
 import { Link } from "react-router-dom";
-import { Share2, Download, MessageCircle, Link2 } from "lucide-react";
+import { Share2, Download, Link2 } from "lucide-react";
 import { downloadVCard } from "@/utils/linkUtils";
 
 interface ShareCardDisplayProps {
@@ -41,17 +41,6 @@ const ShareCardDisplay: React.FC<ShareCardDisplayProps> = ({
           <Download className="h-4 w-4" />
           Guardar contacto
         </Button>
-        
-        {card.phone && (
-          <Button 
-            variant="outline" 
-            className="gap-1"
-            onClick={() => window.open(`https://wa.me/${card.phone.replace(/\D/g, "")}`, "_blank")}
-          >
-            <MessageCircle className="h-4 w-4" />
-            WhatsApp
-          </Button>
-        )}
         
         <Link to="/create" className="mt-4 w-full">
           <Button variant="default" className="w-full gap-1">
