@@ -1,47 +1,24 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { BusinessCard, CardLink } from "@/types";
 import { v4 as uuidv4 } from "uuid";
-import { saveCard, getCards } from "@/utils/storage";
+import { saveCard } from "@/utils/storage";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
-
-// Default theme colors - black, white, and orange
-const DEFAULT_COLORS = ["#000000", "#ffffff", "#dd8d0a"];
+import { useCardValidation } from "./useCardValidation";
+import { useCardColors } from "./useCardColors";
+import { useCardImages } from "./useCardImages";
+import { useCardVisibility } from "./useCardVisibility";
 
 export const useCardForm = (initialData?: BusinessCard) => {
   const navigate = useNavigate();
-  const { user, isSuperAdmin } = useAuth();
   const [links, setLinks] = useState<CardLink[]>(initialData?.links || []);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl || null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
-  const [existingCards, setExistingCards] = useState<BusinessCard[]>([]);
   
-  // Initialize with existing colors if available, with a proper fallback
-  const [selectedColors, setSelectedColors] = useState<string[]>(() => {
-    if (initialData?.themeColors && initialData.themeColors.length === 3) {
-      console.log("Using initial colors:", initialData.themeColors);
-      return [...initialData.themeColors];
-    }
-    console.log("Using default colors:", DEFAULT_COLORS);
-    return [...DEFAULT_COLORS];
-  });
-  
-  // Field visibility state
-  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(
-    initialData?.visibleFields || {
-      name: true,
-      jobTitle: true,
-      company: true,
-      email: true,
-      phone: true,
-      website: true,
-      address: true,
-      description: true,
-    }
-  );
+  // Use the separated hooks
+  const validation = useCardValidation(initialData);
+  const colors = useCardColors(initialData);
+  const images = useCardImages(initialData);
+  const visibility = useCardVisibility(initialData);
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<BusinessCard>({
     defaultValues: initialData || {
@@ -57,7 +34,7 @@ export const useCardForm = (initialData?: BusinessCard) => {
       logoUrl: "",
       description: "",
       createdAt: Date.now(),
-      themeColors: [...DEFAULT_COLORS],
+      themeColors: [...colors.DEFAULT_COLORS],
       visibleFields: {
         name: true,
         jobTitle: true,
@@ -71,76 +48,15 @@ export const useCardForm = (initialData?: BusinessCard) => {
     }
   });
 
-  // Check existing cards on component mount
-  useEffect(() => {
-    const checkExistingCards = async () => {
-      if (user && !initialData) {
-        const cards = await getCards();
-        const userCards = cards.filter(card => card.userId === user.id);
-        setExistingCards(userCards);
-      }
-    };
-    checkExistingCards();
-  }, [user, initialData]);
-
-  // Update form values when selectedColors change - critical for saving
-  useEffect(() => {
-    console.log("CardForm: Setting form colors to", selectedColors);
-    setValue('themeColors', selectedColors, { shouldDirty: true });
-  }, [selectedColors, setValue]);
-
-  // Update form when logos/avatars change
-  useEffect(() => {
-    if (avatarPreview) {
-      console.log("Updating avatarUrl in form:", avatarPreview ? "Avatar present" : "No avatar");
-      setValue('avatarUrl', avatarPreview, { shouldDirty: true });
-    }
-  }, [avatarPreview, setValue]);
-
-  useEffect(() => {
-    if (logoPreview) {
-      console.log("Updating logoUrl in form:", logoPreview ? "Logo present" : "No logo");
-      setValue('logoUrl', logoPreview, { shouldDirty: true });
-    }
-  }, [logoPreview, setValue]);
-
-  // Initialize form with initial data on mount
-  useEffect(() => {
-    if (initialData) {
-      console.log("Initializing form with data:", initialData);
-      setValue('themeColors', selectedColors, { shouldDirty: true });
-      setValue('visibleFields', visibleFields, { shouldDirty: true });
-      if (initialData.avatarUrl) {
-        console.log("Setting initial avatar:", initialData.avatarUrl ? "Avatar present" : "No avatar");
-        setValue('avatarUrl', initialData.avatarUrl, { shouldDirty: true });
-        setAvatarPreview(initialData.avatarUrl);
-      }
-      if (initialData.logoUrl) {
-        console.log("Setting initial logo:", initialData.logoUrl ? "Logo present" : "No logo");
-        setValue('logoUrl', initialData.logoUrl, { shouldDirty: true });
-        setLogoPreview(initialData.logoUrl);
-      }
-    }
-  }, []);
-
-  const handleColorChange = (index: number, color: string) => {
-    console.log("CardForm: Color change requested", index, color);
-    const newColors = [...selectedColors];
-    newColors[index] = color;
-    console.log("CardForm: New colors array", newColors);
-    setSelectedColors(newColors);
-  };
-  
-  const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
-    const updatedVisibility = { ...visibleFields, [fieldName]: isVisible };
-    setVisibleFields(updatedVisibility);
-    setValue('visibleFields', updatedVisibility, { shouldDirty: true });
-  };
+  // Connect the hooks to the form
+  const connectedColors = useCardColors(initialData, setValue);
+  const connectedImages = useCardImages(initialData, setValue);
+  const connectedVisibility = useCardVisibility(initialData, setValue);
 
   const onSubmit = async (data: BusinessCard) => {
     try {
       // Check if user already has a card and is not superadmin
-      if (!initialData && existingCards.length > 0 && !isSuperAdmin()) {
+      if (!initialData && validation.existingCards.length > 0 && !validation.isSuperAdmin()) {
         toast.error("Solo puedes tener una tarjeta. Edita la existente o contacta al administrador.");
         return;
       }
@@ -148,18 +64,18 @@ export const useCardForm = (initialData?: BusinessCard) => {
       console.log("Submitting form data:", data);
       console.log("Logo data being submitted:", data.logoUrl ? "Logo present" : "No logo");
       console.log("Avatar data being submitted:", data.avatarUrl ? "Avatar present" : "No avatar");
-      console.log("Logo preview state:", logoPreview ? "Logo preview present" : "No logo preview");
+      console.log("Logo preview state:", connectedImages.logoPreview ? "Logo preview present" : "No logo preview");
 
       // Prepare final data ensuring all state is included
       const finalData = {
         ...data,
         links: links,
-        themeColors: selectedColors,
-        visibleFields: visibleFields,
-        userId: user?.id || "anonymous",
+        themeColors: connectedColors.selectedColors,
+        visibleFields: connectedVisibility.visibleFields,
+        userId: validation.user?.id || "anonymous",
         // Ensure logo and avatar are included from current state - prioritize preview state
-        avatarUrl: avatarPreview || data.avatarUrl || "",
-        logoUrl: logoPreview || data.logoUrl || "",
+        avatarUrl: connectedImages.avatarPreview || data.avatarUrl || "",
+        logoUrl: connectedImages.logoPreview || data.logoUrl || "",
         // Keep ID if editing
         id: initialData?.id || data.id
       };
@@ -186,17 +102,17 @@ export const useCardForm = (initialData?: BusinessCard) => {
     watch,
     links,
     setLinks,
-    avatarPreview,
-    logoPreview,
-    setAvatarPreview,
-    setLogoPreview,
-    existingCards,
-    selectedColors,
-    visibleFields,
-    handleColorChange,
-    handleFieldVisibilityChange,
+    avatarPreview: connectedImages.avatarPreview,
+    logoPreview: connectedImages.logoPreview,
+    setAvatarPreview: connectedImages.setAvatarPreview,
+    setLogoPreview: connectedImages.setLogoPreview,
+    existingCards: validation.existingCards,
+    selectedColors: connectedColors.selectedColors,
+    visibleFields: connectedVisibility.visibleFields,
+    handleColorChange: connectedColors.handleColorChange,
+    handleFieldVisibilityChange: connectedVisibility.handleFieldVisibilityChange,
     onSubmit,
-    isSuperAdmin,
-    user,
+    isSuperAdmin: validation.isSuperAdmin,
+    user: validation.user,
   };
 };
