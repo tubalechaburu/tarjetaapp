@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Palette, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 
 interface ColorSelectorProps {
   selectedColors: string[];
@@ -61,7 +60,7 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
               <div className="flex items-center space-x-2">
                 <div
                   className="w-6 h-6 rounded border-2 border-gray-300"
-                  style={{ backgroundColor: selectedColors[index] || "#ffffff" }}
+                  style={{ backgroundColor: selectedColors[index] || "#000000" }}
                 />
                 <div>
                   <span className="text-sm font-medium">{purpose.name}</span>
@@ -70,13 +69,22 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
               </div>
               
               <div className="flex items-center gap-2">
+                {/* Color picker - moved first for better UX */}
+                <Input
+                  type="color"
+                  value={selectedColors[index] || "#000000"}
+                  onChange={(e) => handleColorChange(index, e.target.value)}
+                  className="w-12 h-8 p-0 border-0 cursor-pointer rounded"
+                />
+                
                 {/* HEX input display with copy button */}
                 <div className="relative flex items-center">
                   <Input
                     type="text"
-                    value={selectedColors[index] || "#ffffff"}
+                    value={selectedColors[index] || "#000000"}
                     onChange={(e) => handleColorChange(index, e.target.value)}
                     className="w-28 pr-8 font-mono text-sm"
+                    placeholder="#000000"
                   />
                   <button
                     type="button"
@@ -91,14 +99,6 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
                     )}
                   </button>
                 </div>
-                
-                {/* Color picker */}
-                <Input
-                  type="color"
-                  value={selectedColors[index] || "#ffffff"}
-                  onChange={(e) => handleColorChange(index, e.target.value)}
-                  className="w-10 h-8 p-0 border-0 cursor-pointer"
-                />
               </div>
             </div>
           </div>

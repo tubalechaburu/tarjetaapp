@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           company: string | null
           created_at: string | null
+          description: string | null
           email: string | null
           id: string
           links: Json | null
@@ -23,10 +24,12 @@ export type Database = {
           title: string | null
           updated_at: string | null
           user_id: string
+          visible_fields: Json | null
         }
         Insert: {
           company?: string | null
           created_at?: string | null
+          description?: string | null
           email?: string | null
           id?: string
           links?: Json | null
@@ -37,10 +40,12 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id: string
+          visible_fields?: Json | null
         }
         Update: {
           company?: string | null
           created_at?: string | null
+          description?: string | null
           email?: string | null
           id?: string
           links?: Json | null
@@ -51,6 +56,7 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id?: string
+          visible_fields?: Json | null
         }
         Relationships: []
       }

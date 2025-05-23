@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -29,11 +30,14 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
   
   // Initialize with existing colors if available, with a proper fallback
-  const [selectedColors, setSelectedColors] = useState<string[]>(
-    initialData?.themeColors && initialData.themeColors.length === 3 
-      ? [...initialData.themeColors] // Create a new array to ensure reactivity
-      : [...DEFAULT_COLORS]
-  );
+  const [selectedColors, setSelectedColors] = useState<string[]>(() => {
+    if (initialData?.themeColors && initialData.themeColors.length === 3) {
+      console.log("Using initial colors:", initialData.themeColors);
+      return [...initialData.themeColors];
+    }
+    console.log("Using default colors:", DEFAULT_COLORS);
+    return [...DEFAULT_COLORS];
+  });
   
   // Field visibility state
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(
@@ -80,8 +84,14 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   // Update form values when selectedColors change - critical for saving
   useEffect(() => {
     console.log("CardForm: Setting form colors to", selectedColors);
-    setValue('themeColors', selectedColors);
+    setValue('themeColors', selectedColors, { shouldDirty: true });
   }, [selectedColors, setValue]);
+
+  // Also update form on initial load
+  useEffect(() => {
+    setValue('themeColors', selectedColors, { shouldDirty: true });
+    setValue('visibleFields', visibleFields, { shouldDirty: true });
+  }, []);
 
   const handleColorChange = (index: number, color: string) => {
     console.log("CardForm: Color change requested", index, color);
@@ -94,7 +104,7 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
     const updatedVisibility = { ...visibleFields, [fieldName]: isVisible };
     setVisibleFields(updatedVisibility);
-    setValue('visibleFields', updatedVisibility);
+    setValue('visibleFields', updatedVisibility, { shouldDirty: true });
   };
 
   const onSubmit = async (data: BusinessCard) => {

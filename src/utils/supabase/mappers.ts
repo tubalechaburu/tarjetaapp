@@ -33,9 +33,13 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     const theme = card.theme as any;
     if (theme.colors && Array.isArray(theme.colors) && theme.colors.length === 3) {
       themeColors = theme.colors;
+      console.log("Found theme colors from Supabase:", themeColors);
     } else if (theme.background && theme.text && theme.accent) {
       // Legacy format support
       themeColors = [theme.background, theme.text, theme.accent];
+      console.log("Found legacy theme format:", themeColors);
+    } else {
+      console.log("No valid theme colors found, using defaults");
     }
   }
   
@@ -50,6 +54,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     phone: card.phone || "",
     website: website || "",
     address: "", // Add default empty address
+    description: card.description || "",
     avatarUrl: card.photo || "",
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
@@ -120,6 +125,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
+    description: card.description || null,
     links: links,
     user_id: userId,
     theme: theme,
