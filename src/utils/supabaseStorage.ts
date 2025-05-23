@@ -1,3 +1,4 @@
+
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,13 +20,13 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
     
     if (error) {
       console.error("Supabase error:", error);
-      return handleSupabaseError(error, "No se pudo guardar la tarjeta en Supabase");
+      return handleSupabaseError(error, "No se pudo guardar la tarjeta");
     } else {
-      handleSupabaseSuccess(data, "Tarjeta guardada correctamente en Supabase");
+      handleSupabaseSuccess(data, "Tarjeta guardada correctamente");
       return true;
     }
   } catch (supabaseError) {
-    return handleSupabaseError(supabaseError, "Error al guardar en Supabase");
+    return handleSupabaseError(supabaseError, "Error al guardar la tarjeta");
   }
 };
 
@@ -38,7 +39,7 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       .select('*');
     
     if (error) {
-      handleSupabaseError(error, "Error al obtener las tarjetas de Supabase");
+      handleSupabaseError(error, "Error al obtener las tarjetas");
       return null;
     }
     
@@ -47,11 +48,11 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       return [];
     }
     
-    handleSupabaseSuccess(data, "Tarjetas cargadas desde Supabase");
+    handleSupabaseSuccess(data, "Tarjetas cargadas correctamente");
     // Explicitly cast the data as SupabaseBusinessCard[]
     return (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
   } catch (supabaseError) {
-    handleSupabaseError(supabaseError, "Error al conectar con Supabase");
+    handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
     return null;
   }
 };
@@ -69,7 +70,7 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
     
     if (error) {
       console.error("Supabase query error:", error);
-      handleSupabaseError(error, "Error al obtener la tarjeta de Supabase");
+      handleSupabaseError(error, "Error al obtener la tarjeta");
       return null;
     }
     
@@ -79,14 +80,14 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
     }
     
     console.log(`Card with ID ${id} found in Supabase:`, data);
-    handleSupabaseSuccess(data, "Tarjeta cargada desde Supabase");
+    handleSupabaseSuccess(data, "Tarjeta cargada correctamente");
     
     // Convertimos los datos de Supabase al formato BusinessCard usando nuestra función auxiliar
     // Aseguramos que los tipos sean compatibles con lo esperado
     const card = mapSupabaseToBusinessCard(data as unknown as SupabaseBusinessCard);
     return card;
   } catch (supabaseError) {
-    handleSupabaseError(supabaseError, "Error al conectar con Supabase");
+    handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
     return null;
   }
 };
@@ -101,12 +102,12 @@ export const deleteCardSupabase = async (id: string): Promise<boolean> => {
       .eq('id', id);
     
     if (error) {
-      return handleSupabaseError(error, "Error al eliminar la tarjeta de Supabase");
+      return handleSupabaseError(error, "Error al eliminar la tarjeta");
     }
     
     handleSupabaseSuccess(null, "Tarjeta eliminada correctamente");
     return true;
   } catch (supabaseError) {
-    return handleSupabaseError(supabaseError, "Error al conectar con Supabase");
+    return handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
   }
 };
