@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,7 @@ const ViewCard = () => {
         });
       } else {
         await navigator.clipboard.writeText(fullShareUrl);
-        toast.success("Tarjeta guardada correctamente");
+        toast.success("Enlace copiado al portapapeles");
       }
     } catch (error) {
       console.error("Error sharing:", error);

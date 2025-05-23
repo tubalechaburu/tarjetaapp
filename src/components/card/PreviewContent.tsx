@@ -5,9 +5,9 @@ import CardPreview from "@/components/CardPreview";
 
 interface PreviewContentProps {
   card: BusinessCard;
-  shareUrl: string;
-  fullShareUrl: string;
-  onShare: () => void;
+  shareUrl?: string;
+  fullShareUrl?: string;
+  onShare?: () => void;
 }
 
 const PreviewContent: React.FC<PreviewContentProps> = ({ 
