@@ -17,6 +17,7 @@ export type Database = {
           email: string | null
           id: string
           links: Json | null
+          logo: string | null
           name: string
           phone: string | null
           photo: string | null
@@ -33,6 +34,7 @@ export type Database = {
           email?: string | null
           id?: string
           links?: Json | null
+          logo?: string | null
           name: string
           phone?: string | null
           photo?: string | null
@@ -49,6 +51,7 @@ export type Database = {
           email?: string | null
           id?: string
           links?: Json | null
+          logo?: string | null
           name?: string
           phone?: string | null
           photo?: string | null

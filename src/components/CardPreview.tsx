@@ -68,8 +68,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
                 className="max-h-14 max-w-14 object-contain"
                 onLoad={() => console.log('Logo displayed successfully in card preview')}
                 onError={(e) => {
-                  console.error('Error displaying logo in card preview');
-                  (e.target as HTMLImageElement).style.display = 'none';
+                  console.error('Error displaying logo in card preview:', e);
+                  console.error('Logo URL that failed:', card.logoUrl);
                 }}
               />
             </div>

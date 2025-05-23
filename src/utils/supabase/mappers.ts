@@ -46,22 +46,11 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   
   console.log("Mapped theme colors:", themeColors);
   
-  // Handle logo field - ensure we properly extract the logo data as base64 string
+  // Handle logo field - extract the logo data as base64 string
   let logoUrl = "";
-  if (card.logo) {
-    if (typeof card.logo === 'string') {
-      logoUrl = card.logo;
-      console.log("Logo is string format:", logoUrl ? "Logo data present" : "No logo data");
-    } else if (typeof card.logo === 'object' && card.logo !== null) {
-      // Handle object format from Supabase
-      const logoObj = card.logo as any;
-      if (logoObj.value) {
-        logoUrl = logoObj.value;
-      } else if (logoObj.url) {
-        logoUrl = logoObj.url;
-      }
-      console.log("Logo is object format:", logoUrl ? "Logo data present" : "No logo data");
-    }
+  if (card.logo && typeof card.logo === 'string' && card.logo.trim() !== "") {
+    logoUrl = card.logo;
+    console.log("Logo mapped successfully from Supabase");
   }
   
   console.log("Final mapped logoUrl:", logoUrl ? "Logo data present" : "No logo data");
@@ -149,7 +138,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
-    logo: card.logoUrl || null, // Ensure logo is saved as base64 string
+    logo: card.logoUrl || null, // Make sure logo is saved as base64 string
     description: card.description || null,
     links: links,
     user_id: userId,

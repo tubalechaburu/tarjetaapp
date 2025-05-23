@@ -148,6 +148,7 @@ export const useCardForm = (initialData?: BusinessCard) => {
       console.log("Submitting form data:", data);
       console.log("Logo data being submitted:", data.logoUrl ? "Logo present" : "No logo");
       console.log("Avatar data being submitted:", data.avatarUrl ? "Avatar present" : "No avatar");
+      console.log("Logo preview state:", logoPreview ? "Logo preview present" : "No logo preview");
 
       // Prepare final data ensuring all state is included
       const finalData = {
@@ -156,7 +157,7 @@ export const useCardForm = (initialData?: BusinessCard) => {
         themeColors: selectedColors,
         visibleFields: visibleFields,
         userId: user?.id || "anonymous",
-        // Ensure logo and avatar are included from current state
+        // Ensure logo and avatar are included from current state - prioritize preview state
         avatarUrl: avatarPreview || data.avatarUrl || "",
         logoUrl: logoPreview || data.logoUrl || "",
         // Keep ID if editing
