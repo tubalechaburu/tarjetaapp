@@ -69,5 +69,11 @@ export interface SupabaseBusinessCard {
     url?: string;
     label?: string;
   }[];
+  theme?: {
+    colors?: string[];
+    background?: string;
+    text?: string;
+    accent?: string;
+  };
   visible_fields?: Record<string, boolean>;
 }
