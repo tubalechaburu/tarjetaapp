@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,79 +33,59 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       // Get card name from the document or URL
       const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
       
-      // Clone the SVG to avoid modifying the original
-      const svgElement = qrRef.current.cloneNode(true) as SVGSVGElement;
-      
-      // Create a canvas with higher resolution for better quality
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+      // Simple approach: convert SVG to canvas directly
+      const svg = qrRef.current;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       
       if (!ctx) {
-        toast.error("Error al crear el código QR");
+        toast.error("No se pudo crear el lienzo");
         return;
       }
       
-      // Set canvas size with scale factor for better quality
-      const scale = 2;
-      canvas.width = size * scale;
-      canvas.height = size * scale;
+      // Set canvas dimensions
+      canvas.width = size;
+      canvas.height = size;
       
-      // Scale the context to maintain the same drawing size
-      ctx.scale(scale, scale);
-      
-      // Serialize the SVG with proper encoding
-      const svgData = new XMLSerializer().serializeToString(svgElement);
-      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-      const svgUrl = URL.createObjectURL(svgBlob);
-      
-      // Create an image element
+      // Create a new image
       const img = new Image();
       
-      img.onload = () => {
-        try {
-          // Fill canvas with white background
-          ctx.fillStyle = "white";
-          ctx.fillRect(0, 0, size, size);
-          
-          // Draw the SVG image
-          ctx.drawImage(img, 0, 0, size, size);
-          
-          // Convert canvas to blob and download
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const downloadUrl = URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.download = `QR_Tarjeta_${cardName.replace(/\s+/g, '_')}.png`;
-              link.href = downloadUrl;
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(downloadUrl);
-              toast.success("Código QR descargado correctamente");
-            } else {
-              toast.error("Error al generar el archivo PNG");
-            }
-          }, "image/png", 1.0);
-          
-          // Clean up the SVG URL
-          URL.revokeObjectURL(svgUrl);
-        } catch (error) {
-          console.error("Error processing canvas:", error);
-          toast.error("Error al procesar el código QR");
-          URL.revokeObjectURL(svgUrl);
-        }
+      // Convert SVG to string
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svg);
+      
+      // Create data URL from SVG
+      const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+      
+      img.onload = function() {
+        // Clear canvas with white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the image
+        ctx.drawImage(img, 0, 0, size, size);
+        
+        // Convert to blob and download
+        canvas.toBlob(function(blob) {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = `QR_${cardName.replace(/\s+/g, '_')}.png`;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success("Código QR descargado correctamente");
+          } else {
+            toast.error("Error al crear la imagen");
+          }
+        }, 'image/png');
       };
       
-      img.onerror = () => {
-        console.error("Error loading SVG image");
-        toast.error("Error al cargar el código QR");
-        URL.revokeObjectURL(svgUrl);
+      img.onerror = function() {
+        toast.error("Error al procesar el código QR");
       };
       
-      // Set crossOrigin to handle potential CORS issues
-      img.crossOrigin = "anonymous";
-      img.src = svgUrl;
+      img.src = svgDataUrl;
       
     } catch (error) {
       console.error("Error downloading QR code:", error);
