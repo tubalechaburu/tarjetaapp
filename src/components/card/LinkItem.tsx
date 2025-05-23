@@ -42,7 +42,7 @@ const LinkItem: React.FC<LinkItemProps> = ({ link, index, onRemove, onUpdate }) 
         <LinkTypeSelector
           id={`link-type-${link.id}`}
           value={link.type}
-          onValueChange={handleTypeChange}
+          onChange={handleTypeChange}
         />
 
         {link.type === "other" && (
