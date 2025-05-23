@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCardById } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import { toast } from "sonner";
@@ -8,7 +9,6 @@ import { useAuth } from "@/providers/AuthProvider";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/navigation/BackButton";
 import CardActions from "@/components/card/CardActions";
-import TabNavigation from "@/components/card/TabNavigation";
 import PreviewTab from "@/components/card/PreviewTab";
 import QRCodeTab from "@/components/card/QRCodeTab";
 
@@ -18,7 +18,7 @@ const ViewCard = () => {
   const { user } = useAuth();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"preview">('preview');
+  const [activeTab, setActiveTab] = useState<"preview" | "qr">('preview');
   
   // Generate the shareable URL for this card
   const cardShareUrl = id ? `/share/${id}` : '';
@@ -122,12 +122,29 @@ const ViewCard = () => {
           onDelete={() => navigate("/")}
         />
 
-        <PreviewTab 
-          card={card} 
-          onShare={handleShare} 
-          shareUrl={cardShareUrl}
-          fullShareUrl={fullShareUrl}
-        />
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "preview" | "qr")} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="preview">Vista previa</TabsTrigger>
+            <TabsTrigger value="qr">Código QR</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="preview">
+            <PreviewTab 
+              card={card} 
+              onShare={handleShare} 
+              shareUrl={cardShareUrl}
+              fullShareUrl={fullShareUrl}
+            />
+          </TabsContent>
+          
+          <TabsContent value="qr">
+            <QRCodeTab 
+              shareUrl={cardShareUrl}
+              fullShareUrl={fullShareUrl}
+              onShare={handleShare}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
       <Footer />
     </div>

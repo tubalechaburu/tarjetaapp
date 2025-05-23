@@ -55,12 +55,12 @@ export const downloadSvgAsPng = async (
         // Convert to blob and download
         canvas.toBlob((blob) => {
           if (blob) {
-            const url = URL.createObjectURL(blob);
+            const downloadUrl = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.download = filename;
-            a.href = url;
+            a.href = downloadUrl;
             a.click();
-            URL.revokeObjectURL(url);
+            URL.revokeObjectURL(downloadUrl);
             toast.success("Código QR descargado correctamente");
             resolve();
           } else {
@@ -117,14 +117,14 @@ export const createAndDownloadShortcut = (url: string, cardName: string): void =
         // Windows .url format
         shortcutContent = `[InternetShortcut]\nURL=${url}`;
         const blob = new Blob([shortcutContent], { type: 'application/x-url' });
-        const url = window.URL.createObjectURL(blob);
+        const fileUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = fileUrl;
         a.download = `Tarjeta_virtual_${cardName}.url`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(fileUrl);
       } else {
         // macOS .webloc format
         shortcutContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -136,14 +136,14 @@ export const createAndDownloadShortcut = (url: string, cardName: string): void =
 </dict>
 </plist>`;
         const blob = new Blob([shortcutContent], { type: 'application/xml' });
-        const url = window.URL.createObjectURL(blob);
+        const fileUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = fileUrl;
         a.download = `Tarjeta_virtual_${cardName}.webloc`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(fileUrl);
       }
       
       toast.success("Acceso directo descargado");
