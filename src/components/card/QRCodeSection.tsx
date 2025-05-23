@@ -17,13 +17,23 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => 
 
   // Use useCallback to prevent the function from being recreated on every render
   const handleQRRef = useCallback((ref: SVGSVGElement | null) => {
-    console.log("QR ref received in QRCodeSection:", !!ref);
+    console.log("QRCodeSection: QR ref received:", !!ref);
     if (ref) {
+      console.log("QRCodeSection: Setting QR reference");
       setQrRef(ref);
     }
   }, []);
 
+  // Add a check to ensure the button is enabled when qrRef is available
+  useEffect(() => {
+    console.log("QRCodeSection: qrRef state changed:", !!qrRef);
+  }, [qrRef]);
+
   const handleDownloadQR = async () => {
+    console.log("QRCodeSection: Download button clicked");
+    console.log("QRCodeSection: Card available:", !!card);
+    console.log("QRCodeSection: QR ref available:", !!qrRef);
+    
     if (!card) {
       toast.error("Error: No hay datos de la tarjeta");
       return;
@@ -83,6 +93,7 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => 
           >
             <Download className="h-4 w-4" />
             Descargar código QR
+            {!qrRef && <span className="text-xs opacity-75">(Cargando...)</span>}
           </Button>
           
           <div className="grid grid-cols-2 gap-2">
