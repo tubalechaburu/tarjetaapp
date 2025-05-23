@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CardLink } from "@/types";
 import { v4 as uuidv4 } from "uuid";
@@ -14,12 +13,24 @@ interface LinksFormProps {
 
 const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
   const addLink = () => {
+    // Find an available link type
+    const usedTypes = links.map(link => link.type);
+    
+    // Find first available type that's not 'other' (since 'other' can have multiple)
+    const availableType = LinkTypeOptions.find(option => 
+      option.value === 'other' || !usedTypes.includes(option.value)
+    );
+    
+    // Default to 'other' if all specific types are used
+    const newType = availableType ? availableType.value : 'other';
+    const typeLabel = LinkTypeOptions.find(opt => opt.value === newType)?.label || 'Otro enlace';
+    
     const newLink: CardLink = {
       id: uuidv4(),
-      type: "website",
+      type: newType as CardLink["type"],
       url: "",
-      title: "Sitio web",
-      label: "Sitio web"
+      title: typeLabel,
+      label: typeLabel
     };
     
     setLinks([...links, newLink]);
@@ -34,22 +45,31 @@ const LinksForm: React.FC<LinksFormProps> = ({ links, setLinks }) => {
       links.map(link => {
         if (link.id === id) {
           if (field === "type") {
-            // Verificar que el tipo sea válido
+            // Allow changing to any type if it's not already used or if it's 'other'
             const validType = value as CardLink["type"];
+            const isTypeUsed = links.some(l => l.id !== id && l.type === validType);
             
-            // Si el tipo cambia, actualizar también la etiqueta
+            // If the type is already used and it's not 'other', prevent the change
+            if (isTypeUsed && validType !== 'other') {
+              toast.error(`Ya existe un enlace de tipo ${validType}`);
+              return link;
+            }
+            
+            // Type change is valid, update label and title too
             const typeOption = LinkTypeOptions.find(opt => opt.value === value);
             return {
               ...link,
               [field]: validType,
               label: typeOption?.label || link.label,
-              title: typeOption?.label || link.label // Update title when type changes
+              title: typeOption?.label || link.title
             };
           }
+          
           // Also update title when label changes if field is "label"
           if (field === "label") {
             return { ...link, [field]: value, title: value };
           }
+          
           return { ...link, [field]: value };
         }
         return link;
