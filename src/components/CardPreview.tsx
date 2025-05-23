@@ -22,7 +22,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   useEffect(() => {
     console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
     console.log("Card theme colors from props:", card.themeColors);
-  }, [bgColor, textColor, accentColor, card.themeColors]);
+    console.log("Card logo URL:", card.logoUrl);
+  }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl]);
   
   // Get visibility settings with defaults
   const visibleFields = card.visibleFields || {
@@ -72,7 +73,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
               {card.company}
             </p>
             
-            {/* Logo de empresa - Arreglado para mostrar correctamente */}
+            {/* Logo de empresa - Corregido para mostrar desde logoUrl */}
             {card.logoUrl && (
               <div className="mt-3 p-3 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm">
                 <img 

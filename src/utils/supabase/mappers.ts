@@ -56,6 +56,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     address: "", // Add default empty address
     description: card.description || "",
     avatarUrl: card.photo || "",
+    logoUrl: card.logo || "", // Añadir soporte para logo
     createdAt: new Date(card.created_at).getTime(),
     userId: card.user_id,
     links: links,
@@ -80,7 +81,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
   // Ensure user ID is not undefined
   const userId = card.userId || "00000000-0000-0000-0000-000000000000";
   
-  // Prepare links for Supabase
+  // Prepare links for Supabase - incluir TODOS los enlaces
   const links = [];
   
   // Add website as link if it exists
@@ -95,11 +96,13 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
   
   // Add additional links if they exist
   if (card.links && card.links.length > 0) {
-    // Filter to avoid duplicates (in case the website is already in the links)
-    const additionalLinks = card.links.filter(link => 
-      link.type !== "website" || link.url !== card.website
-    );
-    links.push(...additionalLinks);
+    // Include ALL links, not just filtered ones
+    links.push(...card.links.map(link => ({
+      id: link.id || uuidv4(),
+      type: link.type,
+      url: link.url,
+      label: link.label || link.title
+    })));
   }
 
   // Prepare theme with custom colors - use defaults if not provided
@@ -125,6 +128,7 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     email: card.email,
     phone: card.phone,
     photo: card.avatarUrl || null,
+    logo: card.logoUrl || null, // Añadir soporte para logo
     description: card.description || null,
     links: links,
     user_id: userId,

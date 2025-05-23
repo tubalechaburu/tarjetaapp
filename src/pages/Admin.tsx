@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -32,18 +32,18 @@ const Admin = () => {
       <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg">
         <AdminHeader />
         
-        <Tabs defaultValue="users" className="mt-6">
+        <Tabs defaultValue="all-users" className="mt-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
             <TabsTrigger value="all-users">Todos los Usuarios</TabsTrigger>
+            <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="users" className="mt-6">
-            <UsersManagementTable />
-          </TabsContent>
           
           <TabsContent value="all-users" className="mt-6">
             <AllUsersTable />
+          </TabsContent>
+          
+          <TabsContent value="users" className="mt-6">
+            <UsersManagementTable />
           </TabsContent>
         </Tabs>
       </div>

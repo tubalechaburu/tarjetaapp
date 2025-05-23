@@ -1,27 +1,17 @@
 
-import { supabase } from "../../integrations/supabase/client";
 import { toast } from "sonner";
 
-/**
- * Handles errors from Supabase operations
- */
-export const handleSupabaseError = (error: any, messagePrefix: string): boolean => {
-  console.error(`${messagePrefix}:`, error);
-  toast.error(`${messagePrefix}`);
+export const handleSupabaseError = (error: any, fallbackMessage: string): boolean => {
+  console.error("Supabase operation failed:", error);
+  toast.error(fallbackMessage);
   return false;
 };
 
-/**
- * Handles successful Supabase operations with a toast notification
- */
 export const handleSupabaseSuccess = (data: any, message: string): void => {
-  console.log(`${message}:`, data);
-  toast.success(message);
+  console.log("Supabase operation successful:", data);
+  toast.success("Se ha guardado la tarjeta");
 };
 
-/**
- * Checks if data is empty or null
- */
 export const isEmptyData = (data: any): boolean => {
   return !data || (Array.isArray(data) && data.length === 0);
 };

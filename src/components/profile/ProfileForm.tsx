@@ -69,12 +69,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           const mappedCard = mapSupabaseToBusinessCard(cardData as unknown as SupabaseBusinessCard);
           setUserCard(mappedCard);
           
+          // Extraer LinkedIn de los enlaces de la tarjeta
+          const linkedinLink = mappedCard.links?.find(link => link.type === 'linkedin')?.url || '';
+          
           // Si hay tarjeta, usar sus datos como base
           setFormData({
             full_name: mappedCard.name || profile?.full_name || '',
             phone: mappedCard.phone || profile?.phone || '',
             website: mappedCard.website || profile?.website || '',
-            linkedin: profile?.linkedin || '',
+            linkedin: linkedinLink || profile?.linkedin || '',
             company: mappedCard.company || profile?.company || '',
             job_title: mappedCard.jobTitle || profile?.job_title || '',
             email: mappedCard.email || profile?.email || '',
@@ -254,6 +257,19 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             <p className="text-sm text-muted-foreground">
               Los datos mostrados se sincronizan con tu tarjeta digital: <strong>{userCard.name}</strong>
             </p>
+            {userCard.links && userCard.links.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-muted-foreground">Enlaces adicionales:</p>
+                <ul className="text-xs space-y-1">
+                  {userCard.links.map((link, index) => (
+                    <li key={index} className="flex justify-between">
+                      <span>{link.label || link.type}:</span>
+                      <span className="truncate max-w-48">{link.url}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
