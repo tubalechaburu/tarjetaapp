@@ -13,9 +13,9 @@ interface CardPreviewProps {
 }
 
 const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
-  // Use themeColors array from the card data with safe fallbacks
-  const bgColor = (card.themeColors && card.themeColors[0]) || "#dd8d0a";
-  const textColor = (card.themeColors && card.themeColors[1]) || "#000000";
+  // Use themeColors array from the card data with safe fallbacks to black, white, orange
+  const bgColor = (card.themeColors && card.themeColors[0]) || "#000000";
+  const textColor = (card.themeColors && card.themeColors[1]) || "#ffffff";
   const accentColor = (card.themeColors && card.themeColors[2]) || "#dd8d0a";
   
   // Log colors for debugging

@@ -26,8 +26,8 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     website = websiteLink?.url || "";
   }
 
-  // Extract theme colors from Supabase theme object
-  let themeColors: string[] = ["#dd8d0a", "#000000", "#dd8d0a"]; // Default colors
+  // Extract theme colors from Supabase theme object with proper defaults
+  let themeColors: string[] = ["#000000", "#ffffff", "#dd8d0a"]; // Default colors: black, white, orange
   
   if (card.theme && typeof card.theme === 'object') {
     const theme = card.theme as any;
@@ -97,15 +97,20 @@ export const prepareSupabaseCard = (card: BusinessCard) => {
     links.push(...additionalLinks);
   }
 
-  // Prepare theme with custom colors
+  // Prepare theme with custom colors - use defaults if not provided
+  const finalColors = card.themeColors && card.themeColors.length === 3 
+    ? card.themeColors 
+    : ["#000000", "#ffffff", "#dd8d0a"]; // black, white, orange defaults
+
   const theme = {
-    colors: card.themeColors || ["#dd8d0a", "#000000", "#dd8d0a"],
-    background: (card.themeColors && card.themeColors[0]) || "#dd8d0a",
-    text: (card.themeColors && card.themeColors[1]) || "#000000",
-    accent: (card.themeColors && card.themeColors[2]) || "#dd8d0a"
+    colors: finalColors,
+    background: finalColors[0],
+    text: finalColors[1],
+    accent: finalColors[2]
   };
   
   console.log("Preparing card for Supabase with theme:", theme);
+  console.log("Original card colors:", card.themeColors);
     
   return {
     id: card.id,
