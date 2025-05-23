@@ -7,13 +7,11 @@ import { Palette } from "lucide-react";
 interface ColorSelectorProps {
   selectedColors: string[];
   onChange: (index: number, color: string) => void;
-  brandColors: { name: string; hex: string }[];
 }
 
 const ColorSelector: React.FC<ColorSelectorProps> = ({
   selectedColors,
   onChange,
-  brandColors,
 }) => {
   // Color purposes
   const colorPurposes = [
