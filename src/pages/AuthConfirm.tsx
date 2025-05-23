@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,8 +31,13 @@ const AuthConfirm = () => {
             type: type as any
           });
         } else if (token) {
-          // Use token for older email confirmations
+          // Use token for older email confirmations - need to include email for this method
+          const email = searchParams.get('email');
+          if (!email) {
+            throw new Error('Email requerido para verificación con token');
+          }
           result = await supabase.auth.verifyOtp({
+            email,
             token,
             type: type as any
           });
