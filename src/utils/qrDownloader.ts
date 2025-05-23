@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 /**
@@ -44,46 +43,51 @@ export const downloadSvgAsPng = async (
     // Scale the context
     ctx.scale(scale, scale);
     
+    // Fill white background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    
     // Convert SVG to string
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(clonedSvg);
     console.log("SVG serializado correctamente, length:", svgString.length);
     
-    // Create data URL from SVG with proper encoding
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const svgDataUrl = URL.createObjectURL(svgBlob);
-    console.log("SVG data URL created");
-    
-    // Create a new image and draw to canvas when loaded
+    // Create a new image
     const img = new Image();
+    img.width = size;
+    img.height = size;
+    
+    // Create a DataURL for the SVG to avoid CORS issues
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(svgBlob);
     
     // Create a promise to handle the image loading
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       img.onload = () => {
         try {
           console.log("Imagen cargada en canvas");
           
-          // Clear canvas with white background
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, size, size);
-          
-          // Draw the image
+          // Draw the image to canvas
           ctx.drawImage(img, 0, 0, size, size);
           
-          // Clean up the object URL
-          URL.revokeObjectURL(svgDataUrl);
+          // Clean up object URL
+          URL.revokeObjectURL(url);
           
-          // Convert to blob and download
+          // Convert to PNG and download
           canvas.toBlob((blob) => {
             if (blob) {
-              const downloadUrl = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.download = filename;
-              a.href = downloadUrl;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(downloadUrl);
+              // Create download link
+              const link = document.createElement('a');
+              link.download = filename;
+              link.href = URL.createObjectURL(blob);
+              
+              // Trigger download
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              // Clean up
+              URL.revokeObjectURL(link.href);
               console.log("QR descargado correctamente");
               toast.success("Código QR descargado correctamente");
               resolve();
@@ -102,14 +106,13 @@ export const downloadSvgAsPng = async (
       
       img.onerror = (e) => {
         console.error("Error al cargar la imagen:", e);
-        URL.revokeObjectURL(svgDataUrl);
+        URL.revokeObjectURL(url);
         toast.error("Error al procesar el código QR");
         reject(new Error("Failed to load image"));
       };
       
-      // Set crossOrigin before setting src
-      img.crossOrigin = 'anonymous';
-      img.src = svgDataUrl;
+      // Set source after defining handlers
+      img.src = url;
     });
   } catch (error) {
     console.error("Error downloading QR code:", error);
