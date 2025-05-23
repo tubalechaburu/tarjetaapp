@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,14 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialData?.avatarUrl || null);
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
   
-  // Update color definitions - first color is background, second is text, third is highlight
+  // Fix: Initialize with existing colors if available
   const [selectedColors, setSelectedColors] = useState<string[]>(
-    initialData?.themeColors || [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
+    initialData?.themeColors && initialData.themeColors.length === 3 
+      ? initialData.themeColors 
+      : [BRAND_COLORS[0].hex, BRAND_COLORS[2].hex, BRAND_COLORS[0].hex]
   );
   
-  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<BusinessCard>({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<BusinessCard>({
     defaultValues: initialData || {
       id: uuidv4(),
       name: "",
@@ -87,12 +90,6 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
 
   const onSubmit = async (data: BusinessCard) => {
     try {
-      // Asegurarse de que haya al menos un enlace (si es obligatorio)
-      if (links.length === 0) {
-        toast.error("Añade al menos un enlace a tu tarjeta");
-        return;
-      }
-
       // Validar si hay enlaces sin URL
       const invalidLinks = links.filter(link => !link.url.trim());
       if (invalidLinks.length > 0) {
@@ -100,16 +97,20 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
         return;
       }
 
-      // Guardar la tarjeta con los enlaces y los colores seleccionados
-      await saveCard({
+      // Preparar los datos finales con los colores actualizados
+      const finalData = {
         ...data,
         links: links,
         themeColors: selectedColors,
-        userId: user?.id || "anonymous" // Usar el ID del usuario si está autenticado
-      });
+        userId: user?.id || "anonymous",
+        // Mantener el ID si estamos editando
+        id: initialData?.id || data.id
+      };
+
+      await saveCard(finalData);
       
-      toast.success("Tarjeta guardada exitosamente");
-      navigate(`/card/${data.id}`);
+      toast.success("Tarjeta guardada correctamente");
+      navigate(`/card/${finalData.id}`);
     } catch (error) {
       console.error("Error al guardar la tarjeta:", error);
       toast.error("Error al guardar la tarjeta");
@@ -121,7 +122,6 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
       <div className="space-y-4">
         <BasicInfoFields register={register} errors={errors} />
 
-        {/* Selector de colores con propósitos definidos */}
         <ColorSelector 
           selectedColors={selectedColors} 
           onChange={handleColorChange} 
@@ -152,7 +152,6 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
           {...register("logoUrl")}
         />
 
-        {/* Formulario de enlaces */}
         <LinksForm links={links} setLinks={setLinks} />
       </div>
 

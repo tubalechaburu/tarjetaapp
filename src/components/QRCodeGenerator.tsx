@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Copy } from "lucide-react";
-import { svgToPng, ensureAbsoluteUrl } from "@/utils/qrUtils";
+import { ensureAbsoluteUrl } from "@/utils/qrUtils";
 import { toast } from "sonner";
 
 interface QRCodeGeneratorProps {
@@ -26,9 +26,50 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const downloadQRCode = async () => {
     if (!qrRef.current) return;
     
-    const fileName = `tarjeta-qr-${new Date().getTime()}.png`;
-    await svgToPng(qrRef.current, size, fileName);
-    toast.success("Código QR descargado correctamente");
+    try {
+      // Get card name from the document or URL
+      const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
+      
+      // Clone the SVG to avoid modifying the original
+      const svgClone = qrRef.current.cloneNode(true) as SVGSVGElement;
+      
+      // Create canvas with proper size (just the QR code, no extra space)
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      
+      // Set canvas size to exactly the QR code size
+      canvas.width = size;
+      canvas.height = size;
+      
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      
+      img.onload = () => {
+        if (ctx) {
+          // Fill with white background
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw the QR code
+          ctx.drawImage(img, 0, 0, size, size);
+          
+          // Convert to PNG and download
+          const pngFile = canvas.toDataURL("image/png");
+          const downloadLink = document.createElement("a");
+          
+          downloadLink.download = `QR Tarjeta virtual ${cardName}.png`;
+          downloadLink.href = pngFile;
+          downloadLink.click();
+          
+          toast.success("Código QR descargado correctamente");
+        }
+      };
+      
+      img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    } catch (error) {
+      console.error("Error downloading QR code:", error);
+      toast.error("Error al descargar el código QR");
+    }
   };
 
   const copyUrl = async () => {
@@ -42,23 +83,49 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   };
 
   const downloadShortcut = () => {
-    // Create desktop shortcut file
-    const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
-    const shortcutContent = `[InternetShortcut]
+    try {
+      // Get card name
+      const cardName = document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
+      
+      // Create desktop shortcut content
+      const shortcutContent = `[InternetShortcut]
 URL=${fullUrl}
 IconFile=favicon.ico
 IconIndex=0`;
-    
-    const blob = new Blob([shortcutContent], { type: 'application/x-url' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Tarjeta virtual - ${cardName}.url`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    toast.success("Acceso directo descargado");
+      
+      const blob = new Blob([shortcutContent], { type: 'application/x-url' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Tarjeta virtual ${cardName}.url`;
+      
+      // For mobile devices, try to use the Web Share API first
+      if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        navigator.share({
+          title: `Tarjeta virtual ${cardName}`,
+          url: fullUrl
+        }).then(() => {
+          toast.success("Enlace compartido");
+        }).catch(() => {
+          // Fallback to download
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          toast.success("Acceso directo descargado");
+        });
+      } else {
+        // Desktop: download the .url file
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast.success("Acceso directo descargado");
+      }
+    } catch (error) {
+      console.error("Error creating shortcut:", error);
+      toast.error("Error al crear el acceso directo");
+    }
   };
   
   return (
