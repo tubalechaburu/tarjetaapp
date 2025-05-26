@@ -1,4 +1,3 @@
-
 import { BusinessCard, SupabaseBusinessCard, CardLink } from "../../types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -55,6 +54,17 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
   
   console.log("Final mapped logoUrl:", logoUrl ? "Logo data present" : "No logo data");
   
+  // IMPROVED: Ensure avatarUrl and logoUrl are included in visibleFields
+  let visibleFields = card.visible_fields || {};
+  
+  // If avatarUrl or logoUrl are missing from visible_fields, add them with appropriate defaults
+  if (!visibleFields.hasOwnProperty('avatarUrl')) {
+    visibleFields.avatarUrl = true; // Default to true if field is missing
+  }
+  if (!visibleFields.hasOwnProperty('logoUrl')) {
+    visibleFields.logoUrl = true; // Default to true if field is missing
+  }
+  
   return {
     id: card.id,
     name: card.name,
@@ -71,16 +81,7 @@ export const mapSupabaseToBusinessCard = (card: SupabaseBusinessCard): BusinessC
     userId: card.user_id,
     links: links,
     themeColors: themeColors,
-    visibleFields: card.visible_fields || {
-      name: true,
-      jobTitle: true,
-      company: true,
-      email: true,
-      phone: true,
-      website: true,
-      address: true,
-      description: true,
-    }
+    visibleFields: visibleFields
   };
 };
 

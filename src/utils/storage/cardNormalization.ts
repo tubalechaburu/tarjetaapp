@@ -26,16 +26,31 @@ export const normalizeCardData = (card: BusinessCard): BusinessCard => {
     };
   }
   
-  // Normalize existing visibleFields to ensure proper boolean values
+  // Normalize existing visibleFields to ensure proper boolean values and include missing fields
   const normalizedVisibleFields: Record<string, boolean> = {};
   Object.keys(defaultVisibleFields).forEach(key => {
-    // Only set to true if explicitly true, otherwise false
-    normalizedVisibleFields[key] = card.visibleFields[key] === true;
+    // If the field exists in the card's visibleFields, use its value (converted to boolean)
+    // If it doesn't exist, default to true for avatarUrl and logoUrl, and existing behavior for others
+    if (card.visibleFields.hasOwnProperty(key)) {
+      normalizedVisibleFields[key] = card.visibleFields[key] === true;
+    } else {
+      // For missing fields, default avatarUrl and logoUrl to true if the card has content for them
+      if (key === 'avatarUrl') {
+        normalizedVisibleFields[key] = true; // Default to true, let the component decide based on content
+      } else if (key === 'logoUrl') {
+        normalizedVisibleFields[key] = true; // Default to true, let the component decide based on content
+      } else {
+        normalizedVisibleFields[key] = defaultVisibleFields[key];
+      }
+    }
   });
   
   console.log("Normalizing card visibility fields:", {
+    cardName: card.name,
     original: card.visibleFields,
-    normalized: normalizedVisibleFields
+    normalized: normalizedVisibleFields,
+    hasAvatar: !!card.avatarUrl,
+    hasLogo: !!card.logoUrl
   });
   
   return {
