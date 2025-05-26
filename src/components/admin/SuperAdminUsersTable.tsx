@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessCard, SupabaseBusinessCard, UserRole } from "@/types";
@@ -54,10 +53,16 @@ export const SuperAdminUsersTable = () => {
       if (profilesError) throw profilesError;
       
       // Get auth users to get actual email addresses
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.warn('Could not fetch auth users:', authError);
+      let authUsers: any[] = [];
+      try {
+        const { data, error: authError } = await supabase.auth.admin.listUsers();
+        if (authError) {
+          console.warn('Could not fetch auth users:', authError);
+        } else {
+          authUsers = data?.users || [];
+        }
+      } catch (authFetchError) {
+        console.warn('Failed to fetch auth users:', authFetchError);
       }
       
       // Get user roles
@@ -82,7 +87,7 @@ export const SuperAdminUsersTable = () => {
         const mappedCards = userCards.map(card => mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard));
         
         // Get email from auth users if available, otherwise from profile
-        const authUser = authUsers?.users?.find(user => user.id === profile.id);
+        const authUser = authUsers.find(user => user.id === profile.id);
         const emailToShow = authUser?.email || profile.email || profile.id;
         
         return {
