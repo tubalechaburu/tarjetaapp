@@ -11,7 +11,7 @@ export const useCardVisibility = (
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(() => {
     if (initialData?.visibleFields) {
       console.log("🔧 Initializing visibility with existing data:", initialData.visibleFields);
-      return initialData.visibleFields;
+      return { ...initialData.visibleFields };
     }
     // Default values when no initial data
     return {
@@ -32,7 +32,7 @@ export const useCardVisibility = (
   useEffect(() => {
     if (setValue) {
       console.log("🔧 Updating form visibility fields:", visibleFields);
-      setValue('visibleFields', visibleFields, { shouldDirty: true, shouldTouch: true });
+      setValue('visibleFields', { ...visibleFields }, { shouldDirty: true, shouldTouch: true });
     }
   }, [visibleFields, setValue]);
 
@@ -40,7 +40,7 @@ export const useCardVisibility = (
   useEffect(() => {
     if (initialData?.visibleFields && setValue) {
       console.log("🚀 Setting initial visibility in form:", initialData.visibleFields);
-      setValue('visibleFields', initialData.visibleFields, { shouldDirty: false });
+      setValue('visibleFields', { ...initialData.visibleFields }, { shouldDirty: false });
     }
   }, [initialData, setValue]);
 
@@ -52,9 +52,19 @@ export const useCardVisibility = (
     // Force immediate form update
     if (setValue) {
       console.log(`🚀 Immediately updating form field ${fieldName} to:`, isVisible);
-      setValue('visibleFields', updatedVisibility, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+      setValue('visibleFields', { ...updatedVisibility }, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     }
   };
+
+  // Enhanced debug logging for visibility state
+  useEffect(() => {
+    console.log("📊 useCardVisibility state update:", {
+      currentVisibleFields: visibleFields,
+      initialDataVisibleFields: initialData?.visibleFields || "No initial data",
+      avatarUrlVisible: visibleFields.avatarUrl,
+      logoUrlVisible: visibleFields.logoUrl
+    });
+  }, [visibleFields, initialData]);
 
   return {
     visibleFields,
