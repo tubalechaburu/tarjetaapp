@@ -18,28 +18,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   const textColor = (card.themeColors && card.themeColors[1]) || "#ffffff";
   const accentColor = (card.themeColors && card.themeColors[2]) || "#dd8d0a";
   
-  // Log colors and avatar data for debugging
-  useEffect(() => {
-    console.log("=== CardPreview Debug Info ===");
-    console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
-    console.log("Card theme colors from props:", card.themeColors);
-    console.log("Card has logoUrl:", !!card.logoUrl);
-    console.log("Card has avatarUrl:", !!card.avatarUrl);
-    console.log("Card avatarUrl value:", card.avatarUrl);
-    console.log("Avatar visibility setting:", card.visibleFields?.avatarUrl);
-    console.log("Logo visibility setting:", card.visibleFields?.logoUrl);
-    console.log("Card name:", card.name);
-    console.log("Should show avatar:", card.visibleFields?.avatarUrl !== false && (card.avatarUrl || card.name));
-    if (card.logoUrl) {
-      console.log("Logo preview (first 50 chars):", card.logoUrl.substring(0, 50) + "...");
-    }
-    if (card.avatarUrl) {
-      console.log("Avatar preview (first 50 chars):", card.avatarUrl.substring(0, 50) + "...");
-    }
-    console.log("=== End CardPreview Debug Info ===");
-  }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl, card.avatarUrl, card.visibleFields, card.name]);
-  
-  // Get visibility settings with defaults - avatarUrl should be visible by default
+  // Get visibility settings with defaults
   const visibleFields = card.visibleFields || {
     name: true,
     jobTitle: true,
@@ -53,8 +32,23 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     logoUrl: true,
   };
   
-  // Force avatarUrl to be visible if not explicitly set to false
-  const shouldShowAvatar = visibleFields.avatarUrl !== false && (card.avatarUrl || card.name);
+  // Check if avatar should be shown - must be explicitly enabled AND have content
+  const shouldShowAvatar = visibleFields.avatarUrl === true && (card.avatarUrl || card.name);
+  
+  // Check if logo should be shown - must be explicitly enabled AND have content
+  const shouldShowLogo = visibleFields.logoUrl === true && card.logoUrl && card.logoUrl.trim() !== "";
+  
+  // Log visibility debug info
+  useEffect(() => {
+    console.log("=== CardPreview Visibility Debug ===");
+    console.log("visibleFields.avatarUrl:", visibleFields.avatarUrl);
+    console.log("visibleFields.logoUrl:", visibleFields.logoUrl);
+    console.log("card.avatarUrl exists:", !!card.avatarUrl);
+    console.log("card.logoUrl exists:", !!card.logoUrl);
+    console.log("shouldShowAvatar:", shouldShowAvatar);
+    console.log("shouldShowLogo:", shouldShowLogo);
+    console.log("=== End Visibility Debug ===");
+  }, [visibleFields, card.avatarUrl, card.logoUrl, shouldShowAvatar, shouldShowLogo]);
   
   return (
     <Card 
@@ -63,7 +57,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     >
       <CardHeader className="flex flex-col items-center pb-2">
         <div className="flex items-center justify-center gap-4 mb-2">
-          {/* Avatar - Show if avatar is visible AND we have either an avatar URL or a name for initials */}
+          {/* Avatar - Only show if visibility is enabled AND we have content */}
           {shouldShowAvatar && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
@@ -84,8 +78,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Show logo if it exists, has valid data, and is visible */}
-          {visibleFields.logoUrl && card.logoUrl && card.logoUrl.trim() !== "" && (
+          {/* Logo - Only show if visibility is enabled AND we have content */}
+          {shouldShowLogo && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
                 src={card.logoUrl} 
