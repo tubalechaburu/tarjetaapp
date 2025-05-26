@@ -23,10 +23,16 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
     console.log("Card theme colors from props:", card.themeColors);
     console.log("Card has logoUrl:", !!card.logoUrl);
+    console.log("Card has avatarUrl:", !!card.avatarUrl);
+    console.log("Avatar visibility setting:", card.visibleFields?.avatarUrl);
+    console.log("Logo visibility setting:", card.visibleFields?.logoUrl);
     if (card.logoUrl) {
       console.log("Logo preview (first 50 chars):", card.logoUrl.substring(0, 50) + "...");
     }
-  }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl]);
+    if (card.avatarUrl) {
+      console.log("Avatar preview (first 50 chars):", card.avatarUrl.substring(0, 50) + "...");
+    }
+  }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl, card.avatarUrl, card.visibleFields]);
   
   // Get visibility settings with defaults
   const visibleFields = card.visibleFields || {
@@ -49,10 +55,19 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     >
       <CardHeader className="flex flex-col items-center pb-2">
         <div className="flex items-center justify-center gap-4 mb-2">
-          {visibleFields.name && visibleFields.avatarUrl && (
+          {/* Avatar - Show if avatar is visible AND we have either an avatar URL or a name for initials */}
+          {visibleFields.avatarUrl && (card.avatarUrl || card.name) && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
-                <AvatarImage src={card.avatarUrl} alt={card.name} />
+                <AvatarImage 
+                  src={card.avatarUrl} 
+                  alt={card.name}
+                  onLoad={() => console.log('Avatar displayed successfully in card preview')}
+                  onError={(e) => {
+                    console.error('Error displaying avatar in card preview:', e);
+                    console.error('Avatar URL that failed:', card.avatarUrl);
+                  }}
+                />
               ) : (
                 <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
                   {getInitials(card.name)}

@@ -16,14 +16,14 @@ export const useCardImages = (
 
   // Update form when logos/avatars change
   useEffect(() => {
-    if (setValue && avatarPreview) {
+    if (setValue && avatarPreview !== null) {
       console.log("Updating avatarUrl in form:", avatarPreview ? "Avatar present" : "No avatar");
       setValue('avatarUrl', avatarPreview, { shouldDirty: true });
     }
   }, [avatarPreview, setValue]);
 
   useEffect(() => {
-    if (setValue && logoPreview) {
+    if (setValue && logoPreview !== null) {
       console.log("Updating logoUrl in form:", logoPreview ? "Logo present" : "No logo");
       setValue('logoUrl', logoPreview, { shouldDirty: true });
     }
@@ -44,6 +44,16 @@ export const useCardImages = (
       }
     }
   }, [initialData, setValue]);
+
+  // Log current state for debugging
+  useEffect(() => {
+    console.log("useCardImages state:", { 
+      avatarPreview: avatarPreview ? "Avatar data present" : "No avatar", 
+      logoPreview: logoPreview ? "Logo data present" : "No logo",
+      initialAvatarUrl: initialData?.avatarUrl ? "Initial avatar present" : "No initial avatar",
+      initialLogoUrl: initialData?.logoUrl ? "Initial logo present" : "No initial logo"
+    });
+  }, [avatarPreview, logoPreview, initialData]);
 
   return {
     avatarPreview,
