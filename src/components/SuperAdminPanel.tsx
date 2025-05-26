@@ -2,12 +2,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { AdminActions } from "@/components/admin/AdminActions";
-import { UsersSection } from "@/components/admin/UsersSection";
+import { SuperAdminUsersTable } from "@/components/admin/SuperAdminUsersTable";
 import { toast } from "sonner";
 
 export const SuperAdminPanel = () => {
-  const [showUsers, setShowUsers] = useState(false);
   const { user, userRole } = useAuth();
   
   useEffect(() => {
@@ -25,10 +23,11 @@ export const SuperAdminPanel = () => {
   }
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 mb-6 rounded">
+    <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 mb-6 rounded-lg">
       <AdminHeader />
-      <AdminActions showUsers={showUsers} setShowUsers={setShowUsers} />
-      {showUsers && <UsersSection visible={showUsers} />}
+      <div className="mt-6">
+        <SuperAdminUsersTable />
+      </div>
     </div>
   );
 };
