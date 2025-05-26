@@ -18,23 +18,28 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   const textColor = (card.themeColors && card.themeColors[1]) || "#ffffff";
   const accentColor = (card.themeColors && card.themeColors[2]) || "#dd8d0a";
   
-  // Log colors for debugging
+  // Log colors and avatar data for debugging
   useEffect(() => {
+    console.log("=== CardPreview Debug Info ===");
     console.log("CardPreview: Rendering with colors", { bgColor, textColor, accentColor });
     console.log("Card theme colors from props:", card.themeColors);
     console.log("Card has logoUrl:", !!card.logoUrl);
     console.log("Card has avatarUrl:", !!card.avatarUrl);
+    console.log("Card avatarUrl value:", card.avatarUrl);
     console.log("Avatar visibility setting:", card.visibleFields?.avatarUrl);
     console.log("Logo visibility setting:", card.visibleFields?.logoUrl);
+    console.log("Card name:", card.name);
+    console.log("Should show avatar:", card.visibleFields?.avatarUrl !== false && (card.avatarUrl || card.name));
     if (card.logoUrl) {
       console.log("Logo preview (first 50 chars):", card.logoUrl.substring(0, 50) + "...");
     }
     if (card.avatarUrl) {
       console.log("Avatar preview (first 50 chars):", card.avatarUrl.substring(0, 50) + "...");
     }
-  }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl, card.avatarUrl, card.visibleFields]);
+    console.log("=== End CardPreview Debug Info ===");
+  }, [bgColor, textColor, accentColor, card.themeColors, card.logoUrl, card.avatarUrl, card.visibleFields, card.name]);
   
-  // Get visibility settings with defaults
+  // Get visibility settings with defaults - avatarUrl should be visible by default
   const visibleFields = card.visibleFields || {
     name: true,
     jobTitle: true,
@@ -48,6 +53,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     logoUrl: true,
   };
   
+  // Force avatarUrl to be visible if not explicitly set to false
+  const shouldShowAvatar = visibleFields.avatarUrl !== false && (card.avatarUrl || card.name);
+  
   return (
     <Card 
       className="w-full max-w-md mx-auto shadow-lg"
@@ -56,23 +64,23 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
       <CardHeader className="flex flex-col items-center pb-2">
         <div className="flex items-center justify-center gap-4 mb-2">
           {/* Avatar - Show if avatar is visible AND we have either an avatar URL or a name for initials */}
-          {visibleFields.avatarUrl && (card.avatarUrl || card.name) && (
+          {shouldShowAvatar && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
                 <AvatarImage 
                   src={card.avatarUrl} 
-                  alt={card.name}
-                  onLoad={() => console.log('Avatar displayed successfully in card preview')}
+                  alt={card.name || "Avatar"}
+                  onLoad={() => console.log('✅ Avatar displayed successfully in card preview')}
                   onError={(e) => {
-                    console.error('Error displaying avatar in card preview:', e);
+                    console.error('❌ Error displaying avatar in card preview:', e);
                     console.error('Avatar URL that failed:', card.avatarUrl);
                   }}
                 />
-              ) : (
+              ) : card.name ? (
                 <AvatarFallback className="text-2xl" style={{ backgroundColor: accentColor, color: textColor }}>
                   {getInitials(card.name)}
                 </AvatarFallback>
-              )}
+              ) : null}
             </Avatar>
           )}
           
@@ -83,9 +91,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
                 src={card.logoUrl} 
                 alt={`Logo de ${card.company || 'empresa'}`} 
                 className="max-h-14 max-w-14 object-contain"
-                onLoad={() => console.log('Logo displayed successfully in card preview')}
+                onLoad={() => console.log('✅ Logo displayed successfully in card preview')}
                 onError={(e) => {
-                  console.error('Error displaying logo in card preview:', e);
+                  console.error('❌ Error displaying logo in card preview:', e);
                   console.error('Logo URL that failed:', card.logoUrl);
                 }}
               />
