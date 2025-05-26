@@ -32,11 +32,11 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     logoUrl: true,
   };
   
-  // Check if avatar should be shown - must be explicitly enabled (not false) AND have content
-  const shouldShowAvatar = visibleFields.avatarUrl !== false && (card.avatarUrl || card.name);
+  // Check if avatar should be shown - must be explicitly TRUE AND have content
+  const shouldShowAvatar = visibleFields.avatarUrl === true && (card.avatarUrl || card.name);
   
-  // Check if logo should be shown - must be explicitly enabled (not false) AND have content  
-  const shouldShowLogo = visibleFields.logoUrl !== false && card.logoUrl && card.logoUrl.trim() !== "";
+  // Check if logo should be shown - must be explicitly TRUE AND have content  
+  const shouldShowLogo = visibleFields.logoUrl === true && card.logoUrl && card.logoUrl.trim() !== "";
   
   // Log visibility debug info
   useEffect(() => {
@@ -46,8 +46,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     console.log("visibleFields.logoUrl:", visibleFields.logoUrl);
     console.log("card.avatarUrl exists:", !!card.avatarUrl);
     console.log("card.logoUrl exists:", !!card.logoUrl);
-    console.log("shouldShowAvatar calculation:", `${visibleFields.avatarUrl} !== false && (${!!card.avatarUrl} || ${!!card.name}) = ${shouldShowAvatar}`);
-    console.log("shouldShowLogo calculation:", `${visibleFields.logoUrl} !== false && ${!!card.logoUrl} = ${shouldShowLogo}`);
+    console.log("shouldShowAvatar calculation:", `${visibleFields.avatarUrl} === true && (${!!card.avatarUrl} || ${!!card.name}) = ${shouldShowAvatar}`);
+    console.log("shouldShowLogo calculation:", `${visibleFields.logoUrl} === true && ${!!card.logoUrl} = ${shouldShowLogo}`);
     console.log("=== End Visibility Debug ===");
   }, [visibleFields, card.avatarUrl, card.logoUrl, shouldShowAvatar, shouldShowLogo]);
   
@@ -58,7 +58,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     >
       <CardHeader className="flex flex-col items-center pb-2">
         <div className="flex items-center justify-center gap-4 mb-2">
-          {/* Avatar - Only show if visibility is enabled AND we have content */}
+          {/* Avatar - Only show if visibility is explicitly TRUE AND we have content */}
           {shouldShowAvatar && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
@@ -79,7 +79,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo - Only show if visibility is enabled AND we have content */}
+          {/* Logo - Only show if visibility is explicitly TRUE AND we have content */}
           {shouldShowLogo && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 

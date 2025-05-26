@@ -7,9 +7,14 @@ export const useCardVisibility = (
   initialData?: BusinessCard,
   setValue?: UseFormSetValue<BusinessCard>
 ) => {
-  // Field visibility state
-  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(
-    initialData?.visibleFields || {
+  // Field visibility state - initialize with data from initialData if available
+  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(() => {
+    if (initialData?.visibleFields) {
+      console.log("🔧 Initializing visibility with existing data:", initialData.visibleFields);
+      return initialData.visibleFields;
+    }
+    // Default values when no initial data
+    return {
       name: true,
       jobTitle: true,
       company: true,
@@ -20,23 +25,29 @@ export const useCardVisibility = (
       description: true,
       avatarUrl: true,
       logoUrl: true,
-    }
-  );
+    };
+  });
 
-  // Initialize form with visibility data
+  // Update form whenever visibility changes
   useEffect(() => {
-    if (initialData && setValue) {
-      console.log("Initializing visibility with data:", initialData);
+    if (setValue) {
+      console.log("🔧 Updating form visibility fields:", visibleFields);
       setValue('visibleFields', visibleFields, { shouldDirty: true });
     }
-  }, [initialData, setValue, visibleFields]);
+  }, [visibleFields, setValue]);
+
+  // Initialize form with visibility data when component mounts
+  useEffect(() => {
+    if (initialData?.visibleFields && setValue) {
+      console.log("🚀 Setting initial visibility in form:", initialData.visibleFields);
+      setValue('visibleFields', initialData.visibleFields, { shouldDirty: false });
+    }
+  }, [initialData, setValue]);
 
   const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
+    console.log(`🔧 Changing ${fieldName} visibility to:`, isVisible);
     const updatedVisibility = { ...visibleFields, [fieldName]: isVisible };
     setVisibleFields(updatedVisibility);
-    if (setValue) {
-      setValue('visibleFields', updatedVisibility, { shouldDirty: true });
-    }
   };
 
   return {
