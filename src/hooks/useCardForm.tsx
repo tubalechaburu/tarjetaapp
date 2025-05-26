@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { BusinessCard, CardLink } from "@/types";
@@ -44,6 +45,8 @@ export const useCardForm = (initialData?: BusinessCard) => {
         website: true,
         address: true,
         description: true,
+        avatarUrl: true,
+        logoUrl: true,
       }
     }
   });

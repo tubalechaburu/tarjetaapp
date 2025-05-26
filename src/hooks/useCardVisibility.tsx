@@ -18,6 +18,8 @@ export const useCardVisibility = (
       website: true,
       address: true,
       description: true,
+      avatarUrl: true,
+      logoUrl: true,
     }
   );
 

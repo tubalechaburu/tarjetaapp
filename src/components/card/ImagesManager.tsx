@@ -3,6 +3,8 @@ import React from "react";
 import ImageUploader from "./ImageUploader";
 import { UseFormRegister, UseFormSetValue } from "react-hook-form";
 import { BusinessCard } from "@/types";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface ImagesManagerProps {
   register: UseFormRegister<BusinessCard>;
@@ -11,6 +13,8 @@ interface ImagesManagerProps {
   logoPreview: string | null;
   setAvatarPreview: (url: string | null) => void;
   setLogoPreview: (url: string | null) => void;
+  visibleFields: Record<string, boolean>;
+  onFieldVisibilityChange: (fieldName: string, isVisible: boolean) => void;
 }
 
 const ImagesManager: React.FC<ImagesManagerProps> = ({
@@ -20,6 +24,8 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
   logoPreview,
   setAvatarPreview,
   setLogoPreview,
+  visibleFields,
+  onFieldVisibilityChange,
 }) => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,18 +59,55 @@ const ImagesManager: React.FC<ImagesManagerProps> = ({
     }
   };
 
+  const ImageFieldWithVisibility = ({ 
+    id, 
+    label, 
+    description,
+    preview,
+    onChange 
+  }: {
+    id: string;
+    label: string;
+    description: string;
+    preview: string | null;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>{label}</Label>
+        <div className="flex items-center space-x-2">
+          <Label htmlFor={`visibility-${id}`} className="text-sm text-muted-foreground">
+            Mostrar
+          </Label>
+          <Switch
+            id={`visibility-${id}`}
+            checked={visibleFields[id] ?? true}
+            onCheckedChange={(checked) => onFieldVisibilityChange(id, checked)}
+          />
+        </div>
+      </div>
+      <ImageUploader
+        id={`${id}-upload`}
+        label=""
+        description={description}
+        preview={preview}
+        onChange={onChange}
+      />
+    </div>
+  );
+
   return (
     <>
-      <ImageUploader
-        id="avatar-upload"
+      <ImageFieldWithVisibility
+        id="avatarUrl"
         label="Imagen de perfil"
         description="Sube una foto de perfil para tu tarjeta"
         preview={avatarPreview}
         onChange={handleAvatarChange}
       />
 
-      <ImageUploader
-        id="logo-upload"
+      <ImageFieldWithVisibility
+        id="logoUrl"
         label="Logo de empresa"
         description="Sube el logo de tu empresa para tu tarjeta"
         preview={logoPreview}

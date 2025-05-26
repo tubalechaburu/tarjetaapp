@@ -38,6 +38,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     website: true,
     address: true,
     description: true,
+    avatarUrl: true,
+    logoUrl: true,
   };
   
   return (
@@ -47,7 +49,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     >
       <CardHeader className="flex flex-col items-center pb-2">
         <div className="flex items-center justify-center gap-4 mb-2">
-          {visibleFields.name && (
+          {visibleFields.name && visibleFields.avatarUrl && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
                 <AvatarImage src={card.avatarUrl} alt={card.name} />
@@ -59,8 +61,8 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo de empresa - Show logo if it exists and has valid data */}
-          {card.logoUrl && card.logoUrl.trim() !== "" && (
+          {/* Logo de empresa - Show logo if it exists, has valid data, and is visible */}
+          {visibleFields.logoUrl && card.logoUrl && card.logoUrl.trim() !== "" && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
                 src={card.logoUrl} 

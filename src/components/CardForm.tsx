@@ -62,6 +62,8 @@ const CardForm: React.FC<CardFormProps> = ({ initialData }) => {
           logoPreview={logoPreview}
           setAvatarPreview={setAvatarPreview}
           setLogoPreview={setLogoPreview}
+          visibleFields={visibleFields}
+          onFieldVisibilityChange={handleFieldVisibilityChange}
         />
 
         <LinkManager links={links} setLinks={setLinks} />

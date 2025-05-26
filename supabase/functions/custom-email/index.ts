@@ -30,10 +30,13 @@ serve(async (req) => {
       );
     }
 
-    // Create confirmation URL
+    // Use the correct site URL - prioritize site_url from request, fallback to Lovable domain
+    const baseUrl = site_url || "https://tarjetaapp.lovable.app";
+    
+    // Create confirmation URL with the correct domain
     const confirmationUrl = token_hash 
-      ? `${site_url || window.location.origin}/auth/confirm?token_hash=${token_hash}&type=${type}&redirect_to=${redirect_to || '/'}`
-      : `${site_url || window.location.origin}/auth/confirm?token=${token}&type=${type}&redirect_to=${redirect_to || '/'}`;
+      ? `${baseUrl}/auth/confirm?token_hash=${token_hash}&type=${type}&redirect_to=${redirect_to || '/'}`
+      : `${baseUrl}/auth/confirm?token=${token}&type=${type}&redirect_to=${redirect_to || '/'}`;
 
     // Get email subject and content based on type
     let subject = "";
@@ -250,6 +253,7 @@ serve(async (req) => {
     `;
 
     console.log(`Custom email template generated for ${email} (type: ${type})`);
+    console.log("Using base URL:", baseUrl);
 
     return new Response(
       JSON.stringify({ 
