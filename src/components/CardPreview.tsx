@@ -38,7 +38,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     }
     
     // Return the existing visibleFields, but ensure proper boolean conversion
-    const normalized = {};
+    const normalized: Record<string, boolean> = {};
     Object.keys(card.visibleFields).forEach(key => {
       // Convert to boolean - only true if explicitly true
       normalized[key] = card.visibleFields[key] === true;
