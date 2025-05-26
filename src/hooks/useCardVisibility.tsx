@@ -32,7 +32,7 @@ export const useCardVisibility = (
   useEffect(() => {
     if (setValue) {
       console.log("🔧 Updating form visibility fields:", visibleFields);
-      setValue('visibleFields', visibleFields, { shouldDirty: true });
+      setValue('visibleFields', visibleFields, { shouldDirty: true, shouldTouch: true });
     }
   }, [visibleFields, setValue]);
 
@@ -48,6 +48,12 @@ export const useCardVisibility = (
     console.log(`🔧 Changing ${fieldName} visibility to:`, isVisible);
     const updatedVisibility = { ...visibleFields, [fieldName]: isVisible };
     setVisibleFields(updatedVisibility);
+    
+    // Force immediate form update
+    if (setValue) {
+      console.log(`🚀 Immediately updating form field ${fieldName} to:`, isVisible);
+      setValue('visibleFields', updatedVisibility, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+    }
   };
 
   return {

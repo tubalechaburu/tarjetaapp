@@ -15,12 +15,6 @@ export const useCardForm = (initialData?: BusinessCard) => {
   const navigate = useNavigate();
   const [links, setLinks] = useState<CardLink[]>(initialData?.links || []);
   
-  // Use the separated hooks
-  const validation = useCardValidation(initialData);
-  const colors = useCardColors(initialData);
-  const images = useCardImages(initialData);
-  const visibility = useCardVisibility(initialData);
-
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<BusinessCard>({
     defaultValues: initialData || {
       id: uuidv4(),
@@ -35,7 +29,7 @@ export const useCardForm = (initialData?: BusinessCard) => {
       logoUrl: "",
       description: "",
       createdAt: Date.now(),
-      themeColors: [...colors.DEFAULT_COLORS],
+      themeColors: ["#000000", "#ffffff", "#dd8d0a"],
       visibleFields: {
         name: true,
         jobTitle: true,
@@ -51,10 +45,11 @@ export const useCardForm = (initialData?: BusinessCard) => {
     }
   });
 
-  // Connect the hooks to the form
-  const connectedColors = useCardColors(initialData, setValue);
-  const connectedImages = useCardImages(initialData, setValue);
-  const connectedVisibility = useCardVisibility(initialData, setValue);
+  // Use the separated hooks with setValue connection
+  const validation = useCardValidation(initialData);
+  const colors = useCardColors(initialData, setValue);
+  const images = useCardImages(initialData, setValue);
+  const visibility = useCardVisibility(initialData, setValue);
 
   const onSubmit = async (data: BusinessCard) => {
     try {
@@ -65,26 +60,22 @@ export const useCardForm = (initialData?: BusinessCard) => {
       }
 
       console.log("Submitting form data:", data);
-      console.log("Logo data being submitted:", data.logoUrl ? "Logo present" : "No logo");
-      console.log("Avatar data being submitted:", data.avatarUrl ? "Avatar present" : "No avatar");
-      console.log("Logo preview state:", connectedImages.logoPreview ? "Logo preview present" : "No logo preview");
+      console.log("Visibility fields being submitted:", data.visibleFields);
+      console.log("Current visibility state:", visibility.visibleFields);
 
       // Prepare final data ensuring all state is included
       const finalData = {
         ...data,
         links: links,
-        themeColors: connectedColors.selectedColors,
-        visibleFields: connectedVisibility.visibleFields,
+        themeColors: colors.selectedColors,
+        visibleFields: visibility.visibleFields, // Use the hook state
         userId: validation.user?.id || "anonymous",
-        // Ensure logo and avatar are included from current state - prioritize preview state
-        avatarUrl: connectedImages.avatarPreview || data.avatarUrl || "",
-        logoUrl: connectedImages.logoPreview || data.logoUrl || "",
-        // Keep ID if editing
+        avatarUrl: images.avatarPreview || data.avatarUrl || "",
+        logoUrl: images.logoPreview || data.logoUrl || "",
         id: initialData?.id || data.id
       };
 
-      console.log("Final data being saved - Logo:", finalData.logoUrl ? "Logo present" : "No logo");
-      console.log("Final data being saved - Avatar:", finalData.avatarUrl ? "Avatar present" : "No avatar");
+      console.log("Final visibility data being saved:", finalData.visibleFields);
       
       await saveCard(finalData);
       
@@ -105,15 +96,15 @@ export const useCardForm = (initialData?: BusinessCard) => {
     watch,
     links,
     setLinks,
-    avatarPreview: connectedImages.avatarPreview,
-    logoPreview: connectedImages.logoPreview,
-    setAvatarPreview: connectedImages.setAvatarPreview,
-    setLogoPreview: connectedImages.setLogoPreview,
+    avatarPreview: images.avatarPreview,
+    logoPreview: images.logoPreview,
+    setAvatarPreview: images.setAvatarPreview,
+    setLogoPreview: images.setLogoPreview,
     existingCards: validation.existingCards,
-    selectedColors: connectedColors.selectedColors,
-    visibleFields: connectedVisibility.visibleFields,
-    handleColorChange: connectedColors.handleColorChange,
-    handleFieldVisibilityChange: connectedVisibility.handleFieldVisibilityChange,
+    selectedColors: colors.selectedColors,
+    visibleFields: visibility.visibleFields,
+    handleColorChange: colors.handleColorChange,
+    handleFieldVisibilityChange: visibility.handleFieldVisibilityChange,
     onSubmit,
     isSuperAdmin: validation.isSuperAdmin,
     user: validation.user,
