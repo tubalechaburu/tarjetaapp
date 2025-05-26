@@ -18,41 +18,27 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   const textColor = (card.themeColors && card.themeColors[1]) || "#ffffff";
   const accentColor = (card.themeColors && card.themeColors[2]) || "#dd8d0a";
   
-  // Get visibility settings with defaults - if undefined, default to true
-  const visibleFields = card.visibleFields || {
-    name: true,
-    jobTitle: true,
-    company: true,
-    email: true,
-    phone: true,
-    website: true,
-    address: true,
-    description: true,
-    avatarUrl: true,
-    logoUrl: true,
-  };
+  // Get visibility settings with defaults - FIXED: explicitly check for true
+  const visibleFields = card.visibleFields || {};
   
-  // Fix visibility logic - if field is not explicitly false, show it
-  const shouldShowAvatar = visibleFields.avatarUrl !== false && (card.avatarUrl || card.name);
-  const shouldShowLogo = visibleFields.logoUrl !== false && card.logoUrl && card.logoUrl.trim() !== "";
+  // FIXED: Only show if explicitly set to true
+  const shouldShowAvatar = visibleFields.avatarUrl === true && (card.avatarUrl || card.name);
+  const shouldShowLogo = visibleFields.logoUrl === true && card.logoUrl && card.logoUrl.trim() !== "";
   
   // Enhanced debug logging
   useEffect(() => {
-    console.log("=== CardPreview Visibility Debug (ENHANCED) ===");
+    console.log("=== CardPreview Visibility Debug (FIXED) ===");
     console.log("Raw card.visibleFields:", card.visibleFields);
     console.log("Processed visibleFields:", visibleFields);
     console.log("visibleFields.avatarUrl value:", visibleFields.avatarUrl);
-    console.log("visibleFields.avatarUrl type:", typeof visibleFields.avatarUrl);
     console.log("visibleFields.logoUrl value:", visibleFields.logoUrl);
-    console.log("visibleFields.logoUrl type:", typeof visibleFields.logoUrl);
     console.log("card.avatarUrl exists:", !!card.avatarUrl);
-    console.log("card.avatarUrl value:", card.avatarUrl?.substring(0, 50) + "...");
     console.log("card.logoUrl exists:", !!card.logoUrl);
-    console.log("shouldShowAvatar calculation:", `${visibleFields.avatarUrl} !== false && (${!!card.avatarUrl} || ${!!card.name}) = ${shouldShowAvatar}`);
-    console.log("shouldShowLogo calculation:", `${visibleFields.logoUrl} !== false && ${!!card.logoUrl} = ${shouldShowLogo}`);
+    console.log("shouldShowAvatar calculation:", `${visibleFields.avatarUrl} === true && content exists = ${shouldShowAvatar}`);
+    console.log("shouldShowLogo calculation:", `${visibleFields.logoUrl} === true && content exists = ${shouldShowLogo}`);
     console.log("Final decision - Avatar will show:", shouldShowAvatar);
     console.log("Final decision - Logo will show:", shouldShowLogo);
-    console.log("=== End Enhanced Visibility Debug ===");
+    console.log("=== End Fixed Visibility Debug ===");
   }, [visibleFields, card.avatarUrl, card.logoUrl, card.visibleFields, shouldShowAvatar, shouldShowLogo]);
   
   return (
@@ -62,7 +48,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
     >
       <CardHeader className="flex flex-col items-center pb-2">
         <div className="flex items-center justify-center gap-4 mb-2">
-          {/* Avatar - Show if not explicitly false AND we have content */}
+          {/* Avatar - Show ONLY if explicitly true AND we have content */}
           {shouldShowAvatar && (
             <Avatar className="h-24 w-24" style={{ borderColor: accentColor, borderWidth: '2px' }}>
               {card.avatarUrl ? (
@@ -83,7 +69,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
             </Avatar>
           )}
           
-          {/* Logo - Show if not explicitly false AND we have content */}
+          {/* Logo - Show ONLY if explicitly true AND we have content */}
           {shouldShowLogo && (
             <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg shadow-sm p-1">
               <img 
