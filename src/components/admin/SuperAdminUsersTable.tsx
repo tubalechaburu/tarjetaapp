@@ -46,12 +46,19 @@ export const SuperAdminUsersTable = () => {
     try {
       setLoading(true);
       
-      // Get users from profiles table
+      // Get users from profiles table with proper email field
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email, updated_at');
       
       if (profilesError) throw profilesError;
+      
+      // Get auth users to get actual email addresses
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.warn('Could not fetch auth users:', authError);
+      }
       
       // Get user roles
       const { data: rolesData, error: rolesError } = await supabase
@@ -74,10 +81,14 @@ export const SuperAdminUsersTable = () => {
         const userCards = cards?.filter(card => card.user_id === profile.id) || [];
         const mappedCards = userCards.map(card => mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard));
         
+        // Get email from auth users if available, otherwise from profile
+        const authUser = authUsers?.users?.find(user => user.id === profile.id);
+        const emailToShow = authUser?.email || profile.email || profile.id;
+        
         return {
           id: profile.id,
           full_name: profile.full_name,
-          email: profile.email || profile.id,
+          email: emailToShow,
           role: roleName as UserRole,
           cards: mappedCards,
           updated_at: profile.updated_at || ''
