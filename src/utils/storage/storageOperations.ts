@@ -1,6 +1,7 @@
-import { BusinessCard } from "../types";
+
+import { BusinessCard } from "../../types";
 import { toast } from "sonner";
-import { checkSupabaseConnection } from "../integrations/supabase/client";
+import { normalizeCardData } from "./cardNormalization";
 
 // Import local storage operations
 import { 
@@ -8,7 +9,7 @@ import {
   getCardsLocally, 
   getCardByIdLocally, 
   deleteCardLocally 
-} from "./localStorage";
+} from "../localStorage";
 
 // Import Supabase storage operations
 import { 
@@ -16,58 +17,7 @@ import {
   getCardsSupabase, 
   getCardByIdSupabase, 
   deleteCardSupabase 
-} from "./supabaseStorage";
-
-// Re-export local storage functions as they might be used directly
-export { 
-  saveCardLocally, 
-  getCardsLocally, 
-  getCardByIdLocally, 
-  deleteCardLocally 
-};
-
-// IMPROVED: Normalize card data to ensure consistent visibility fields
-const normalizeCardData = (card: BusinessCard): BusinessCard => {
-  // Ensure visibleFields exists and has proper boolean values
-  const defaultVisibleFields = {
-    name: true,
-    jobTitle: true,
-    company: true,
-    email: true,
-    phone: true,
-    website: true,
-    address: true,
-    description: true,
-    avatarUrl: true,
-    logoUrl: true,
-  };
-  
-  // If no visibleFields, use defaults
-  if (!card.visibleFields) {
-    console.log("Normalizing card - no visibleFields, using defaults");
-    return {
-      ...card,
-      visibleFields: defaultVisibleFields
-    };
-  }
-  
-  // Normalize existing visibleFields to ensure proper boolean values
-  const normalizedVisibleFields = {};
-  Object.keys(defaultVisibleFields).forEach(key => {
-    // Only set to true if explicitly true, otherwise false
-    normalizedVisibleFields[key] = card.visibleFields[key] === true;
-  });
-  
-  console.log("Normalizing card visibility fields:", {
-    original: card.visibleFields,
-    normalized: normalizedVisibleFields
-  });
-  
-  return {
-    ...card,
-    visibleFields: normalizedVisibleFields
-  };
-};
+} from "../supabaseStorage";
 
 // Main storage API that handles both Supabase and local storage
 export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {

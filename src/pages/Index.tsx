@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
-import { getCards } from "@/utils/storage";
+import { getCards, deleteCard } from "@/utils/storage";
 import { checkSupabaseConnection } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
-import { deleteCard } from "@/utils/storage";
 import { toast } from "sonner";
 
 // Imported components
