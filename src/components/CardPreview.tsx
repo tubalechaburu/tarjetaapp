@@ -18,28 +18,56 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
   const textColor = (card.themeColors && card.themeColors[1]) || "#ffffff";
   const accentColor = (card.themeColors && card.themeColors[2]) || "#dd8d0a";
   
-  // Get visibility settings with defaults - FIXED: explicitly check for true
-  const visibleFields = card.visibleFields || {};
+  // IMPROVED: Handle visibility settings with better defaults and normalization
+  const normalizeVisibleFields = () => {
+    // If no visibleFields exist, default to showing everything
+    if (!card.visibleFields) {
+      console.log("No visibleFields found, defaulting to show all");
+      return {
+        name: true,
+        jobTitle: true,
+        company: true,
+        email: true,
+        phone: true,
+        website: true,
+        address: true,
+        description: true,
+        avatarUrl: true,
+        logoUrl: true,
+      };
+    }
+    
+    // Return the existing visibleFields, but ensure proper boolean conversion
+    const normalized = {};
+    Object.keys(card.visibleFields).forEach(key => {
+      // Convert to boolean - only true if explicitly true
+      normalized[key] = card.visibleFields[key] === true;
+    });
+    
+    return normalized;
+  };
   
-  // FIXED: Only show if explicitly set to true
+  const visibleFields = normalizeVisibleFields();
+  
+  // IMPROVED: More robust visibility logic with proper null checks
   const shouldShowAvatar = visibleFields.avatarUrl === true && (card.avatarUrl || card.name);
   const shouldShowLogo = visibleFields.logoUrl === true && card.logoUrl && card.logoUrl.trim() !== "";
   
-  // Enhanced debug logging
+  // Enhanced debug logging with card identification
   useEffect(() => {
-    console.log("=== CardPreview Visibility Debug (FIXED) ===");
+    console.log("=== CardPreview Visibility Debug (IMPROVED) ===");
+    console.log("Card name:", card.name);
+    console.log("Card ID:", card.id);
     console.log("Raw card.visibleFields:", card.visibleFields);
-    console.log("Processed visibleFields:", visibleFields);
-    console.log("visibleFields.avatarUrl value:", visibleFields.avatarUrl);
-    console.log("visibleFields.logoUrl value:", visibleFields.logoUrl);
+    console.log("Normalized visibleFields:", visibleFields);
+    console.log("visibleFields.avatarUrl:", visibleFields.avatarUrl);
+    console.log("visibleFields.logoUrl:", visibleFields.logoUrl);
     console.log("card.avatarUrl exists:", !!card.avatarUrl);
     console.log("card.logoUrl exists:", !!card.logoUrl);
-    console.log("shouldShowAvatar calculation:", `${visibleFields.avatarUrl} === true && content exists = ${shouldShowAvatar}`);
-    console.log("shouldShowLogo calculation:", `${visibleFields.logoUrl} === true && content exists = ${shouldShowLogo}`);
-    console.log("Final decision - Avatar will show:", shouldShowAvatar);
-    console.log("Final decision - Logo will show:", shouldShowLogo);
-    console.log("=== End Fixed Visibility Debug ===");
-  }, [visibleFields, card.avatarUrl, card.logoUrl, card.visibleFields, shouldShowAvatar, shouldShowLogo]);
+    console.log("shouldShowAvatar:", shouldShowAvatar);
+    console.log("shouldShowLogo:", shouldShowLogo);
+    console.log("=== End Improved Visibility Debug ===");
+  }, [card, visibleFields, shouldShowAvatar, shouldShowLogo]);
   
   return (
     <Card 
@@ -55,9 +83,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
                 <AvatarImage 
                   src={card.avatarUrl} 
                   alt={card.name || "Avatar"}
-                  onLoad={() => console.log('✅ Avatar displayed successfully in card preview')}
+                  onLoad={() => console.log(`✅ Avatar displayed successfully for ${card.name}`)}
                   onError={(e) => {
-                    console.error('❌ Error displaying avatar in card preview:', e);
+                    console.error(`❌ Error displaying avatar for ${card.name}:`, e);
                     console.error('Avatar URL that failed:', card.avatarUrl);
                   }}
                 />
@@ -76,9 +104,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ card, actions = false }) => {
                 src={card.logoUrl} 
                 alt={`Logo de ${card.company || 'empresa'}`} 
                 className="max-h-14 max-w-14 object-contain"
-                onLoad={() => console.log('✅ Logo displayed successfully in card preview')}
+                onLoad={() => console.log(`✅ Logo displayed successfully for ${card.name}`)}
                 onError={(e) => {
-                  console.error('❌ Error displaying logo in card preview:', e);
+                  console.error(`❌ Error displaying logo for ${card.name}:`, e);
                   console.error('Logo URL that failed:', card.logoUrl);
                 }}
               />

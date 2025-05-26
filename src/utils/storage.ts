@@ -1,4 +1,3 @@
-
 import { BusinessCard } from "../types";
 import { toast } from "sonner";
 import { checkSupabaseConnection } from "../integrations/supabase/client";
@@ -27,17 +26,64 @@ export {
   deleteCardLocally 
 };
 
+// IMPROVED: Normalize card data to ensure consistent visibility fields
+const normalizeCardData = (card: BusinessCard): BusinessCard => {
+  // Ensure visibleFields exists and has proper boolean values
+  const defaultVisibleFields = {
+    name: true,
+    jobTitle: true,
+    company: true,
+    email: true,
+    phone: true,
+    website: true,
+    address: true,
+    description: true,
+    avatarUrl: true,
+    logoUrl: true,
+  };
+  
+  // If no visibleFields, use defaults
+  if (!card.visibleFields) {
+    console.log("Normalizing card - no visibleFields, using defaults");
+    return {
+      ...card,
+      visibleFields: defaultVisibleFields
+    };
+  }
+  
+  // Normalize existing visibleFields to ensure proper boolean values
+  const normalizedVisibleFields = {};
+  Object.keys(defaultVisibleFields).forEach(key => {
+    // Only set to true if explicitly true, otherwise false
+    normalizedVisibleFields[key] = card.visibleFields[key] === true;
+  });
+  
+  console.log("Normalizing card visibility fields:", {
+    original: card.visibleFields,
+    normalized: normalizedVisibleFields
+  });
+  
+  return {
+    ...card,
+    visibleFields: normalizedVisibleFields
+  };
+};
+
 // Main storage API that handles both Supabase and local storage
 export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
   try {
+    // Normalize card data before saving
+    const normalizedCard = normalizeCardData(card);
+    console.log("Saving normalized card:", normalizedCard.name, normalizedCard.visibleFields);
+    
     // Save locally first
-    saveCardLocally(card);
-    console.log("Card saved locally:", card.id);
+    saveCardLocally(normalizedCard);
+    console.log("Card saved locally:", normalizedCard.id);
     
     // Then try to save to Supabase
     try {
-      console.log("Attempting to save card to Supabase:", card.id);
-      const saved = await saveCardSupabase(card);
+      console.log("Attempting to save card to Supabase:", normalizedCard.id);
+      const saved = await saveCardSupabase(normalizedCard);
       
       if (saved) {
         console.log("Card successfully saved to Supabase");
@@ -51,7 +97,7 @@ export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
       toast.warning("Tarjeta guardada localmente solamente");
     }
     
-    return card;
+    return normalizedCard;
   } catch (error) {
     console.error("Error saving card:", error);
     toast.error("Error al guardar la tarjeta");
@@ -69,23 +115,27 @@ export const getCards = async (): Promise<BusinessCard[]> => {
         // If Supabase query failed, fall back to local storage
         console.log("Supabase query failed, falling back to local storage");
         const localCards = getCardsLocally();
-        if (localCards.length > 0) {
+        // Normalize local cards
+        const normalizedCards = localCards.map(normalizeCardData);
+        if (normalizedCards.length > 0) {
           toast.info("Mostrando tarjetas guardadas localmente");
         }
-        return localCards;
+        return normalizedCards;
       }
       
       if (supabaseCards.length === 0) {
         // If no cards in Supabase, check local storage
         console.log("No cards in Supabase, checking local storage");
         const localCards = getCardsLocally();
-        if (localCards.length > 0) {
+        const normalizedCards = localCards.map(normalizeCardData);
+        if (normalizedCards.length > 0) {
           toast.info("Mostrando tarjetas guardadas localmente");
-          return localCards;
+          return normalizedCards;
         }
       }
       
-      return supabaseCards;
+      // Normalize Supabase cards
+      return supabaseCards.map(normalizeCardData);
     } catch (supabaseError) {
       // If Supabase operation failed, fall back to local storage
       console.error("Supabase operation failed:", supabaseError);
@@ -94,8 +144,9 @@ export const getCards = async (): Promise<BusinessCard[]> => {
   } catch (error) {
     console.error("Error getting cards from Supabase:", error);
     const localCards = getCardsLocally();
+    const normalizedCards = localCards.map(normalizeCardData);
     toast.error("Error al conectar con Supabase, usando datos locales");
-    return localCards; // Fallback to local storage
+    return normalizedCards; // Fallback to local storage
   }
 };
 
@@ -110,7 +161,7 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
       
       if (supabaseCard) {
         console.log(`Found card with ID ${id} in Supabase`);
-        return supabaseCard;
+        return normalizeCardData(supabaseCard);
       }
       
       console.log(`Card with ID ${id} not found in Supabase, checking locally`);
@@ -119,17 +170,18 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
       console.log("Local card result:", localCard);
       
       if (localCard) {
+        const normalizedCard = normalizeCardData(localCard);
         // If found locally but not in Supabase, try to sync it to Supabase for future use
         console.log("Found locally, attempting to sync to Supabase for sharing");
         try {
-          await saveCardSupabase(localCard);
+          await saveCardSupabase(normalizedCard);
           console.log("Successfully synced local card to Supabase");
           toast.success("Tarjeta sincronizada a la nube");
         } catch (syncError) {
           console.error("Failed to sync local card to Supabase:", syncError);
           toast.error("No se pudo sincronizar la tarjeta a la nube");
         }
-        return localCard;
+        return normalizedCard;
       }
       
       console.log(`Card with ID ${id} not found in any storage`);
@@ -137,12 +189,12 @@ export const getCardById = async (id: string): Promise<BusinessCard | undefined>
     } catch (supabaseError) {
       console.error("Supabase operation failed:", supabaseError);
       const localCard = getCardByIdLocally(id);
-      return localCard;
+      return localCard ? normalizeCardData(localCard) : undefined;
     }
   } catch (error) {
     console.error(`Error getting card ${id}:`, error);
     const localCard = getCardByIdLocally(id);
-    return localCard; // Fallback to local storage
+    return localCard ? normalizeCardData(localCard) : undefined; // Fallback to local storage
   }
 };
 
