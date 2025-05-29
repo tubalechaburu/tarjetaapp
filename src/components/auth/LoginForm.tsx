@@ -29,13 +29,18 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (data: AuthFormValues) => {
+    if (isSubmitting) return; // Prevenir doble submit
+    
     try {
+      console.log("LoginForm: Starting login process for:", data.email);
       setIsSubmitting(true);
       await onSubmit(data);
+      console.log("LoginForm: Login completed successfully");
     } catch (error: any) {
-      console.error("Error en login:", error);
+      console.error("LoginForm: Error during login:", error);
       toast.error(error.message || "Error al iniciar sesión. Por favor, inténtalo de nuevo.");
     } finally {
+      console.log("LoginForm: Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
@@ -48,6 +53,7 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
           id="login-email"
           type="email"
           placeholder="tu@email.com"
+          disabled={isSubmitting}
           {...form.register("email", {
             required: "El correo electrónico es obligatorio",
             pattern: {
@@ -71,6 +77,7 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
             variant="link" 
             className="p-0 h-auto text-xs"
             onClick={onForgotPassword}
+            disabled={isSubmitting}
           >
             ¿Olvidaste tu contraseña?
           </Button>
@@ -80,6 +87,7 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
             id="login-password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
+            disabled={isSubmitting}
             {...form.register("password", {
               required: "La contraseña es obligatoria",
               minLength: {
@@ -94,6 +102,7 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
             size="icon"
             className="absolute right-0 top-0 h-full"
             onClick={togglePasswordVisibility}
+            disabled={isSubmitting}
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />
@@ -112,6 +121,7 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="remember" 
+          disabled={isSubmitting}
           onCheckedChange={(checked) => {
             form.setValue("rememberMe", checked === true);
           }}

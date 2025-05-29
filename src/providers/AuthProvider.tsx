@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { AuthContextType, UserRole } from "@/types";
 import { supabase, getUserRole } from "@/integrations/supabase/client";
@@ -28,9 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!userId) return;
     
     try {
-      console.log("Loading user role for user ID:", userId);
+      console.log("AuthProvider: Loading user role for user ID:", userId);
       const role = await getUserRole(userId);
-      console.log("User role loaded:", role);
+      console.log("AuthProvider: User role loaded:", role);
       setUserRole(role);
       
       // Si el email es tubal@tubalechaburu.com y no tiene rol de superadmin, mostramos advertencia
@@ -39,14 +38,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.warning("Tu cuenta debería tener permisos de superadmin. Contacta con el administrador del sistema.");
       }
     } catch (error) {
-      console.error("Error loading user role:", error);
+      console.error("AuthProvider: Error loading user role:", error);
     }
   };
 
   // Función para refrescar el rol del usuario
   const refreshUserRole = async () => {
     if (user?.id) {
-      console.log("Refreshing user role...");
+      console.log("AuthProvider: Refreshing user role...");
       await loadUserRole(user.id);
     }
   };
@@ -54,52 +53,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log("AuthProvider: Setting up authentication...");
     
-    // Escuchar cambios en el estado de autenticación PRIMERO
+    let mounted = true;
+    
+    // Configurar listener de cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed, event:", event);
-        console.log("Session:", session);
+        if (!mounted) return;
+        
+        console.log("AuthProvider: Auth state changed, event:", event);
+        console.log("AuthProvider: Session:", session);
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user?.id) {
-          console.log("Session updated, loading user role...");
+          console.log("AuthProvider: Session updated, loading user role...");
           await loadUserRole(session.user.id);
         } else {
           setUserRole(null);
         }
         
-        // Solo marcamos como no loading después de procesar el evento
         setIsLoading(false);
       }
     );
 
-    // LUEGO obtener la sesión actual
+    // Obtener sesión inicial
     const getInitialSession = async () => {
       try {
-        console.log("Getting initial session...");
+        console.log("AuthProvider: Getting initial session...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Error getting session:", error);
-          setIsLoading(false);
+          console.error("AuthProvider: Error getting session:", error);
+          if (mounted) {
+            setIsLoading(false);
+          }
           return;
         }
         
-        console.log("Initial session:", session);
+        console.log("AuthProvider: Initial session:", session);
         
-        // Solo actualizar si no tenemos sesión ya (evitar duplicados)
-        if (!session) {
-          setSession(null);
-          setUser(null);
-          setUserRole(null);
+        if (mounted) {
+          // Si no hay sesión, marcar como no loading
+          if (!session) {
+            setSession(null);
+            setUser(null);
+            setUserRole(null);
+            setIsLoading(false);
+          }
+          // Si hay sesión, el onAuthStateChange la manejará
+        }
+      } catch (error) {
+        console.error("AuthProvider: Error getting initial session:", error);
+        if (mounted) {
           setIsLoading(false);
         }
-        // Si hay sesión, el onAuthStateChange la manejará
-      } catch (error) {
-        console.error("Error al obtener la sesión inicial:", error);
-        setIsLoading(false);
       }
     };
 
@@ -107,15 +115,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log("AuthProvider: Cleaning up subscription");
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Removemos dependencias para evitar loops
+  }, []);
 
   // Método para iniciar sesión con mejor manejo de errores
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Attempting to sign in with email:", email);
-      setIsLoading(true);
+      console.log("AuthProvider: Attempting to sign in with email:", email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -123,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.error("Supabase auth error:", error);
+        console.error("AuthProvider: Supabase auth error:", error);
         
         // Mejorar mensajes de error específicos
         if (error.message === "Invalid login credentials") {
@@ -135,18 +143,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           toast.error(`Error de autenticación: ${error.message}`);
         }
-        setIsLoading(false);
         throw error;
       }
 
-      console.log("Sign in successful:", data);
+      console.log("AuthProvider: Sign in successful:", data);
       toast.success("Sesión iniciada correctamente");
       
-      // No redirigir aquí, dejar que el onAuthStateChange maneje la actualización
-      
     } catch (error: any) {
-      console.error("Error signing in:", error);
-      setIsLoading(false);
+      console.error("AuthProvider: Error signing in:", error);
       throw error;
     }
   };
@@ -232,9 +236,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     userRole,
     signIn,
-    signUp,
-    signOut,
-    resetPassword,
+    signUp: async (email: string, password: string, metadata?: any) => {
+      try {
+        setIsLoading(true);
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: metadata,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
+      } catch (error: any) {
+        toast.error(error.message || "Error al registrarse");
+        console.error("Error al registrarse:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    signOut: async () => {
+      try {
+        setIsLoading(true);
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          throw error;
+        }
+        setUserRole(null);
+        toast.success("Sesión cerrada correctamente");
+        // Redirigir a la landing page después del logout
+        window.location.href = '/landing';
+      } catch (error: any) {
+        toast.error(error.message || "Error al cerrar sesión");
+        console.error("Error al cerrar sesión:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    resetPassword: async (email: string) => {
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        toast.success("Instrucciones enviadas a tu correo electrónico");
+      } catch (error: any) {
+        toast.error(error.message || "Error al enviar el correo de recuperación");
+        console.error("Error al enviar el correo de recuperación:", error);
+        throw error;
+      }
+    },
     isAdmin,
     isSuperAdmin,
     refreshUserRole,
