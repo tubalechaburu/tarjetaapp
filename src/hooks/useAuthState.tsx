@@ -16,11 +16,6 @@ export const useAuthState = () => {
     try {
       const role = await getUserRole(userId);
       setUserRole(role);
-      
-      // Solo mostrar warning una vez y solo para el email específico
-      if (user?.email === "tubal@tubalechaburu.com" && role !== "superadmin") {
-        toast.warning("Tu cuenta debería tener permisos de superadmin. Contacta con el administrador del sistema.");
-      }
     } catch (error) {
       console.error("Error loading user role:", error);
       setUserRole(null);
@@ -36,29 +31,7 @@ export const useAuthState = () => {
   useEffect(() => {
     let mounted = true;
     
-    // Función para manejar cambios de autenticación
-    const handleAuthChange = async (event: string, session: any) => {
-      if (!mounted) return;
-      
-      console.log("Auth state changed:", event);
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Solo cargar rol si hay usuario y no lo tenemos ya
-      if (session?.user?.id && (!userRole || event === 'SIGNED_IN')) {
-        await loadUserRole(session.user.id);
-      } else if (!session?.user) {
-        setUserRole(null);
-      }
-      
-      setIsLoading(false);
-    };
-
-    // Configurar listener de cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
-
-    // Obtener sesión inicial solo una vez
+    // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -89,13 +62,33 @@ export const useAuthState = () => {
       }
     };
 
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+        
+        console.log("Auth state changed:", event);
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user?.id && event === 'SIGNED_IN') {
+          await loadUserRole(session.user.id);
+        } else if (!session?.user) {
+          setUserRole(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
     getInitialSession();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Remover dependencias para evitar re-renders innecesarios
+  }, []); // Empty dependency array to prevent re-runs
 
   return {
     user,
