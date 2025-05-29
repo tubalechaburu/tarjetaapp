@@ -149,18 +149,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setIsLoading(false);
       
-      // Load user role if user exists - use setTimeout to avoid blocking
+      // Load user role if user exists and avoid RLS recursion
       if (session?.user?.id) {
         console.log("Loading role for user:", session.user.id);
-        setTimeout(() => {
-          getUserRole(session.user.id).then(role => {
+        // Add small delay to ensure RLS policies are stable
+        setTimeout(async () => {
+          try {
+            const role = await getUserRole(session.user.id);
             console.log("Initial user role:", role);
             setUserRole(role || 'user');
-          }).catch(error => {
+          } catch (error) {
             console.error("Error loading initial user role:", error);
+            // Set default role if there's an error
             setUserRole('user');
-          });
-        }, 0);
+          }
+        }, 100);
       }
     });
 
@@ -174,16 +177,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user?.id && event === 'SIGNED_IN') {
           console.log("User signed in, loading role");
-          // Use setTimeout to avoid blocking the auth state change
-          setTimeout(() => {
-            getUserRole(session.user.id).then(role => {
+          // Add small delay to ensure RLS policies are stable
+          setTimeout(async () => {
+            try {
+              const role = await getUserRole(session.user.id);
               console.log("User role loaded:", role);
               setUserRole(role || 'user');
-            }).catch(error => {
+            } catch (error) {
               console.error("Error loading user role:", error);
               setUserRole('user');
-            });
-          }, 0);
+            }
+          }, 100);
         } else if (!session?.user) {
           console.log("No user, clearing role");
           setUserRole(null);

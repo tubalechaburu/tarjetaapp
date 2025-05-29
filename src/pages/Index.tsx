@@ -24,7 +24,7 @@ const Index = () => {
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle navigation in useEffect to avoid React warning
+  // Handle navigation when not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       console.log("No user found, redirecting to auth...");
@@ -43,7 +43,7 @@ const Index = () => {
         setError(null);
         console.log("Starting page initialization...");
         
-        // Verificar conexión con Supabase
+        // Check Supabase connection
         try {
           console.log("Checking Supabase connection...");
           const connected = await checkSupabaseConnection();
@@ -54,42 +54,51 @@ const Index = () => {
           setConnectionStatus(false);
         }
 
-        // Cargar tarjetas
-        try {
-          console.log("Loading cards...");
-          setLoading(true);
-          const fetchedCards = await getCards();
-          console.log("Fetched cards:", fetchedCards);
-          
-          // Remove duplicates by keeping only the latest card per user
-          const uniqueCards = fetchedCards.reduce((acc: BusinessCard[], card) => {
-            const existingIndex = acc.findIndex(c => c.userId === card.userId);
-            if (existingIndex >= 0) {
-              // Keep the one with the latest createdAt timestamp
-              if ((card.createdAt || 0) > (acc[existingIndex].createdAt || 0)) {
-                acc[existingIndex] = card;
-              }
+        // Load cards with better error handling
+        if (user) {
+          try {
+            console.log("Loading cards...");
+            setLoading(true);
+            const fetchedCards = await getCards();
+            console.log("Fetched cards:", fetchedCards);
+            
+            if (fetchedCards && Array.isArray(fetchedCards)) {
+              // Remove duplicates by keeping only the latest card per user
+              const uniqueCards = fetchedCards.reduce((acc: BusinessCard[], card) => {
+                const existingIndex = acc.findIndex(c => c.userId === card.userId);
+                if (existingIndex >= 0) {
+                  // Keep the one with the latest createdAt timestamp
+                  if ((card.createdAt || 0) > (acc[existingIndex].createdAt || 0)) {
+                    acc[existingIndex] = card;
+                  }
+                } else {
+                  acc.push(card);
+                }
+                return acc;
+              }, []);
+              
+              console.log("Unique cards:", uniqueCards);
+              setCards(uniqueCards);
+              
+              // Find user's card
+              const foundUserCard = uniqueCards.find(card => card.userId === user.id);
+              console.log("Found user card:", foundUserCard);
+              setUserCard(foundUserCard || null);
             } else {
-              acc.push(card);
+              console.log("No cards returned or invalid format");
+              setCards([]);
+              setUserCard(null);
             }
-            return acc;
-          }, []);
-          
-          console.log("Unique cards:", uniqueCards);
-          setCards(uniqueCards);
-          
-          // Find user's card
-          if (user) {
-            const foundUserCard = uniqueCards.find(card => card.userId === user.id);
-            console.log("Found user card:", foundUserCard);
-            setUserCard(foundUserCard || null);
+          } catch (error) {
+            console.error("Error loading cards:", error);
+            setError("Error al cargar las tarjetas. Revisa la conexión a Supabase.");
+            toast.error("Error al cargar las tarjetas");
+            // Still set empty arrays to prevent undefined errors
+            setCards([]);
+            setUserCard(null);
+          } finally {
+            setLoading(false);
           }
-        } catch (error) {
-          console.error("Error loading cards:", error);
-          setError("Error al cargar las tarjetas");
-          toast.error("Error al cargar las tarjetas");
-        } finally {
-          setLoading(false);
         }
       } catch (error) {
         console.error("Error in page initialization:", error);
@@ -102,7 +111,7 @@ const Index = () => {
     if (!authLoading && user) {
       initPage();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, userRole]); // Added userRole to dependencies
 
   // Don't render anything if redirecting
   if (!authLoading && !user) {
