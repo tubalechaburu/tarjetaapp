@@ -1,11 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types";
+
+// Define the allowed roles based on the database schema
+type DatabaseRole = 'user' | 'superadmin';
 
 // Function to update a user's role directly in the profiles table
 export const updateUserRole = async (
   userId: string, 
-  role: UserRole,
+  role: DatabaseRole,
   onSuccess?: () => void,
   onError?: (error: any) => void
 ) => {
@@ -13,7 +15,7 @@ export const updateUserRole = async (
     // Update the role directly in the profiles table
     const { error } = await supabase
       .from('profiles')
-      .update({ role: role as UserRole })
+      .update({ role: role })
       .eq('id', userId);
         
     if (error) throw error;

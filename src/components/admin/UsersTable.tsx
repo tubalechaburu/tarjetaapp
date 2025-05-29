@@ -1,7 +1,5 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
@@ -24,6 +22,9 @@ import { Check, ChevronDown, ChevronUp, Copy, MoreHorizontal, User, Download, Ex
 import { updateUserRole } from "@/utils/userRoleUtils";
 import { UserCardsSection } from "@/components/admin/UserCardsSection";
 import { Link } from "react-router-dom";
+
+// Define the allowed roles based on the database schema
+type DatabaseRole = 'user' | 'superadmin';
 
 export const UsersTable = () => {
   const { toast } = useToast();
@@ -53,7 +54,7 @@ export const UsersTable = () => {
       const usersWithData = data?.map(user => ({
         ...user,
         full_name: user.email?.split('@')[0] || 'Usuario', // Use email prefix as name fallback
-        role: user.role as UserRole
+        role: user.role as DatabaseRole
       })) || [];
       
       setUsers(usersWithData);
@@ -75,7 +76,7 @@ export const UsersTable = () => {
     fetchUsers();
   }, []);
 
-  const handleRoleUpdate = async (userId: string, newRole: UserRole) => {
+  const handleRoleUpdate = async (userId: string, newRole: DatabaseRole) => {
     try {
       await updateUserRole(userId, newRole, () => {
         toast({

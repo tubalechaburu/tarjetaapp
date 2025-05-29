@@ -1,10 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { BusinessCard, SupabaseBusinessCard, UserRole } from "@/types";
+import { BusinessCard, SupabaseBusinessCard } from "@/types";
 import { UserWithCards } from "@/types/admin";
 import { mapSupabaseToBusinessCard } from "@/utils/supabase/mappers";
 import { useToast } from "@/components/ui/use-toast";
+
+// Define the allowed roles based on the database schema
+type DatabaseRole = 'user' | 'superadmin';
 
 export const useUsersWithCards = () => {
   const { toast } = useToast();
@@ -39,7 +42,7 @@ export const useUsersWithCards = () => {
           id: profile.id,
           full_name: profile.email?.split('@')[0] || 'Usuario', // Use email prefix as name
           email: profile.email,
-          role: profile.role as UserRole,
+          role: profile.role as DatabaseRole,
           cards: mappedCards,
           updated_at: profile.updated_at || ''
         };

@@ -1,7 +1,5 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
@@ -14,6 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, ChevronDown, ChevronUp } from "lucide-react";
 import { UserCardsSection } from "@/components/admin/UserCardsSection";
+
+// Define the allowed roles based on the database schema
+type DatabaseRole = 'user' | 'superadmin';
 
 export const AllUsersTable = () => {
   const { toast } = useToast();
@@ -43,7 +44,7 @@ export const AllUsersTable = () => {
       const usersWithData = data?.map(user => ({
         ...user,
         full_name: user.email?.split('@')[0] || 'Usuario', // Use email prefix as name fallback
-        role: user.role as UserRole
+        role: user.role as DatabaseRole
       })) || [];
       
       setUsers(usersWithData);
