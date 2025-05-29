@@ -30,8 +30,8 @@ serve(async (req) => {
       );
     }
 
-    // Use the correct site URL - prioritize site_url from request, fallback to Lovable domain
-    const baseUrl = site_url || "https://tarjetaapp.lovable.app";
+    // Use the custom domain tarjetavisita.app
+    const baseUrl = "https://tarjetavisita.app";
     
     // Create confirmation URL with the correct domain
     const confirmationUrl = token_hash 
@@ -46,26 +46,26 @@ serve(async (req) => {
 
     switch (type) {
       case "signup":
-        subject = "¡Bienvenido a TarjetaApp! Confirma tu cuenta";
-        greeting = "¡Bienvenido a TarjetaApp!";
-        mainMessage = "Gracias por registrarte en TarjetaApp. Para activar tu cuenta, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo:";
+        subject = "¡Bienvenido a TarjetaVisita! Confirma tu cuenta";
+        greeting = "¡Bienvenido a TarjetaVisita!";
+        mainMessage = "Gracias por registrarte en TarjetaVisita. Para activar tu cuenta, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo:";
         buttonText = "Confirmar mi cuenta";
         break;
       case "recovery":
-        subject = "Restablecer contraseña - TarjetaApp";
+        subject = "Restablecer contraseña - TarjetaVisita";
         greeting = "Restablece tu contraseña";
         mainMessage = "Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para crear una nueva contraseña:";
         buttonText = "Restablecer contraseña";
         break;
       case "email_change":
-        subject = "Confirmar cambio de email - TarjetaApp";
+        subject = "Confirmar cambio de email - TarjetaVisita";
         greeting = "Confirma tu nuevo email";
         mainMessage = "Por favor, confirma tu nueva dirección de correo electrónico haciendo clic en el botón de abajo:";
         buttonText = "Confirmar nuevo email";
         break;
     }
 
-    // Enhanced email template
+    // Enhanced email template with TarjetaVisita branding
     const template = `
     <!DOCTYPE html>
     <html lang="es">
@@ -210,8 +210,8 @@ serve(async (req) => {
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">📱 TarjetaApp</div>
-          <div class="subtitle">Tu plataforma de tarjetas digitales</div>
+          <div class="logo">🎴 TarjetaVisita</div>
+          <div class="subtitle">Tu tarjeta de presentación digital</div>
         </div>
         
         <div class="content">
@@ -236,15 +236,15 @@ serve(async (req) => {
         
         <div class="footer">
           <p class="footer-text">
-            Este correo fue enviado por <strong>TarjetaApp</strong><br>
+            Este correo fue enviado por <strong>TarjetaVisita</strong><br>
             La plataforma líder en tarjetas de presentación digitales
           </p>
           <p class="footer-text">
-            <a href="mailto:soporte@tarjetaapp.com" class="footer-link">¿Necesitas ayuda?</a> • 
-            <a href="#" class="footer-link">Política de Privacidad</a>
+            <a href="mailto:soporte@tarjetavisita.app" class="footer-link">¿Necesitas ayuda?</a> • 
+            <a href="https://tarjetavisita.app" class="footer-link">Visitar TarjetaVisita</a>
           </p>
           <p class="footer-text" style="margin-top: 15px; font-size: 12px;">
-            &copy; 2025 TarjetaApp - Todos los derechos reservados.
+            &copy; 2025 TarjetaVisita - Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -253,7 +253,7 @@ serve(async (req) => {
     `;
 
     console.log(`Custom email template generated for ${email} (type: ${type})`);
-    console.log("Using base URL:", baseUrl);
+    console.log("Using domain:", baseUrl);
 
     return new Response(
       JSON.stringify({ 
