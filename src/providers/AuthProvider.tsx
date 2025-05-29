@@ -142,6 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setUserRole(null);
       toast.success("Sesión cerrada correctamente");
+      // Redirigir a la landing page después del logout
+      window.location.href = '/landing';
     } catch (error: any) {
       toast.error(error.message || "Error al cerrar sesión");
       console.error("Error al cerrar sesión:", error);

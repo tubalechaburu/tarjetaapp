@@ -42,17 +42,21 @@ const Landing = () => {
           Olvídate del papel. Comparte tu información profesional al instante con códigos QR, 
           enlaces personalizados y un diseño que destaca tu marca personal.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
           <Link to="/auth">
             <Button size="lg" className="text-lg px-8 py-4">
               Crear mi tarjeta gratis
             </Button>
           </Link>
-          <Link to="/demo">
-            <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-              Ver ejemplo
-            </Button>
-          </Link>
+        </div>
+
+        {/* Imagen de ejemplo de la tarjeta */}
+        <div className="max-w-sm mx-auto">
+          <img
+            src="/lovable-uploads/80bd2469-a8e8-4a1b-8741-7d640baf9ae8.png"
+            alt="Ejemplo de tarjeta digital - María González"
+            className="w-full rounded-lg shadow-2xl"
+          />
         </div>
       </section>
 
