@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { AuthContextType, UserRole } from "@/types";
 import { supabase, getUserRole } from "@/integrations/supabase/client";
@@ -199,66 +200,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     userRole,
     signIn,
-    signUp: async (email: string, password: string, metadata?: any) => {
-      try {
-        setIsLoading(true);
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: metadata,
-          },
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
-      } catch (error: any) {
-        toast.error(error.message || "Error al registrarse");
-        console.error("Error al registrarse:", error);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    signOut: async () => {
-      try {
-        setIsLoading(true);
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          throw error;
-        }
-        setUserRole(null);
-        toast.success("Sesión cerrada correctamente");
-        // Redirigir a la landing page después del logout
-        window.location.href = '/landing';
-      } catch (error: any) {
-        toast.error(error.message || "Error al cerrar sesión");
-        console.error("Error al cerrar sesión:", error);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    resetPassword: async (email: string) => {
-      try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        toast.success("Instrucciones enviadas a tu correo electrónico");
-      } catch (error: any) {
-        toast.error(error.message || "Error al enviar el correo de recuperación");
-        console.error("Error al enviar el correo de recuperación:", error);
-        throw error;
-      }
-    },
+    signUp,
+    signOut,
+    resetPassword,
     isAdmin,
     isSuperAdmin,
     refreshUserRole,
