@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { AuthContextType, UserRole } from "@/types";
 import { supabase, getUserRole } from "@/integrations/supabase/client";
@@ -88,24 +87,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Método para iniciar sesión
+  // Método para iniciar sesión con mejor manejo de errores
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Attempting to sign in with email:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase auth error:", error);
+        
+        // Mejorar mensajes de error específicos
+        if (error.message === "Invalid login credentials") {
+          toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Debes confirmar tu email antes de iniciar sesión.");
+        } else if (error.message.includes("too many requests")) {
+          toast.error("Demasiados intentos. Espera unos minutos antes de intentar de nuevo.");
+        } else {
+          toast.error(`Error de autenticación: ${error.message}`);
+        }
+        throw error;
+      }
 
+      console.log("Sign in successful:", data);
       toast.success("Sesión iniciada correctamente");
       
       // Redirect to main dashboard after successful login
-      window.location.href = '/';
+      window.location.href = '/dashboard';
       
     } catch (error: any) {
       console.error("Error signing in:", error);
-      toast.error(error.message || "Error al iniciar sesión");
       throw error;
     }
   };
