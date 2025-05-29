@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { AuthContextType, UserRole } from "@/types";
 import { supabase, getUserRole } from "@/integrations/supabase/client";
@@ -91,19 +90,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Método para iniciar sesión
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast.success("Sesión iniciada correctamente");
+      
+      // Redirect to dashboard after successful login
+      window.location.href = '/dashboard';
+      
+      return data;
     } catch (error: any) {
+      console.error("Error signing in:", error);
       toast.error(error.message || "Error al iniciar sesión");
-      console.error("Error al iniciar sesión:", error);
       throw error;
     }
   };
