@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards, deleteCard } from "@/utils/storage";
@@ -23,6 +24,14 @@ const Index = () => {
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Handle navigation in useEffect to avoid React warning
+  useEffect(() => {
+    if (!authLoading && !user) {
+      console.log("No user found, redirecting to auth...");
+      navigate('/auth', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     console.log("Index component mounted");
@@ -90,11 +99,19 @@ const Index = () => {
       }
     };
 
-    // Solo inicializar si no estamos cargando la autenticación
-    if (!authLoading) {
+    // Solo inicializar si no estamos cargando la autenticación y hay usuario
+    if (!authLoading && user) {
       initPage();
+    } else if (!authLoading && !user) {
+      // Si no hay usuario y no estamos cargando, marcar como no loading para mostrar la redirección
+      setLoading(false);
     }
   }, [user, authLoading]);
+
+  // Don't render anything if redirecting
+  if (!authLoading && !user) {
+    return null;
+  }
 
   const handleDeleteCard = async () => {
     if (!userCard) return;
@@ -153,13 +170,6 @@ const Index = () => {
     );
   }
 
-  // Si no hay usuario, redirigir a auth
-  if (!user) {
-    console.log("No user found, redirecting to auth...");
-    navigate('/auth');
-    return null;
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <Header />
@@ -169,7 +179,7 @@ const Index = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Mis Tarjetas Digitales</h1>
           <div className="flex items-center gap-2">
-            <span className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full">
+            <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
               {userRole || 'user'}
             </span>
             {(!userCard || isSuperAdmin()) && (
