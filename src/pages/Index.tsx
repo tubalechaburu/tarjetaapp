@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards, deleteCard } from "@/utils/storage";

@@ -149,22 +149,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setIsLoading(false);
       
-      // Load user role if user exists
+      // Load user role if user exists - use setTimeout to avoid blocking
       if (session?.user?.id) {
         console.log("Loading role for user:", session.user.id);
-        getUserRole(session.user.id).then(role => {
-          console.log("Initial user role:", role);
-          setUserRole(role || 'user');
-        }).catch(error => {
-          console.error("Error loading initial user role:", error);
-          setUserRole('user');
-        });
+        setTimeout(() => {
+          getUserRole(session.user.id).then(role => {
+            console.log("Initial user role:", role);
+            setUserRole(role || 'user');
+          }).catch(error => {
+            console.error("Error loading initial user role:", error);
+            setUserRole('user');
+          });
+        }, 0);
       }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed:", event, session);
         setSession(session);
         setUser(session?.user ?? null);
@@ -172,14 +174,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user?.id && event === 'SIGNED_IN') {
           console.log("User signed in, loading role");
-          try {
-            const role = await getUserRole(session.user.id);
-            console.log("User role loaded:", role);
-            setUserRole(role || 'user');
-          } catch (error) {
-            console.error("Error loading user role:", error);
-            setUserRole('user');
-          }
+          // Use setTimeout to avoid blocking the auth state change
+          setTimeout(() => {
+            getUserRole(session.user.id).then(role => {
+              console.log("User role loaded:", role);
+              setUserRole(role || 'user');
+            }).catch(error => {
+              console.error("Error loading user role:", error);
+              setUserRole('user');
+            });
+          }, 0);
         } else if (!session?.user) {
           console.log("No user, clearing role");
           setUserRole(null);

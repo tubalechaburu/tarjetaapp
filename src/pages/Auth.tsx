@@ -27,7 +27,7 @@ const Auth = () => {
   // Si el usuario ya está autenticado, redirigir al dashboard
   if (user && !isLoading) {
     console.log("User authenticated, redirecting to dashboard");
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleLoginSubmit = async (data: AuthFormValues) => {
