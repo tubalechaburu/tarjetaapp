@@ -29,8 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await signIn(email, password);
-    } finally {
+      // No necesitamos setIsLoading(false) aquí porque useAuthState lo maneja
+    } catch (error) {
       setIsLoading(false);
+      throw error;
     }
   };
 
