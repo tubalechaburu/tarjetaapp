@@ -12,8 +12,10 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // Function to get user role from profiles table
-export const getUserRole = async (userId: string): Promise<'user' | 'superadmin' | null> => {
+export const getUserRole = async (userId: string): Promise<'user' | 'admin' | 'superadmin' | null> => {
   try {
+    console.log("Getting user role for:", userId);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('role')
@@ -22,13 +24,14 @@ export const getUserRole = async (userId: string): Promise<'user' | 'superadmin'
     
     if (error) {
       console.error('Error fetching user role:', error);
-      return null;
+      return 'user'; // Default to user role instead of null
     }
     
-    return data?.role || null;
+    console.log("User role data:", data);
+    return data?.role || 'user';
   } catch (error) {
     console.error('Error in getUserRole:', error);
-    return null;
+    return 'user'; // Default to user role instead of null
   }
 };
 

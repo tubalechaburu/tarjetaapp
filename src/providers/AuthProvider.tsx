@@ -21,74 +21,112 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    console.log("Attempting to sign in with:", email);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      if (error.message === "Invalid login credentials") {
-        toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
-      } else if (error.message.includes("Email not confirmed")) {
-        toast.error("Debes confirmar tu email antes de iniciar sesión.");
-      } else if (error.message.includes("too many requests")) {
-        toast.error("Demasiados intentos. Espera unos minutos antes de intentar de nuevo.");
-      } else {
-        toast.error(`Error de autenticación: ${error.message}`);
+      if (error) {
+        console.error("Sign in error:", error);
+        if (error.message === "Invalid login credentials") {
+          toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Debes confirmar tu email antes de iniciar sesión.");
+        } else if (error.message.includes("too many requests")) {
+          toast.error("Demasiados intentos. Espera unos minutos antes de intentar de nuevo.");
+        } else {
+          toast.error(`Error de autenticación: ${error.message}`);
+        }
+        throw error;
       }
+
+      console.log("Sign in successful:", data);
+      toast.success("Sesión iniciada correctamente");
+    } catch (error) {
+      console.error("Exception during sign in:", error);
       throw error;
     }
-
-    toast.success("Sesión iniciada correctamente");
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
+    console.log("Attempting to sign up with:", email);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      });
 
-    if (error) {
-      toast.error(error.message || "Error al registrarse");
+      if (error) {
+        console.error("Sign up error:", error);
+        toast.error(error.message || "Error al registrarse");
+        throw error;
+      }
+
+      toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
+    } catch (error) {
+      console.error("Exception during sign up:", error);
       throw error;
     }
-
-    toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error(error.message || "Error al cerrar sesión");
+    console.log("Attempting to sign out");
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Sign out error:", error);
+        toast.error(error.message || "Error al cerrar sesión");
+        throw error;
+      }
+      
+      console.log("Sign out successful");
+      toast.success("Sesión cerrada correctamente");
+      window.location.href = '/landing';
+    } catch (error) {
+      console.error("Exception during sign out:", error);
       throw error;
     }
-    toast.success("Sesión cerrada correctamente");
-    window.location.href = '/landing';
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    console.log("Attempting to reset password for:", email);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
 
-    if (error) {
-      toast.error(error.message || "Error al enviar el correo de recuperación");
+      if (error) {
+        console.error("Reset password error:", error);
+        toast.error(error.message || "Error al enviar el correo de recuperación");
+        throw error;
+      }
+
+      toast.success("Instrucciones enviadas a tu correo electrónico");
+    } catch (error) {
+      console.error("Exception during password reset:", error);
       throw error;
     }
-
-    toast.success("Instrucciones enviadas a tu correo electrónico");
   };
 
   const refreshUserRole = async () => {
     if (user?.id) {
       try {
+        console.log("Refreshing user role for:", user.id);
         const role = await getUserRole(user.id);
+        console.log("User role received:", role);
         setUserRole(role);
       } catch (error) {
         console.error("Error loading user role:", error);
+        setUserRole('user'); // Default fallback
       }
     }
   };
@@ -102,42 +140,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    console.log("AuthProvider: Setting up auth state");
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session:", session);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
       
       // Load user role if user exists
       if (session?.user?.id) {
+        console.log("Loading role for user:", session.user.id);
         getUserRole(session.user.id).then(role => {
-          setUserRole(role);
-        }).catch(console.error);
+          console.log("Initial user role:", role);
+          setUserRole(role || 'user');
+        }).catch(error => {
+          console.error("Error loading initial user role:", error);
+          setUserRole('user');
+        });
       }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event);
+        console.log("Auth state changed:", event, session);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
         
         if (session?.user?.id && event === 'SIGNED_IN') {
+          console.log("User signed in, loading role");
           try {
             const role = await getUserRole(session.user.id);
-            setUserRole(role);
+            console.log("User role loaded:", role);
+            setUserRole(role || 'user');
           } catch (error) {
             console.error("Error loading user role:", error);
+            setUserRole('user');
           }
         } else if (!session?.user) {
+          console.log("No user, clearing role");
           setUserRole(null);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("AuthProvider: Cleaning up subscription");
+      subscription.unsubscribe();
+    };
   }, []);
 
   const value = {
