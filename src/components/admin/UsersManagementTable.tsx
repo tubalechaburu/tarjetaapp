@@ -19,7 +19,6 @@ import { Link } from "react-router-dom";
 
 interface UserWithCard {
   id: string;
-  full_name: string | null;
   email: string;
   card: BusinessCard | null;
 }
@@ -37,7 +36,7 @@ export const UsersManagementTable = () => {
       // Get users from profiles table
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name');
+        .select('id, email');
       
       if (profilesError) throw profilesError;
       
@@ -48,18 +47,17 @@ export const UsersManagementTable = () => {
         
       if (cardsError) throw cardsError;
       
-      // Get user emails from auth metadata - we'll use a workaround for now
-      const usersWithCards: UserWithCard[] = profiles.map(profile => {
+      // Combine data
+      const usersWithCards: UserWithCard[] = profiles?.map(profile => {
         const userCard = cards?.find(card => card.user_id === profile.id);
         const mappedCard = userCard ? mapSupabaseToBusinessCard(userCard as unknown as SupabaseBusinessCard) : null;
         
         return {
           id: profile.id,
-          full_name: profile.full_name,
-          email: mappedCard?.email || profile.id, // Use card email or fallback to ID
+          email: profile.email,
           card: mappedCard
         };
-      });
+      }) || [];
       
       setUsers(usersWithCards);
       setError(null);
@@ -124,7 +122,7 @@ export const UsersManagementTable = () => {
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.id}>
-              <TableCell>{user.full_name || "Sin nombre"}</TableCell>
+              <TableCell>{user.email?.split('@')[0] || "Sin nombre"}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
                 {user.card ? (

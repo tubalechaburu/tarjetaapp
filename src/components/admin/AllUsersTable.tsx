@@ -26,38 +26,27 @@ export const AllUsersTable = () => {
     try {
       setLoading(true);
       
-      // Get users from profiles table
+      // Get users from profiles table with all needed fields
       const { data, error } = await supabase
         .from('profiles')
         .select(`
           id,
-          full_name,
           email,
-          avatar_url,
+          role,
+          created_at,
           updated_at
         `);
       
       if (error) throw error;
       
-      // Get user roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-        
-      if (rolesError) throw rolesError;
+      // Map the data to include a display name
+      const usersWithData = data?.map(user => ({
+        ...user,
+        full_name: user.email?.split('@')[0] || 'Usuario', // Use email prefix as name fallback
+        role: user.role as UserRole
+      })) || [];
       
-      // Combine data
-      const usersWithRoles = data.map(user => {
-        const userRoles = rolesData?.filter(role => role.user_id === user.id) || [];
-        const roleName = userRoles.length > 0 ? userRoles[0].role : 'user';
-        return {
-          ...user,
-          role: roleName as UserRole,
-          email: user.email || user.id // Use profile email or fallback to ID
-        };
-      });
-      
-      setUsers(usersWithRoles);
+      setUsers(usersWithData);
       setError(null);
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -95,11 +84,11 @@ export const AllUsersTable = () => {
   };
 
   if (loading) {
-    return <div>Cargando usuarios...</div>;
+    return <div className="flex justify-center p-4">Cargando usuarios...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className="text-red-600 p-4">Error: {error}</div>;
   }
 
   return (

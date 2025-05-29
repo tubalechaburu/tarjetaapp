@@ -41,32 +41,22 @@ export const UsersTable = () => {
         .from('profiles')
         .select(`
           id,
-          full_name,
-          avatar_url,
+          email,
+          role,
+          created_at,
           updated_at
         `);
       
       if (error) throw error;
       
-      // Get user roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-        
-      if (rolesError) throw rolesError;
+      // Map the data to include display name
+      const usersWithData = data?.map(user => ({
+        ...user,
+        full_name: user.email?.split('@')[0] || 'Usuario', // Use email prefix as name fallback
+        role: user.role as UserRole
+      })) || [];
       
-      // Get user emails from auth metadata (we'll use the user ID as email fallback)
-      const usersWithRoles = data.map(user => {
-        const userRoles = rolesData.filter(role => role.user_id === user.id);
-        const roleName = userRoles.length > 0 ? userRoles[0].role : 'user';
-        return {
-          ...user,
-          role: roleName as UserRole,
-          email: user.id // For now, using ID as email identifier
-        };
-      });
-      
-      setUsers(usersWithRoles);
+      setUsers(usersWithData);
       setError(null);
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -192,12 +182,6 @@ export const UsersTable = () => {
                         <DropdownMenuItem onClick={() => handleRoleUpdate(user.id, 'superadmin')}>
                           Superadmin
                           {user.role === 'superadmin' && (
-                            <Check className="ml-auto h-4 w-4" />
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRoleUpdate(user.id, 'admin')}>
-                          Admin
-                          {user.role === 'admin' && (
                             <Check className="ml-auto h-4 w-4" />
                           )}
                         </DropdownMenuItem>
