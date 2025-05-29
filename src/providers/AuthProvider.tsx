@@ -100,8 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast.success("Sesión iniciada correctamente");
       
-      // Redirect to dashboard after successful login
-      window.location.href = '/dashboard';
+      // Redirect to main dashboard after successful login
+      window.location.href = '/';
       
     } catch (error: any) {
       console.error("Error signing in:", error);

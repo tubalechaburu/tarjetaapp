@@ -48,7 +48,7 @@ const Landing = () => {
               Crear mi tarjeta gratis
             </Button>
           </Link>
-          <Link to="/card/demo">
+          <Link to="/demo">
             <Button variant="outline" size="lg" className="text-lg px-8 py-4">
               Ver ejemplo
             </Button>
