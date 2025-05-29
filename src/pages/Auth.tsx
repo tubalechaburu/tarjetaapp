@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
 import { ArrowLeft } from "lucide-react";
@@ -24,29 +24,42 @@ const Auth = () => {
 
   console.log("Auth page - user:", user, "isLoading:", isLoading);
 
-  // Si el usuario ya está autenticado, redirigir al dashboard
+  // Si el usuario ya está autenticado, redirigir al dashboard principal
   if (user && !isLoading) {
-    console.log("User authenticated, redirecting to dashboard");
-    return <Navigate to="/dashboard" replace />;
+    console.log("User authenticated, redirecting to main dashboard");
+    return <Navigate to="/" replace />;
   }
 
   const handleLoginSubmit = async (data: AuthFormValues) => {
     console.log("Attempting login with:", data.email);
-    await signIn(data.email, data.password);
+    try {
+      await signIn(data.email, data.password);
+      console.log("Login successful, should redirect automatically");
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
   const handleRegisterSubmit = async (data: AuthFormValues) => {
     console.log("Attempting register with:", data.email);
-    await signUp(data.email, data.password, {
-      full_name: data.fullName
-    });
+    try {
+      await signUp(data.email, data.password, {
+        full_name: data.fullName
+      });
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
     console.log("Sending password reset to:", email);
-    await resetPassword(email);
-    setForgotPassword(false);
-    setActiveTab("login");
+    try {
+      await resetPassword(email);
+      setForgotPassword(false);
+      setActiveTab("login");
+    } catch (error) {
+      console.error("Password reset failed:", error);
+    }
   };
 
   return (

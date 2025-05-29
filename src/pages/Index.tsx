@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards, deleteCard } from "@/utils/storage";
@@ -49,15 +50,21 @@ const Index = () => {
           const connected = await checkSupabaseConnection();
           setConnectionStatus(connected);
           console.log("Supabase connection status:", connected);
+          
+          if (!connected) {
+            console.warn("Supabase not connected, showing warning");
+            toast.warning("Conexión a Supabase no disponible. Los datos se guardarán localmente.");
+          }
         } catch (error) {
           console.error("Error checking Supabase connection:", error);
           setConnectionStatus(false);
+          toast.warning("Error de conexión a Supabase");
         }
 
         // Load cards with better error handling
         if (user) {
           try {
-            console.log("Loading cards...");
+            console.log("Loading cards for user:", user.id);
             setLoading(true);
             const fetchedCards = await getCards();
             console.log("Fetched cards:", fetchedCards);
@@ -84,6 +91,10 @@ const Index = () => {
               const foundUserCard = uniqueCards.find(card => card.userId === user.id);
               console.log("Found user card:", foundUserCard);
               setUserCard(foundUserCard || null);
+              
+              if (!foundUserCard) {
+                console.log("No card found for user, they may need to create one");
+              }
             } else {
               console.log("No cards returned or invalid format");
               setCards([]);
@@ -91,7 +102,7 @@ const Index = () => {
             }
           } catch (error) {
             console.error("Error loading cards:", error);
-            setError("Error al cargar las tarjetas. Revisa la conexión a Supabase.");
+            setError("Error al cargar las tarjetas. Intenta refrescar la página.");
             toast.error("Error al cargar las tarjetas");
             // Still set empty arrays to prevent undefined errors
             setCards([]);
@@ -111,7 +122,7 @@ const Index = () => {
     if (!authLoading && user) {
       initPage();
     }
-  }, [user, authLoading, userRole]); // Added userRole to dependencies
+  }, [user, authLoading, userRole]);
 
   // Don't render anything if redirecting
   if (!authLoading && !user) {
@@ -148,12 +159,10 @@ const Index = () => {
   if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Header />
         <div className="text-center py-20">
-          <p>Cargando...</p>
-          <p className="text-sm text-gray-500">Verificando autenticación...</p>
+          <p className="text-lg">Cargando...</p>
+          <p className="text-sm text-gray-500 mt-2">Verificando autenticación...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -164,10 +173,13 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <Header />
         <div className="text-center py-20">
-          <p className="text-red-600">{error}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mb-2">
             Reintentar
           </Button>
+          <p className="text-sm text-gray-500">
+            Estado de conexión a Supabase: {connectionStatus ? "✅ Conectado" : "❌ Desconectado"}
+          </p>
         </div>
         <Footer />
       </div>
@@ -181,7 +193,7 @@ const Index = () => {
       
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Mis Tarjetas Digitales</h1>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2">
             <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
               {userRole || 'user'}
@@ -375,7 +387,7 @@ const Index = () => {
         {isSuperAdmin() && cards.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Todas las tarjetas (Superadmin)</CardTitle>
+              <CardTitle>Panel de Administración (Superadmin)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
