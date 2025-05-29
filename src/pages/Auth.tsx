@@ -18,35 +18,40 @@ import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import { AuthFormValues } from "@/types";
 
 const Auth = () => {
-  const { signIn, signUp, user, isLoading } = useAuth();
+  const { signIn, signUp, resetPassword, user, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [forgotPassword, setForgotPassword] = useState(false);
 
-  // Si el usuario ya está autenticado, redirigir a la página principal
+  console.log("Auth page - user:", user, "isLoading:", isLoading);
+
+  // Si el usuario ya está autenticado, redirigir al dashboard
   if (user && !isLoading) {
-    return <Navigate to="/" />;
+    console.log("User authenticated, redirecting to dashboard");
+    return <Navigate to="/dashboard" />;
   }
 
   const handleLoginSubmit = async (data: AuthFormValues) => {
+    console.log("Attempting login with:", data.email);
     await signIn(data.email, data.password);
   };
 
   const handleRegisterSubmit = async (data: AuthFormValues) => {
+    console.log("Attempting register with:", data.email);
     await signUp(data.email, data.password, {
       full_name: data.fullName
     });
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
-    // Aquí iría la lógica para enviar el correo de recuperación
-    console.log("Enviar recuperación a:", email);
+    console.log("Sending password reset to:", email);
+    await resetPassword(email);
     setForgotPassword(false);
     setActiveTab("login");
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
-      <Link to="/">
+      <Link to="/landing">
         <Button variant="ghost" className="mb-4 gap-1">
           <ArrowLeft className="h-4 w-4" />
           Volver

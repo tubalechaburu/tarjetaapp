@@ -31,10 +31,15 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
   const handleSubmit = async (data: AuthFormValues) => {
     if (isSubmitting) return;
     
+    console.log("LoginForm: handleSubmit called with:", { email: data.email });
+    
     try {
       setIsSubmitting(true);
+      console.log("LoginForm: Calling onSubmit...");
       await onSubmit(data);
+      console.log("LoginForm: onSubmit completed successfully");
     } catch (error: any) {
+      console.error("LoginForm: Error during submit:", error);
       toast.error(error.message || "Error al iniciar sesión. Por favor, inténtalo de nuevo.");
     } finally {
       setIsSubmitting(false);
