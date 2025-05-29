@@ -42,6 +42,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Función para refrescar el rol del usuario
+  const refreshUserRole = async () => {
+    if (user?.id) {
+      console.log("Refreshing user role...");
+      await loadUserRole(user.id);
+    }
+  };
+
   useEffect(() => {
     // Obtener la sesión actual al montar el componente
     const getInitialSession = async () => {
@@ -53,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user?.id) {
           console.log("Session found, loading user role...");
-          loadUserRole(session.user.id);
+          await loadUserRole(session.user.id);
         }
       } catch (error) {
         console.error("Error al obtener la sesión inicial:", error);
@@ -73,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user?.id) {
           // Actualizamos el rol cuando cambia la sesión
           console.log("Session updated, loading user role...");
-          loadUserRole(session.user.id);
+          await loadUserRole(session.user.id);
         } else {
           setUserRole(null);
         }
@@ -85,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [user?.email]); // Agregamos user?.email como dependencia
 
   // Método para iniciar sesión con mejor manejo de errores
   const signIn = async (email: string, password: string) => {
@@ -205,6 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword,
     isAdmin,
     isSuperAdmin,
+    refreshUserRole, // Agregamos la función para refrescar el rol
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,3 @@
-
 export interface AuthContextType {
   user: any | null;
   session: any | null;
@@ -10,6 +9,7 @@ export interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
+  refreshUserRole?: () => Promise<void>; // Nueva función opcional
 }
 
 export type UserRole = 'user' | 'admin' | 'superadmin' | null;
