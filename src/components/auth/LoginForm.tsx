@@ -29,18 +29,14 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (data: AuthFormValues) => {
-    if (isSubmitting) return; // Prevenir doble submit
+    if (isSubmitting) return;
     
     try {
-      console.log("LoginForm: Starting login process for:", data.email);
       setIsSubmitting(true);
       await onSubmit(data);
-      console.log("LoginForm: Login completed successfully");
     } catch (error: any) {
-      console.error("LoginForm: Error during login:", error);
       toast.error(error.message || "Error al iniciar sesión. Por favor, inténtalo de nuevo.");
     } finally {
-      console.log("LoginForm: Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
