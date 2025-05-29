@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { AuthContextType, UserRole } from "@/types";
 import { supabase, getUserRole } from "@/integrations/supabase/client";
@@ -102,7 +103,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Redirect to dashboard after successful login
       window.location.href = '/dashboard';
       
-      return data;
     } catch (error: any) {
       console.error("Error signing in:", error);
       toast.error(error.message || "Error al iniciar sesión");
