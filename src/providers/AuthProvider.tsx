@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { AuthContextType, UserRole } from "@/types";
 import { supabase, getUserRole } from "@/integrations/supabase/client";
@@ -51,54 +52,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Obtener la sesión actual al montar el componente
-    const getInitialSession = async () => {
-      try {
-        console.log("Getting initial session...");
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user?.id) {
-          console.log("Session found, loading user role...");
-          await loadUserRole(session.user.id);
-        }
-      } catch (error) {
-        console.error("Error al obtener la sesión inicial:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Escuchar cambios en el estado de autenticación
+    console.log("AuthProvider: Setting up authentication...");
+    
+    // Escuchar cambios en el estado de autenticación PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log("Auth state changed, event:", _event);
+      async (event, session) => {
+        console.log("Auth state changed, event:", event);
+        console.log("Session:", session);
+        
         setSession(session);
         setUser(session?.user ?? null);
-        setIsLoading(false);
         
         if (session?.user?.id) {
-          // Actualizamos el rol cuando cambia la sesión
           console.log("Session updated, loading user role...");
           await loadUserRole(session.user.id);
         } else {
           setUserRole(null);
         }
+        
+        // Solo marcamos como no loading después de procesar el evento
+        setIsLoading(false);
       }
     );
+
+    // LUEGO obtener la sesión actual
+    const getInitialSession = async () => {
+      try {
+        console.log("Getting initial session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("Initial session:", session);
+        
+        // Solo actualizar si no tenemos sesión ya (evitar duplicados)
+        if (!session) {
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+          setIsLoading(false);
+        }
+        // Si hay sesión, el onAuthStateChange la manejará
+      } catch (error) {
+        console.error("Error al obtener la sesión inicial:", error);
+        setIsLoading(false);
+      }
+    };
 
     getInitialSession();
 
     return () => {
+      console.log("AuthProvider: Cleaning up subscription");
       subscription.unsubscribe();
     };
-  }, [user?.email]); // Agregamos user?.email como dependencia
+  }, []); // Removemos dependencias para evitar loops
 
   // Método para iniciar sesión con mejor manejo de errores
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Attempting to sign in with email:", email);
+      setIsLoading(true);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -118,17 +135,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           toast.error(`Error de autenticación: ${error.message}`);
         }
+        setIsLoading(false);
         throw error;
       }
 
       console.log("Sign in successful:", data);
       toast.success("Sesión iniciada correctamente");
       
-      // Redirect to main dashboard after successful login
-      window.location.href = '/dashboard';
+      // No redirigir aquí, dejar que el onAuthStateChange maneje la actualización
       
     } catch (error: any) {
       console.error("Error signing in:", error);
+      setIsLoading(false);
       throw error;
     }
   };
@@ -136,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Método para registrarse
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -153,12 +172,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error(error.message || "Error al registrarse");
       console.error("Error al registrarse:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Método para cerrar sesión
   const signOut = async () => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -171,6 +193,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error(error.message || "Error al cerrar sesión");
       console.error("Error al cerrar sesión:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -213,7 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword,
     isAdmin,
     isSuperAdmin,
-    refreshUserRole, // Agregamos la función para refrescar el rol
+    refreshUserRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
