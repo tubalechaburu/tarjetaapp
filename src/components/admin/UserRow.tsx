@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UserRole } from "@/types";
 import { updateUserRole } from "@/utils/userRoleUtils";
@@ -24,7 +25,7 @@ export const UserRow = ({ user, onRefresh }: UserRowProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showCards, setShowCards] = useState(false);
   
-  const handleRoleChange = async (newRole: UserRole) => {
+  const handleRoleChange = async (newRole: 'user' | 'superadmin') => {
     try {
       setIsUpdating(true);
       await updateUserRole(
@@ -70,15 +71,6 @@ export const UserRow = ({ user, onRefresh }: UserRowProps) => {
                   disabled={isUpdating}
                 >
                   Usuario
-                </Button>
-                <Button 
-                  variant={user.role === 'admin' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="justify-start"
-                  onClick={() => handleRoleChange('admin')}
-                  disabled={isUpdating}
-                >
-                  Administrador
                 </Button>
                 <Button 
                   variant={user.role === 'superadmin' ? 'default' : 'outline'} 

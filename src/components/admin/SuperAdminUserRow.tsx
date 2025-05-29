@@ -26,7 +26,7 @@ export const SuperAdminUserRow = ({ user, onUserUpdated }: SuperAdminUserRowProp
   const { toast } = useToast();
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
-  const handleRoleUpdate = async (userId: string, newRole: UserRole, userName: string) => {
+  const handleRoleUpdate = async (userId: string, newRole: 'user' | 'superadmin', userName: string) => {
     try {
       await updateUserRole(userId, newRole, () => {
         toast({
@@ -49,7 +49,6 @@ export const SuperAdminUserRow = ({ user, onUserUpdated }: SuperAdminUserRowProp
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'superadmin': return 'bg-red-500 text-white';
-      case 'admin': return 'bg-orange-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
   };
@@ -105,12 +104,6 @@ export const SuperAdminUserRow = ({ user, onUserUpdated }: SuperAdminUserRowProp
                   disabled={user.role === 'user'}
                 >
                   Usuario {user.role === 'user' && '✓'}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleRoleUpdate(user.id, 'admin', user.full_name || user.email)}
-                  disabled={user.role === 'admin'}
-                >
-                  Admin {user.role === 'admin' && '✓'}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleRoleUpdate(user.id, 'superadmin', user.full_name || user.email)}
