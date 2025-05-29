@@ -42,7 +42,7 @@ export const SuperAdminUsersTable = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-4">Cargando usuarios...</div>;
+    return <div className="flex justify-center p-4">Cargando usuarios y sincronizando perfiles...</div>;
   }
 
   if (error) {
@@ -53,10 +53,15 @@ export const SuperAdminUsersTable = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">Gestión de Usuarios ({users.length})</h3>
-        <Button onClick={exportAllData} variant="outline" className="gap-1">
-          <Download className="h-4 w-4" />
-          Exportar todo
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={refetch} variant="outline" className="gap-1">
+            Sincronizar perfiles
+          </Button>
+          <Button onClick={exportAllData} variant="outline" className="gap-1">
+            <Download className="h-4 w-4" />
+            Exportar todo
+          </Button>
+        </div>
       </div>
       
       <Table>
