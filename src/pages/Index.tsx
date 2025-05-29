@@ -20,7 +20,7 @@ const Index = () => {
   const { user, userRole, isSuperAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [cards, setCards] = useState<BusinessCard[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,12 +99,9 @@ const Index = () => {
       }
     };
 
-    // Solo inicializar si no estamos cargando la autenticación y hay usuario
+    // Only initialize if we have a user and auth is not loading
     if (!authLoading && user) {
       initPage();
-    } else if (!authLoading && !user) {
-      // Si no hay usuario y no estamos cargando, marcar como no loading para mostrar la redirección
-      setLoading(false);
     }
   }, [user, authLoading]);
 
@@ -139,22 +136,21 @@ const Index = () => {
       .substring(0, 2);
   };
 
-  // Mostrar loading solo si auth está cargando O si estamos cargando tarjetas
-  if (authLoading || loading) {
+  // Show loading only if auth is loading
+  if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Header />
         <div className="text-center py-20">
           <p>Cargando...</p>
-          {authLoading && <p className="text-sm text-gray-500">Verificando autenticación...</p>}
-          {loading && !authLoading && <p className="text-sm text-gray-500">Cargando tarjetas...</p>}
+          <p className="text-sm text-gray-500">Verificando autenticación...</p>
         </div>
         <Footer />
       </div>
     );
   }
 
-  // Mostrar error si hay alguno
+  // Show error if there's one
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -191,7 +187,13 @@ const Index = () => {
           </div>
         </div>
 
-        {userCard ? (
+        {loading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p>Cargando tarjetas...</p>
+            </CardContent>
+          </Card>
+        ) : userCard ? (
           <Card className="mb-6">
             <CardHeader>
               <div className="flex justify-between items-start">
