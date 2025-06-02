@@ -22,41 +22,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUserRole = async () => {
     if (user?.id) {
       console.log("🔄 Refreshing user role for:", user.id);
-      const role = await loadUserRole(user.id);
-      console.log("🎭 New role loaded:", role);
-      setUserRole(role);
+      try {
+        const role = await loadUserRole(user.id);
+        console.log("🎭 New role loaded:", role);
+        setUserRole(role);
+      } catch (error) {
+        console.error("Error refreshing user role:", error);
+        setUserRole('user');
+      }
     }
   };
 
   const handleAuthStateChange = async (event: string, session: any) => {
     console.log("🔐 Auth state changed:", event, session?.user?.email);
+    
+    // Siempre actualizar la sesión y usuario primero
     setSession(session);
     setUser(session?.user ?? null);
     
-    if (session?.user?.id && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-      console.log("✅ User signed in, loading role for:", session.user.email);
-      try {
-        const role = await loadUserRole(session.user.id);
-        console.log("🎭 Role loaded for", session.user.email, ":", role);
-        setUserRole(role || 'user');
-      } catch (error) {
-        console.error("Error loading user role:", error);
-        setUserRole('user');
-      } finally {
-        setIsLoading(false);
+    if (session?.user?.id) {
+      console.log("✅ User found, loading role for:", session.user.email);
+      // Solo cargar el rol si es un evento de login o refresh, no en todos los eventos
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        try {
+          const role = await loadUserRole(session.user.id);
+          console.log("🎭 Role loaded for", session.user.email, ":", role);
+          setUserRole(role || 'user');
+        } catch (error) {
+          console.error("Error loading user role:", error);
+          setUserRole('user');
+        }
       }
-    } else if (!session?.user) {
+    } else {
       console.log("❌ No user, clearing role");
       setUserRole(null);
-      setIsLoading(false);
     }
+    
+    // Siempre marcar como no loading al final
+    setIsLoading(false);
   };
 
   useEffect(() => {
     console.log("🚀 AuthProvider: Setting up auth state");
     
+    // Configurar el listener de cambios de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
+    // Inicializar la sesión actual
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -68,6 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         console.log("📋 Initial session:", session?.user?.email || "No user");
+        
+        // Actualizar estado inmediatamente
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -81,9 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error("Error loading initial role:", error);
             setUserRole('user');
           }
+        } else {
+          setUserRole(null);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
+        setUserRole(null);
       } finally {
         setIsLoading(false);
       }
@@ -105,11 +122,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, [user, userRole, isLoading]);
 
-  // Wrapper functions to match the expected interface
+  // Wrapper functions para mantener la interfaz esperada
   const handleSignIn = async (email: string, password: string): Promise<void> => {
-    await signIn(email, password);
-    // Forzar recarga del rol después del login
-    setTimeout(refreshUserRole, 1000);
+    try {
+      await signIn(email, password);
+      // No forzar recarga aquí, el onAuthStateChange lo manejará
+    } catch (error) {
+      throw error;
+    }
   };
 
   const handleSignUp = async (email: string, password: string, metadata?: any): Promise<void> => {
@@ -117,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleSignOut = async (): Promise<void> => {
+    setUserRole(null); // Limpiar rol inmediatamente
     await signOut();
   };
 
