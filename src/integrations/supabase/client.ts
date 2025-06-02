@@ -11,16 +11,14 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Function to get user role from profiles table
+// Function to get user role using the new safe function
 export const getUserRole = async (userId: string): Promise<'user' | 'admin' | 'superadmin' | null> => {
   try {
     console.log("Getting user role for:", userId);
     
+    // Use the new safe function instead of querying profiles directly
     const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
+      .rpc('get_user_role_safe', { user_uuid: userId });
     
     if (error) {
       console.error('Error fetching user role:', error);
@@ -28,7 +26,7 @@ export const getUserRole = async (userId: string): Promise<'user' | 'admin' | 's
     }
     
     console.log("User role data:", data);
-    return data?.role || 'user';
+    return data || 'user';
   } catch (error) {
     console.error('Error in getUserRole:', error);
     return 'user'; // Default to user role instead of null
