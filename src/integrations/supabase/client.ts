@@ -11,18 +11,18 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Function to get user role using the new safe function
+// Function to get user role using the safe function
 export const getUserRole = async (userId: string): Promise<'user' | 'superadmin' | null> => {
   try {
     console.log("Getting user role for:", userId);
     
-    // Use the new get_current_user_role function
+    // Use the simplified function
     const { data, error } = await supabase
       .rpc('get_current_user_role');
     
     if (error) {
       console.error('Error fetching user role:', error);
-      return 'user'; // Default to user role instead of null
+      return 'user'; // Default to user role
     }
     
     console.log("User role data:", data);
@@ -35,18 +35,19 @@ export const getUserRole = async (userId: string): Promise<'user' | 'superadmin'
     return 'user'; // Default fallback
   } catch (error) {
     console.error('Error in getUserRole:', error);
-    return 'user'; // Default to user role instead of null
+    return 'user'; // Default to user role
   }
 };
 
-// Function to check Supabase connection - usando una consulta sin autenticación
+// Function to check Supabase connection
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    // Usar una consulta simple a la función de test que no requiere autenticación
+    // Test with a simple query that doesn't cause recursion
     const { data, error } = await supabase
-      .rpc('get_user_role_safe', { user_uuid: '00000000-0000-0000-0000-000000000000' });
+      .from('profiles')
+      .select('id')
+      .limit(1);
     
-    // Si la función responde (incluso con error esperado), la conexión funciona
     console.log('Supabase connection test result:', { data, error });
     console.log('✅ Supabase connection successful');
     return true;

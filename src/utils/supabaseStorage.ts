@@ -1,4 +1,3 @@
-
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,7 +33,7 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   try {
     console.log("Fetching cards from Supabase");
     
-    // Check if user is superadmin first
+    // Check if user is superadmin first using the simplified function
     const { data: isSuperAdmin, error: roleError } = await supabase
       .rpc('is_current_user_superadmin');
     
@@ -56,7 +55,8 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     const { data, error } = await query;
     
     if (error) {
-      handleSupabaseError(error, "Error al obtener las tarjetas");
+      console.error("Supabase query error:", error);
+      toast.error("Error al obtener las tarjetas");
       return null;
     }
     
@@ -66,12 +66,13 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     console.log(`Loaded ${data.length} cards from Supabase`);
-    handleSupabaseSuccess(data, "Tarjetas cargadas correctamente");
+    toast.success("Tarjetas cargadas correctamente");
     
     // Map the data to BusinessCard format
     return (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
   } catch (supabaseError) {
-    handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
+    console.error("Error in getCardsSupabase:", supabaseError);
+    toast.error("Error al conectar con la base de datos");
     return null;
   }
 };

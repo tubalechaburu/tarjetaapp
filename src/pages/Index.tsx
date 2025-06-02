@@ -47,12 +47,6 @@ const Index = () => {
           const connected = await checkSupabaseConnection();
           console.log("Connection check result:", connected);
           setConnectionStatus(connected);
-          
-          if (connected) {
-            console.log("✅ Supabase connection successful");
-          } else {
-            console.log("⚠️ Supabase connection failed");
-          }
         } catch (connectionError) {
           console.error("Error during connection check:", connectionError);
           setConnectionStatus(false);

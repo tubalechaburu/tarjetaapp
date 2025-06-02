@@ -21,7 +21,7 @@ export const useUsersWithCards = () => {
       setError(null);
       console.log("Fetching users and cards...");
       
-      // First check if current user is superadmin
+      // First check if current user is superadmin using the simplified function
       const { data: isSuperAdmin, error: roleError } = await supabase
         .rpc('is_current_user_superadmin');
       
