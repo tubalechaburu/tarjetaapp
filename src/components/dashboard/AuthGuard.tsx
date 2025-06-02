@@ -12,19 +12,17 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("🔒 AuthGuard state:", { user: user?.email, isLoading });
+    
     if (!isLoading && !user) {
       console.log("❌ No user found, redirecting to auth...");
       navigate('/auth', { replace: true });
     }
   }, [user, isLoading, navigate]);
 
-  // Don't render anything if redirecting
-  if (!isLoading && !user) {
-    return null;
-  }
-
-  // Show loading only if auth is loading
+  // Show loading while auth is loading
   if (isLoading) {
+    console.log("⏳ Auth is loading...");
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-20">
@@ -35,5 +33,12 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
+  // Don't render anything if no user (will redirect)
+  if (!user) {
+    console.log("❌ No user, not rendering children");
+    return null;
+  }
+
+  console.log("✅ User authenticated, rendering children");
   return <>{children}</>;
 };

@@ -1,4 +1,3 @@
-
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,7 +6,7 @@ import { handleSupabaseError, handleSupabaseSuccess, isEmptyData } from "./supab
 
 export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => {
   try {
-    console.log("Saving card to Supabase:", card);
+    console.log("💾 Saving card to Supabase:", card.name);
     
     // Prepare data for Supabase
     const supabaseCard = prepareSupabaseCard(card);
@@ -19,13 +18,15 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
       .select();
     
     if (error) {
-      console.error("Supabase error:", error);
+      console.error("❌ Supabase error:", error);
       return handleSupabaseError(error, "No se pudo guardar la tarjeta");
     } else {
+      console.log("✅ Card saved successfully:", data);
       handleSupabaseSuccess(data, "Tarjeta guardada correctamente");
       return true;
     }
   } catch (supabaseError) {
+    console.error("💥 Save card error:", supabaseError);
     return handleSupabaseError(supabaseError, "Error al guardar la tarjeta");
   }
 };
@@ -50,23 +51,24 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       return null;
     }
     
-    // Use the database function to get user cards
-    console.log("📋 Loading user cards using database function...");
-    const { data, error } = await supabase.rpc('get_user_cards', {
-      user_uuid: user.id
-    });
+    // Query cards directly with RLS policies
+    console.log("📋 Loading user cards directly from table...");
+    const { data, error } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('user_id', user.id);
     
     if (error) {
-      console.error("❌ Database function error:", error);
+      console.error("❌ Database query error:", error);
       toast.error("Error al obtener las tarjetas");
       return null;
     }
     
-    console.log("✅ Raw cards data from function:", data);
+    console.log("✅ Raw cards data:", data);
     console.log("📊 Number of cards found:", data?.length || 0);
     
     if (isEmptyData(data)) {
-      console.log("📭 No cards found in Supabase");
+      console.log("📭 No cards found in database");
       return [];
     }
     
@@ -78,7 +80,6 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     });
     
     console.log("✅ Final mapped cards:", mappedCards.length, "cards");
-    toast.success(`${mappedCards.length} tarjetas cargadas correctamente`);
     
     return mappedCards;
   } catch (supabaseError) {
@@ -108,21 +109,23 @@ export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       return null;
     }
     
-    // Use the database function to get all cards
-    console.log("📋 Loading all cards using database function...");
-    const { data, error } = await supabase.rpc('get_all_cards');
+    // Query all cards directly (RLS will handle permissions)
+    console.log("📋 Loading all cards directly from table...");
+    const { data, error } = await supabase
+      .from('cards')
+      .select('*');
     
     if (error) {
-      console.error("❌ Database function error:", error);
+      console.error("❌ Database query error:", error);
       toast.error("Error al obtener todas las tarjetas");
       return null;
     }
     
-    console.log("✅ Raw all cards data from function:", data);
+    console.log("✅ Raw all cards data:", data);
     console.log("📊 Total cards found:", data?.length || 0);
     
     if (isEmptyData(data)) {
-      console.log("📭 No cards found in Supabase");
+      console.log("📭 No cards found in database");
       return [];
     }
     
@@ -134,7 +137,6 @@ export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     });
     
     console.log("✅ Final mapped all cards:", mappedCards.length, "cards");
-    toast.success(`${mappedCards.length} tarjetas totales cargadas correctamente`);
     
     return mappedCards;
   } catch (supabaseError) {
