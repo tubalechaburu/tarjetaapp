@@ -21,7 +21,7 @@ export const ConnectionStatus = ({ connectionStatus }: ConnectionStatusProps) =>
     return (
       <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-2 mb-6 rounded">
         <p className="text-sm">
-          ✅ Conectado a Supabase correctamente
+          ✅ Conectado a Supabase correctamente - Los datos se sincronizan en tiempo real
         </p>
       </div>
     );
