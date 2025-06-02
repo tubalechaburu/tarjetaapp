@@ -58,8 +58,10 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         console.log("👤 User's own card:", foundUserCard ? foundUserCard.name : "None");
         setUserCard(foundUserCard || null);
 
+        // Verificar si es superadmin para el mensaje de éxito
+        const isSuperAdminUser = user.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
+        
         if (fetchedCards.length > 0) {
-          const isSuperAdminUser = isSuperAdmin && isSuperAdmin();
           const message = isSuperAdminUser 
             ? `${fetchedCards.length} tarjetas cargadas (vista de administrador)`
             : `Tarjetas cargadas correctamente`;
@@ -102,7 +104,8 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
     );
   }
 
-  const isSuperAdminUser = isSuperAdmin && isSuperAdmin();
+  // Verificar si es superadmin de forma más permisiva
+  const isSuperAdminUser = user?.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
 
   return (
     <div className="container mx-auto px-4 py-8">

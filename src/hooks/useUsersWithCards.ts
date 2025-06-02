@@ -21,17 +21,26 @@ export const useUsersWithCards = () => {
       setError(null);
       console.log("Fetching users and cards...");
       
-      // First check if current user is superadmin using the simplified function
-      const { data: isSuperAdmin, error: roleError } = await supabase
-        .rpc('is_current_user_superadmin');
+      // Verificar autenticación
+      const { data: userData, error: userError } = await supabase.auth.getUser();
       
-      if (roleError) {
-        console.error("Error checking superadmin status:", roleError);
-        throw new Error("No tienes permisos para acceder a esta información");
+      if (userError || !userData.user) {
+        console.error("❌ No user authenticated:", userError);
+        return null;
       }
+
+      console.log("👤 User authenticated:", userData.user.email);
+
+      // Verificar acceso (email específico o función RPC)
+      const hasDirectAccess = userData.user.email === 'tubal@tubalechaburu.com';
       
-      if (!isSuperAdmin) {
-        throw new Error("Solo los superadministradores pueden ver todos los usuarios");
+      if (!hasDirectAccess) {
+        const { data: isSuperAdmin, error: roleError } = await supabase
+          .rpc('is_current_user_superadmin');
+        
+        if (roleError || !isSuperAdmin) {
+          throw new Error("Solo los superadministradores pueden ver todos los usuarios");
+        }
       }
       
       // Get profiles from database
@@ -61,9 +70,18 @@ export const useUsersWithCards = () => {
         const userCards = cards?.filter(card => card.user_id === profile.id) || [];
         const mappedCards = userCards.map(card => mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard));
         
+        // Mejorar el nombre mostrado - usar full_name o email como fallback
+        let displayName = profile.full_name;
+        if (!displayName && profile.email) {
+          displayName = profile.email.split('@')[0];
+        }
+        if (!displayName) {
+          displayName = 'Usuario sin nombre';
+        }
+        
         return {
           id: profile.id,
-          full_name: profile.full_name || profile.email?.split('@')[0] || 'Usuario',
+          full_name: displayName,
           email: profile.email,
           role: profile.role as DatabaseRole,
           cards: mappedCards,

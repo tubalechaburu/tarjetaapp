@@ -12,13 +12,19 @@ export const SuperAdminPanel = () => {
     console.log("SuperAdminPanel - Current role:", userRole);
     console.log("SuperAdminPanel - User:", user);
     
-    if (user && userRole !== 'superadmin') {
+    // Verificar si es el email específico de superadmin o tiene el rol correcto
+    const isSuperAdminUser = user?.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin';
+    
+    if (user && !isSuperAdminUser) {
       toast.error(`Necesitas permisos de superadmin para acceder a este panel. Rol actual: ${userRole || 'no asignado'}`);
     }
   }, [user, userRole]);
 
-  // No renderizar el panel si el usuario no está autenticado o no es superadmin
-  if (!user || userRole !== 'superadmin') {
+  // Permitir acceso si es el email específico o tiene rol superadmin
+  const canAccess = user?.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin';
+
+  // No renderizar el panel si el usuario no está autenticado o no puede acceder
+  if (!user || !canAccess) {
     return null;
   }
 
