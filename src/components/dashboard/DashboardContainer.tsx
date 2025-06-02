@@ -13,6 +13,9 @@ import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 import { SuperAdminPanel } from "@/components/dashboard/SuperAdminPanel";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { mapSupabaseToBusinessCard } from "@/utils/supabase/mappers";
+import { SupabaseBusinessCard } from "@/types";
 
 interface DashboardContainerProps {
   connectionStatus: boolean | null;
@@ -42,38 +45,60 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         // Verificar si es superadmin
         const isSuperAdminUser = user.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
         
-        // Cargar tarjetas usando getCardsSupabase - esta función ya maneja superadmin vs usuario normal
-        console.log("🔍 Loading cards...");
-        const fetchedCards = await getCardsSupabase();
-        
-        if (fetchedCards === null) {
-          console.error("❌ Error loading cards");
-          setError("Error al cargar las tarjetas");
-          setAllCards([]);
-          setUserCards([]);
-          setUserCard(null);
-          toast.error("Error al cargar las tarjetas");
-          return;
-        }
-        
-        console.log("✅ Cards loaded:", fetchedCards.length);
-        
         if (isSuperAdminUser) {
-          // Para superadmin: mostrar todas las tarjetas
-          setAllCards(fetchedCards);
+          console.log("🔐 Superadmin detected, loading all cards AND user's own cards...");
           
-          // También cargar las tarjetas propias del usuario
-          const ownCards = fetchedCards.filter(card => card.userId === user.id);
-          setUserCards(ownCards);
+          // Para superadmin: cargar TODAS las tarjetas del sistema usando la función RPC
+          const { data: allSystemCards, error: allCardsError } = await supabase.rpc('get_all_cards');
           
-          // Buscar la tarjeta propia
-          const foundUserCard = ownCards.find(card => card.userId === user.id);
-          setUserCard(foundUserCard || null);
+          if (allCardsError) {
+            console.error("❌ Error loading all cards:", allCardsError);
+            setError("Error al cargar las tarjetas del sistema");
+            setAllCards([]);
+            toast.error("Error al cargar las tarjetas del sistema");
+          } else {
+            console.log("✅ All system cards loaded:", allSystemCards?.length || 0);
+            const mappedAllCards = (allSystemCards || []).map(item => mapSupabaseToBusinessCard(item as unknown as SupabaseBusinessCard));
+            setAllCards(mappedAllCards);
+            toast.success(`${mappedAllCards.length} tarjetas cargadas (vista de administrador)`);
+          }
           
-          toast.success(`${fetchedCards.length} tarjetas cargadas (vista de administrador)`);
+          // Cargar las tarjetas propias del usuario de forma separada
+          const { data: ownCardsData, error: ownCardsError } = await supabase
+            .from('cards')
+            .select('*')
+            .eq('user_id', user.id);
+          
+          if (ownCardsError) {
+            console.error("❌ Error loading own cards:", ownCardsError);
+            setUserCards([]);
+            setUserCard(null);
+          } else {
+            console.log("✅ Own cards loaded:", ownCardsData?.length || 0);
+            const mappedOwnCards = (ownCardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+            setUserCards(mappedOwnCards);
+            
+            // Buscar la tarjeta propia
+            const foundUserCard = mappedOwnCards.find(card => card.userId === user.id);
+            setUserCard(foundUserCard || null);
+            console.log("👤 User's own card:", foundUserCard ? foundUserCard.name : "None");
+          }
           
         } else {
           // Para usuarios normales: solo sus propias tarjetas
+          console.log("👤 Regular user, loading own cards only...");
+          const fetchedCards = await getCardsSupabase();
+          
+          if (fetchedCards === null) {
+            console.error("❌ Error loading cards");
+            setError("Error al cargar las tarjetas");
+            setUserCards([]);
+            setUserCard(null);
+            toast.error("Error al cargar las tarjetas");
+            return;
+          }
+          
+          console.log("✅ User cards loaded:", fetchedCards.length);
           setUserCards(fetchedCards);
           setAllCards([]); // No mostrar todas las tarjetas a usuarios normales
           
