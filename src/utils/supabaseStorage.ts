@@ -1,4 +1,3 @@
-
 // 1. Actualizar supabaseStorage.ts para mejor manejo de errores y seguridad
 
 import { BusinessCard, SupabaseBusinessCard } from "../types";
@@ -226,5 +225,54 @@ export const deleteCardSupabase = async (id: string): Promise<boolean> => {
     return true;
   } catch (supabaseError) {
     return handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
+  }
+};
+
+export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
+  try {
+    console.log("🔍 Admin loading all cards from Supabase...");
+    
+    // Verificar autenticación
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      console.error("❌ No user authenticated:", userError);
+      return null;
+    }
+
+    console.log("👤 User authenticated:", userData.user.email);
+
+    // Verificar si es superadmin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (profile?.role !== 'superadmin') {
+      console.error("❌ User is not superadmin");
+      return null;
+    }
+
+    console.log("🔐 Superadmin verified, fetching all cards...");
+    
+    const { data: allCards, error: allCardsError } = await supabase.rpc('get_all_cards');
+    
+    if (allCardsError) {
+      console.error("❌ Error fetching all cards:", allCardsError);
+      return null;
+    }
+    
+    console.log("✅ All cards fetched:", allCards?.length || 0);
+    
+    if (!allCards || allCards.length === 0) {
+      return [];
+    }
+    
+    const mappedCards = allCards.map(item => mapSupabaseToBusinessCard(item as unknown as SupabaseBusinessCard));
+    return mappedCards;
+  } catch (supabaseError) {
+    console.error("💥 Error in getAllCardsSupabase:", supabaseError);
+    return null;
   }
 };
