@@ -18,20 +18,31 @@ export const useUsersWithCards = () => {
   const fetchUsersWithCards = async () => {
     try {
       setLoading(true);
+      console.log("Fetching users and cards...");
       
       // Get profiles from database
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, role, created_at, updated_at');
+        .select('id, email, role, full_name, created_at, updated_at');
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+      
+      console.log("Profiles fetched:", profiles?.length || 0);
       
       // Get all cards
       const { data: cards, error: cardsError } = await supabase
         .from('cards')
         .select('*');
         
-      if (cardsError) throw cardsError;
+      if (cardsError) {
+        console.error("Error fetching cards:", cardsError);
+        throw cardsError;
+      }
+      
+      console.log("Cards fetched:", cards?.length || 0);
       
       // Combine data
       const usersWithCards: UserWithCards[] = profiles?.map(profile => {
@@ -40,7 +51,7 @@ export const useUsersWithCards = () => {
         
         return {
           id: profile.id,
-          full_name: profile.email?.split('@')[0] || 'Usuario', // Use email prefix as name
+          full_name: profile.full_name || profile.email?.split('@')[0] || 'Usuario',
           email: profile.email,
           role: profile.role as DatabaseRole,
           cards: mappedCards,
@@ -56,10 +67,10 @@ export const useUsersWithCards = () => {
         return (a.full_name || '').localeCompare(b.full_name || '');
       });
       
+      console.log('Final users with cards:', usersWithCards.length);
       setUsers(usersWithCards);
       setError(null);
       
-      console.log('Final users with cards:', usersWithCards.length);
     } catch (error: any) {
       console.error('Error fetching users with cards:', error);
       setError(error.message);
