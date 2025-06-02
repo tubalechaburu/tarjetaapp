@@ -17,19 +17,9 @@ export const getAllCardsForAdmin = async (): Promise<BusinessCard[] | null> => {
 
     console.log("👤 User authenticated:", userData.user.email);
 
-    // Verificar si es superadmin
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id)
-      .single();
-
-    if (userRole?.role !== 'superadmin') {
-      console.error("❌ User is not superadmin");
-      return null;
-    }
-
-    console.log("🔐 Superadmin verified, fetching all cards...");
+    // Use the secure RLS policy - if user is superadmin, they'll see all cards
+    // If not, they'll only see their own cards (or none if not authorized)
+    console.log("🔐 Checking superadmin access via RLS policies...");
     
     const { data: allCards, error: allCardsError } = await supabase
       .from('cards')
@@ -40,7 +30,7 @@ export const getAllCardsForAdmin = async (): Promise<BusinessCard[] | null> => {
       return null;
     }
     
-    console.log("✅ All cards fetched:", allCards?.length || 0);
+    console.log("✅ Cards fetched (RLS-filtered):", allCards?.length || 0);
     
     if (!allCards || allCards.length === 0) {
       return [];
@@ -62,12 +52,7 @@ export const checkSuperAdminAccess = async (): Promise<boolean> => {
       return false;
     }
 
-    // Check email for quick access
-    if (userData.user.email === 'tubal@tubalechaburu.com') {
-      return true;
-    }
-
-    // Check using RPC function
+    // Use the secure database function instead of hardcoded email check
     const { data: isSuperAdmin, error: roleError } = await supabase
       .rpc('is_superadmin', { _user_id: userData.user.id });
     

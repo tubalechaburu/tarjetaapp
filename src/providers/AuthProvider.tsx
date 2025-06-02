@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     let mounted = true;
 
-    const handleAuthStateChange = (event: string, session: any) => {
+    const handleAuthStateChange = async (event: string, session: any) => {
       if (!mounted) return;
       
       console.log("🔐 Auth state changed:", event, session?.user?.email || "no user");
@@ -31,11 +31,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Set default role based on email
-      if (session?.user?.email === 'tubal@tubalechaburu.com') {
-        setUserRole('superadmin');
-      } else if (session?.user) {
-        setUserRole('user');
+      // Fetch user role from database instead of hardcoded email check
+      if (session?.user) {
+        try {
+          const { data: isSuperAdminResult, error } = await supabase
+            .rpc('is_superadmin', { _user_id: session.user.id });
+          
+          if (error) {
+            console.error("Error checking user role:", error);
+            setUserRole('user'); // Default to user on error
+          } else {
+            setUserRole(isSuperAdminResult ? 'superadmin' : 'user');
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setUserRole('user'); // Default to user on error
+        }
       } else {
         setUserRole(null);
       }
@@ -60,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (mounted) {
-          handleAuthStateChange('INITIAL_SESSION', session);
+          await handleAuthStateChange('INITIAL_SESSION', session);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -98,9 +109,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUserRole = async () => {
-    // Simple refresh without complex loading
-    if (user?.email === 'tubal@tubalechaburu.com') {
-      setUserRole('superadmin');
+    if (!user) return;
+    
+    try {
+      const { data: isSuperAdminResult, error } = await supabase
+        .rpc('is_superadmin', { _user_id: user.id });
+      
+      if (error) {
+        console.error("Error refreshing user role:", error);
+      } else {
+        setUserRole(isSuperAdminResult ? 'superadmin' : 'user');
+      }
+    } catch (error) {
+      console.error("Error refreshing user role:", error);
     }
   };
 

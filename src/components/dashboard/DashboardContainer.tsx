@@ -42,56 +42,43 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         setError(null);
         setLoading(true);
         
-        // Verificar si es superadmin
-        const isSuperAdminUser = user.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
-        
-        // SIEMPRE cargar solo las tarjetas propias del usuario actual para "Mis Tarjetas"
-        console.log("👤 Loading ONLY user's own cards for 'My Cards' section...");
-        const { data: ownCardsData, error: ownCardsError } = await supabase
+        // Use RLS-protected query - will automatically filter based on user permissions
+        console.log("👤 Loading cards using RLS policies...");
+        const { data: cardsData, error: cardsError } = await supabase
           .from('cards')
-          .select('*')
-          .eq('user_id', user.id); // CRÍTICO: solo las del usuario actual
+          .select('*');
         
-        if (ownCardsError) {
-          console.error("❌ Error loading own cards:", ownCardsError);
+        if (cardsError) {
+          console.error("❌ Error loading cards:", cardsError);
           setUserCards([]);
+          setAllCards([]);
           setUserCard(null);
-          toast.error("Error al cargar tus tarjetas");
+          toast.error("Error al cargar las tarjetas");
         } else {
-          console.log("✅ Own cards loaded for user", user.id, ":", ownCardsData?.length || 0);
-          const mappedOwnCards = (ownCardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
-          setUserCards(mappedOwnCards);
+          console.log("✅ Cards loaded (RLS-filtered):", cardsData?.length || 0);
+          const mappedCards = (cardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
           
-          // Buscar la tarjeta propia - debería ser la primera (y posiblemente única)
-          const foundUserCard = mappedOwnCards.length > 0 ? mappedOwnCards[0] : null;
-          setUserCard(foundUserCard);
-          console.log("👤 User's own card:", foundUserCard ? foundUserCard.name : "None");
+          // For regular users, these will be their own cards
+          // For superadmins, these will be all cards in the system
+          const isSuperAdminUser = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
           
-          if (mappedOwnCards.length > 0) {
-            toast.success("Tus tarjetas cargadas correctamente");
-          }
-        }
-
-        // Para superadmin: cargar TODAS las tarjetas del sistema para el panel de administración
-        if (isSuperAdminUser) {
-          console.log("🔐 Superadmin detected, loading all system cards for admin panel...");
-          
-          const { data: allSystemCards, error: allCardsError } = await supabase
-            .from('cards')
-            .select('*');
-          
-          if (allCardsError) {
-            console.error("❌ Error loading all cards:", allCardsError);
-            setAllCards([]);
-            toast.error("Error al cargar las tarjetas del sistema");
+          if (isSuperAdminUser) {
+            // Superadmin sees all cards
+            setAllCards(mappedCards);
+            // Find their own cards within all cards
+            const ownCards = mappedCards.filter(card => card.userId === user.id);
+            setUserCards(ownCards);
+            setUserCard(ownCards.length > 0 ? ownCards[0] : null);
+            toast.success(`${mappedCards.length} tarjetas cargadas en el panel de administración`);
           } else {
-            console.log("✅ All system cards loaded for admin panel:", allSystemCards?.length || 0);
-            const mappedAllCards = (allSystemCards || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
-            setAllCards(mappedAllCards);
-            toast.success(`${mappedAllCards.length} tarjetas cargadas en el panel de administración`);
+            // Regular user sees only their own cards
+            setUserCards(mappedCards);
+            setUserCard(mappedCards.length > 0 ? mappedCards[0] : null);
+            setAllCards([]); // Regular users don't see admin panel
+            if (mappedCards.length > 0) {
+              toast.success("Tus tarjetas cargadas correctamente");
+            }
           }
-        } else {
-          setAllCards([]); // Usuarios normales no ven el panel de administración
         }
 
       } catch (error) {
@@ -109,7 +96,7 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
   const handleUserCardDeleted = () => {
     setUserCard(null);
     setUserCards(prev => prev.filter(card => card.id !== userCard?.id));
-    // Solo eliminar del panel de admin si es la misma tarjeta
+    // Only remove from admin panel if it's the same card
     if (userCard) {
       setAllCards(prev => prev.filter(card => card.id !== userCard.id));
     }
@@ -118,7 +105,7 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
 
   const handleCardDeleted = (cardId: string) => {
     setAllCards(prev => prev.filter(card => card.id !== cardId));
-    // Solo eliminar de las tarjetas del usuario si es su propia tarjeta
+    // Only remove from user cards if it's their own card
     if (userCard?.id === cardId) {
       setUserCard(null);
       setUserCards(prev => prev.filter(card => card.id !== cardId));
@@ -136,8 +123,8 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
     );
   }
 
-  // Verificar si es superadmin
-  const isSuperAdminUser = user?.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
+  // Check if user is superadmin using the secure role system
+  const isSuperAdminUser = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -15,12 +15,9 @@ export const saveCardToSupabase = async (card: BusinessCard): Promise<boolean> =
       return false;
     }
 
-    // Verificar que el usuario solo pueda editar sus propias tarjetas
-    if (card.id && card.userId && card.userId !== user.id) {
-      console.error("❌ User trying to edit card they don't own");
-      return false;
-    }
-
+    // RLS policies will automatically handle authorization
+    // No need for manual user_id checks - the database will enforce this
+    
     // Prepare data for Supabase
     const supabaseCard = prepareSupabaseCard({
       ...card,
@@ -50,6 +47,7 @@ export const getUserCardsFromSupabase = async (userId: string): Promise<Business
   try {
     console.log("🔍 Loading user cards from Supabase...", userId);
     
+    // RLS policies will automatically filter to only user's own cards
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -89,7 +87,7 @@ export const getCardByIdFromSupabase = async (id: string): Promise<BusinessCard 
 
     console.log("👤 User authenticated:", userData.user.email);
 
-    // Obtener la tarjeta directamente - RLS manejará los permisos
+    // RLS policies will automatically handle access control
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -102,7 +100,7 @@ export const getCardByIdFromSupabase = async (id: string): Promise<BusinessCard 
     }
     
     if (!data) {
-      console.log(`📭 Card ${id} not found`);
+      console.log(`📭 Card ${id} not found or not accessible`);
       return null;
     }
     
@@ -126,26 +124,8 @@ export const deleteCardFromSupabase = async (id: string): Promise<boolean> => {
       return false;
     }
 
-    // Verificar que la tarjeta pertenece al usuario (excepto superadmin)
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (userRole?.role !== 'superadmin') {
-      const { data: card } = await supabase
-        .from('cards')
-        .select('user_id')
-        .eq('id', id)
-        .single();
-
-      if (card && card.user_id !== user.id) {
-        console.error("❌ User trying to delete card they don't own");
-        return false;
-      }
-    }
-    
+    // RLS policies will automatically handle authorization
+    // Users can only delete their own cards, superadmins can delete any card
     const { error } = await supabase
       .from('cards')
       .delete()

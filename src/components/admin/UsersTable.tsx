@@ -48,20 +48,8 @@ export const UsersTable = () => {
       setLoading(true);
       setError(null);
       
-      // First check if current user is superadmin using the correct function name
-      const { data: isSuperAdmin, error: roleError } = await supabase
-        .rpc('is_superadmin', { _user_id: (await supabase.auth.getUser()).data.user?.id });
-      
-      if (roleError) {
-        console.error("Error checking superadmin status:", roleError);
-        throw new Error("No tienes permisos para acceder a esta información");
-      }
-      
-      if (!isSuperAdmin) {
-        throw new Error("Solo los superadministradores pueden ver todos los usuarios");
-      }
-      
-      // Get users from profiles table
+      // Use the secure RLS-protected query instead of manual role checking
+      // If user is not superadmin, this query will return no results due to RLS
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -71,14 +59,22 @@ export const UsersTable = () => {
           updated_at
         `);
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        if (profilesError.message?.includes('permission denied') || profilesError.code === 'PGRST116') {
+          throw new Error("No tienes permisos para acceder a esta información");
+        }
+        throw profilesError;
+      }
       
-      // Get user roles separately
+      // Get user roles separately (also RLS-protected)
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
       
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error("Error loading roles:", rolesError);
+        // Continue without roles if there's an error
+      }
       
       // Combine profiles with roles
       const usersWithRoles = profilesData?.map(profile => {
