@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("🔐 Auth state changed:", event, session?.user?.email);
     setSession(session);
     setUser(session?.user ?? null);
-    setIsLoading(false);
     
     if (session?.user?.id && event === 'SIGNED_IN') {
       console.log("✅ User signed in, loading role for:", session.user.email);
@@ -41,10 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const role = await loadUserRole(session.user.id);
         console.log("🎭 Role loaded for", session.user.email, ":", role);
         setUserRole(role || 'user');
+        setIsLoading(false);
       }, 200);
     } else if (!session?.user) {
       console.log("❌ No user, clearing role");
       setUserRole(null);
+      setIsLoading(false);
     }
   };
 
@@ -56,7 +56,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("📋 Initial session:", session?.user?.email || "No user");
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
       
       // Load user role if user exists
       if (session?.user?.id) {
@@ -65,7 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const role = await loadUserRole(session.user.id);
           console.log("🎭 Initial role loaded:", role);
           setUserRole(role || 'user');
+          setIsLoading(false);
         }, 200);
+      } else {
+        setIsLoading(false);
       }
     });
 
