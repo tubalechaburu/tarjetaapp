@@ -14,16 +14,16 @@ export { checkSuperAdminAccess } from "./supabase/adminOperations";
 // Legacy exports for backward compatibility - these will be removed in future versions
 // Import and re-export to maintain existing functionality
 import { 
-  saveCardSupabase as save, 
-  getCardsSupabase as getCards, 
-  getCardByIdSupabase as getById, 
-  deleteCardSupabase as deleteCard,
-  getAllCardsSupabase as getAllCards 
+  saveCardSupabase as saveCardSupabaseImpl, 
+  getCardsSupabase as getCardsSupabaseImpl, 
+  getCardByIdSupabase as getCardByIdSupabaseImpl, 
+  deleteCardSupabase as deleteCardSupabaseImpl,
+  getAllCardsSupabase as getAllCardsSupabaseImpl 
 } from "./supabase/cardOperations";
 
 // Maintain legacy function names
-export const saveCard = save;
-export const getCards = getCards;
-export const getCardById = getById;
-export const deleteCard = deleteCard;
-export const getAllCards = getAllCards;
+export const saveCard = saveCardSupabaseImpl;
+export const getCards = getCardsSupabaseImpl;
+export const getCardById = getCardByIdSupabaseImpl;
+export const deleteCard = deleteCardSupabaseImpl;
+export const getAllCards = getAllCardsSupabaseImpl;
