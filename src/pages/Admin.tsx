@@ -4,10 +4,8 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthContext";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { UsersManagementTable } from "@/components/admin/UsersManagementTable";
-import { AllUsersTable } from "@/components/admin/AllUsersTable";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Admin = () => {
   const { user, userRole } = useAuth();
@@ -32,20 +30,9 @@ const Admin = () => {
       <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg">
         <AdminHeader />
         
-        <Tabs defaultValue="all-users" className="mt-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all-users">Todos los Usuarios</TabsTrigger>
-            <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all-users" className="mt-6">
-            <AllUsersTable />
-          </TabsContent>
-          
-          <TabsContent value="users" className="mt-6">
-            <UsersManagementTable />
-          </TabsContent>
-        </Tabs>
+        <div className="mt-6">
+          <UsersManagementTable />
+        </div>
       </div>
     </div>
   );
