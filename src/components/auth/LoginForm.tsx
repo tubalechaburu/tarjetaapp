@@ -44,22 +44,9 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
       console.log("LoginForm: Calling onSubmit...");
       await onSubmit(data);
       console.log("LoginForm: onSubmit completed successfully");
-      toast.success("Iniciando sesión...");
     } catch (error: any) {
       console.error("LoginForm: Error during submit:", error);
-      let errorMessage = "Error al iniciar sesión. Por favor, inténtalo de nuevo.";
-      
-      if (error.message) {
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Debes confirmar tu email antes de iniciar sesión.";
-        } else if (error.message.includes("too many requests")) {
-          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo.";
-        }
-      }
-      
-      toast.error(errorMessage);
+      // El error ya se maneja en authUtils.ts
     } finally {
       setIsSubmitting(false);
     }

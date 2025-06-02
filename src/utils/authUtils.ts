@@ -14,20 +14,25 @@ export const signIn = async (email: string, password: string) => {
 
     if (error) {
       console.error("Sign in error:", error);
+      let errorMessage = "Error de autenticación";
+      
       if (error.message === "Invalid login credentials") {
-        toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
+        errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
       } else if (error.message.includes("Email not confirmed")) {
-        toast.error("Debes confirmar tu email antes de iniciar sesión.");
+        errorMessage = "Debes confirmar tu email antes de iniciar sesión.";
       } else if (error.message.includes("too many requests")) {
-        toast.error("Demasiados intentos. Espera unos minutos antes de intentar de nuevo.");
+        errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo.";
       } else {
-        toast.error(`Error de autenticación: ${error.message}`);
+        errorMessage = `Error de autenticación: ${error.message}`;
       }
+      
+      toast.error(errorMessage);
       throw error;
     }
 
-    console.log("Sign in successful:", data);
+    console.log("Sign in successful:", data.user?.email);
     toast.success("Sesión iniciada correctamente");
+    return data;
   } catch (error) {
     console.error("Exception during sign in:", error);
     throw error;
@@ -38,11 +43,12 @@ export const signUp = async (email: string, password: string, metadata?: any) =>
   console.log("Attempting to sign up with:", email);
   
   try {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: metadata,
+        emailRedirectTo: `${window.location.origin}/dashboard`
       },
     });
 
@@ -52,7 +58,9 @@ export const signUp = async (email: string, password: string, metadata?: any) =>
       throw error;
     }
 
+    console.log("Sign up successful:", data.user?.email);
     toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
+    return data;
   } catch (error) {
     console.error("Exception during sign up:", error);
     throw error;
@@ -103,7 +111,15 @@ export const resetPassword = async (email: string) => {
 export const loadUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
     console.log("Loading user role for:", userId);
-    const role = await getUserRole(userId);
+    
+    // Use a timeout to prevent hanging
+    const timeoutPromise = new Promise<UserRole>((_, reject) => {
+      setTimeout(() => reject(new Error('Role loading timeout')), 5000);
+    });
+    
+    const rolePromise = getUserRole(userId);
+    
+    const role = await Promise.race([rolePromise, timeoutPromise]);
     console.log("User role received:", role);
     return role;
   } catch (error) {

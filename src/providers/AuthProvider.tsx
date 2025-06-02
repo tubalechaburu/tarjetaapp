@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,13 +35,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (session?.user?.id && event === 'SIGNED_IN') {
       console.log("✅ User signed in, loading role for:", session.user.email);
-      // Force a fresh role load on signin
+      // Use setTimeout to avoid potential deadlocks
       setTimeout(async () => {
-        const role = await loadUserRole(session.user.id);
-        console.log("🎭 Role loaded for", session.user.email, ":", role);
-        setUserRole(role || 'user');
-        setIsLoading(false);
-      }, 200);
+        try {
+          const role = await loadUserRole(session.user.id);
+          console.log("🎭 Role loaded for", session.user.email, ":", role);
+          setUserRole(role || 'user');
+        } catch (error) {
+          console.error("Error loading user role:", error);
+          setUserRole('user'); // Fallback to user role
+        } finally {
+          setIsLoading(false);
+        }
+      }, 100);
     } else if (!session?.user) {
       console.log("❌ No user, clearing role");
       setUserRole(null);
@@ -51,28 +58,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log("🚀 AuthProvider: Setting up auth state");
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("📋 Initial session:", session?.user?.email || "No user");
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Load user role if user exists
-      if (session?.user?.id) {
-        console.log("👤 Loading initial role for:", session.user.email);
-        setTimeout(async () => {
-          const role = await loadUserRole(session.user.id);
-          console.log("🎭 Initial role loaded:", role);
-          setUserRole(role || 'user');
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    // Then get initial session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
           setIsLoading(false);
-        }, 200);
-      } else {
+          return;
+        }
+
+        console.log("📋 Initial session:", session?.user?.email || "No user");
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Load user role if user exists
+        if (session?.user?.id) {
+          console.log("👤 Loading initial role for:", session.user.email);
+          try {
+            const role = await loadUserRole(session.user.id);
+            console.log("🎭 Initial role loaded:", role);
+            setUserRole(role || 'user');
+          } catch (error) {
+            console.error("Error loading initial role:", error);
+            setUserRole('user');
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
         setIsLoading(false);
       }
-    });
+    };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    initializeAuth();
 
     return () => {
       console.log("🧹 AuthProvider: Cleaning up subscription");
