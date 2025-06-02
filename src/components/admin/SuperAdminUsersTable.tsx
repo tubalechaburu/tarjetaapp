@@ -18,7 +18,7 @@ export const SuperAdminUsersTable = () => {
   const exportAllData = () => {
     const exportData = users.map(user => ({
       name: user.full_name || 'Sin nombre',
-      email: user.email,
+      email: user.email || 'Sin email',
       role: user.role,
       cards_count: user.cards.length,
       cards: user.cards.map(card => ({

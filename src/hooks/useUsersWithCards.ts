@@ -21,36 +21,38 @@ export const useUsersWithCards = () => {
       setError(null);
       console.log("Fetching users and cards...");
       
-      // Verificar autenticación
+      // Verificar usuario actual
       const { data: userData, error: userError } = await supabase.auth.getUser();
       
       if (userError || !userData.user) {
-        console.error("❌ No user authenticated:", userError);
-        return null;
+        throw new Error("No tienes acceso a esta información");
       }
 
-      console.log("👤 User authenticated:", userData.user.email);
-
-      // Verificar acceso (email específico o función RPC)
-      const hasDirectAccess = userData.user.email === 'tubal@tubalechaburu.com';
+      console.log("Current user:", userData.user.email);
       
-      if (!hasDirectAccess) {
-        const { data: isSuperAdmin, error: roleError } = await supabase
+      // Verificar si es superadmin (más permisivo)
+      const isSuperAdmin = userData.user.email === 'tubal@tubalechaburu.com';
+      
+      if (!isSuperAdmin) {
+        // También verificar usando la función RPC como respaldo
+        const { data: rpcResult, error: roleError } = await supabase
           .rpc('is_current_user_superadmin');
         
-        if (roleError || !isSuperAdmin) {
+        if (roleError || !rpcResult) {
           throw new Error("Solo los superadministradores pueden ver todos los usuarios");
         }
       }
       
-      // Get profiles from database
+      console.log("Access granted for superadmin");
+      
+      // Get profiles from database with better error handling
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, role, full_name, created_at, updated_at');
       
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
-        throw profilesError;
+        throw new Error(`Error al obtener perfiles: ${profilesError.message}`);
       }
       
       console.log("Profiles fetched:", profiles?.length || 0);
@@ -60,19 +62,21 @@ export const useUsersWithCards = () => {
         
       if (cardsError) {
         console.error("Error fetching cards:", cardsError);
-        throw cardsError;
+        // No lanzar error si no se pueden obtener tarjetas, solo continuar sin ellas
+        console.log("Continuing without cards data");
       }
       
       console.log("Cards fetched:", cards?.length || 0);
       
-      // Combine data
+      // Combine data with improved user display
       const usersWithCards: UserWithCards[] = profiles?.map(profile => {
         const userCards = cards?.filter(card => card.user_id === profile.id) || [];
         const mappedCards = userCards.map(card => mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard));
         
-        // Mejorar el nombre mostrado - usar full_name o email como fallback
+        // Mejorar el nombre mostrado - asegurar que siempre hay un nombre visible
         let displayName = profile.full_name;
         if (!displayName && profile.email) {
+          // Usar la parte antes del @ del email como nombre
           displayName = profile.email.split('@')[0];
         }
         if (!displayName) {
@@ -82,7 +86,7 @@ export const useUsersWithCards = () => {
         return {
           id: profile.id,
           full_name: displayName,
-          email: profile.email,
+          email: profile.email || 'Sin email', // Asegurar que siempre se muestre algo
           role: profile.role as DatabaseRole,
           cards: mappedCards,
           updated_at: profile.updated_at || ''
