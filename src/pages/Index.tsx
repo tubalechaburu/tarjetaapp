@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
-import { getCardsSupabase } from "@/utils/supabaseStorage";
+import { getCardsSupabase, getAllCardsSupabase } from "@/utils/supabaseStorage";
 import { checkSupabaseConnection } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ const Index = () => {
   const { user, userRole, isSuperAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [cards, setCards] = useState<BusinessCard[]>([]);
+  const [allCards, setAllCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
@@ -55,13 +56,13 @@ const Index = () => {
           setConnectionStatus(false);
         }
 
-        // Load cards from Supabase
+        // Load user cards from Supabase
         try {
-          console.log("📋 Loading cards from Supabase for user:", user.id);
+          console.log("📋 Loading user cards from Supabase for user:", user.id);
           setLoading(true);
           
           const fetchedCards = await getCardsSupabase();
-          console.log("📦 Fetched cards result:", fetchedCards);
+          console.log("📦 Fetched user cards result:", fetchedCards);
           
           if (fetchedCards === null) {
             console.log("❌ getCardsSupabase returned null");
@@ -72,19 +73,25 @@ const Index = () => {
           }
           
           if (Array.isArray(fetchedCards)) {
-            console.log("✅ Setting cards:", fetchedCards.length, "cards found");
+            console.log("✅ Setting user cards:", fetchedCards.length, "cards found");
             setCards(fetchedCards);
             
             // Find user's card
             const foundUserCard = fetchedCards.find(card => card.userId === user.id);
             console.log("👤 Found user card:", foundUserCard ? "Yes" : "No");
             setUserCard(foundUserCard || null);
-          } else {
-            console.log("❌ Invalid cards format returned");
-            setError("Formato de datos inválido");
-            setCards([]);
-            setUserCard(null);
           }
+
+          // If user is superadmin, also load all cards
+          if (isSuperAdmin()) {
+            console.log("🔐 User is superadmin, loading all cards...");
+            const allCardsResult = await getAllCardsSupabase();
+            if (allCardsResult && Array.isArray(allCardsResult)) {
+              console.log("✅ Setting all cards for superadmin:", allCardsResult.length);
+              setAllCards(allCardsResult);
+            }
+          }
+
         } catch (error) {
           console.error("💥 Error loading cards:", error);
           setError("Error al cargar las tarjetas. Intenta refrescar la página.");
@@ -101,7 +108,7 @@ const Index = () => {
     };
 
     initPage();
-  }, [user, authLoading, userRole]);
+  }, [user, authLoading, userRole, isSuperAdmin]);
 
   const handleUserCardDeleted = () => {
     setUserCard(null);
@@ -110,6 +117,7 @@ const Index = () => {
 
   const handleCardDeleted = (cardId: string) => {
     setCards(prev => prev.filter(card => card.id !== cardId));
+    setAllCards(prev => prev.filter(card => card.id !== cardId));
   };
 
   // Don't render anything if redirecting
@@ -166,7 +174,7 @@ const Index = () => {
         {/* Show all cards for superadmin */}
         {isSuperAdmin() && (
           <SuperAdminPanel 
-            cards={cards} 
+            cards={allCards} 
             onCardDeleted={handleCardDeleted} 
           />
         )}
