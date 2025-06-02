@@ -20,22 +20,37 @@ export const downloadSvgAsPng = async (
     console.log("SVG element found:", !!svgElement);
     console.log("Size:", size, "Filename:", filename);
     
-    // Get the actual QR code SVG (without extra padding from the container)
-    const qrSvg = svgElement.querySelector('svg') || svgElement;
+    // Find the actual QR code SVG - it might be nested
+    let qrSvg = svgElement;
     
-    // Create a deep clone of the QR SVG element
+    // If the element has a nested SVG, use that instead
+    const nestedSvg = svgElement.querySelector('svg');
+    if (nestedSvg) {
+      qrSvg = nestedSvg;
+    }
+    
+    // Create a clean clone
     const clonedSvg = qrSvg.cloneNode(true) as SVGSVGElement;
     
-    // Set explicit dimensions for a clean QR code
-    const qrSize = 400; // Fixed size for better quality
+    // Set fixed dimensions for a clean QR code
+    const qrSize = 512; // Higher resolution for better quality
     clonedSvg.setAttribute('width', qrSize.toString());
     clonedSvg.setAttribute('height', qrSize.toString());
-    clonedSvg.setAttribute('viewBox', `0 0 ${qrSize} ${qrSize}`);
     
-    // Ensure white background
-    clonedSvg.style.backgroundColor = '#ffffff';
+    // Ensure proper viewBox
+    const existingViewBox = clonedSvg.getAttribute('viewBox');
+    if (!existingViewBox) {
+      clonedSvg.setAttribute('viewBox', `0 0 ${qrSize} ${qrSize}`);
+    }
     
-    // Create a canvas with the exact QR size
+    // Add white background as a rect element
+    const backgroundRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    backgroundRect.setAttribute('width', '100%');
+    backgroundRect.setAttribute('height', '100%');
+    backgroundRect.setAttribute('fill', '#ffffff');
+    clonedSvg.insertBefore(backgroundRect, clonedSvg.firstChild);
+    
+    // Create canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -44,41 +59,38 @@ export const downloadSvgAsPng = async (
       return;
     }
     
-    // Set canvas dimensions (no extra scaling needed)
     canvas.width = qrSize;
     canvas.height = qrSize;
     
-    // Fill white background
+    // Fill canvas with white background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Convert SVG to string with proper encoding
+    // Convert SVG to string
     const serializer = new XMLSerializer();
     let svgString = serializer.serializeToString(clonedSvg);
     
-    // Ensure proper XML declaration and encoding
+    // Ensure proper namespace
     if (!svgString.includes('xmlns')) {
       svgString = svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
     }
     
-    console.log("SVG serializado correctamente, length:", svgString.length);
+    console.log("SVG string length:", svgString.length);
     
-    // Create image element
+    // Create image and load SVG
     const img = new Image();
     
-    // Create a promise to handle the image loading
     return new Promise<void>((resolve, reject) => {
       img.onload = () => {
         try {
-          console.log("Imagen cargada en canvas");
+          console.log("Imagen cargada correctamente");
           
-          // Draw the image to canvas (1:1 ratio, no scaling)
+          // Draw image to canvas
           ctx.drawImage(img, 0, 0, qrSize, qrSize);
           
-          // Convert canvas to blob and download
+          // Create download
           canvas.toBlob((blob) => {
             if (blob) {
-              // Create download link
               const link = document.createElement('a');
               link.download = filename;
               link.href = URL.createObjectURL(blob);
@@ -112,17 +124,9 @@ export const downloadSvgAsPng = async (
         reject(new Error("Failed to load image"));
       };
       
-      // Convert SVG to data URL
-      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
-      
-      // Set source after defining handlers
-      img.src = url;
-      
-      // Clean up after a timeout
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 1000);
+      // Create data URL from SVG
+      const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+      img.src = svgDataUrl;
     });
   } catch (error) {
     console.error("Error downloading QR code:", error);
