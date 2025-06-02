@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards, deleteCard } from "@/utils/storage";
@@ -42,14 +41,20 @@ const Index = () => {
         setError(null);
         console.log("Starting page initialization...");
         
-        // Check Supabase connection solo una vez al cargar
+        // Check Supabase connection con mejor manejo de errores
         try {
           console.log("Checking Supabase connection...");
           const connected = await checkSupabaseConnection();
+          console.log("Connection check result:", connected);
           setConnectionStatus(connected);
-          console.log("Supabase connection status:", connected);
-        } catch (error) {
-          console.error("Error checking Supabase connection:", error);
+          
+          if (connected) {
+            console.log("✅ Supabase connection successful");
+          } else {
+            console.log("⚠️ Supabase connection failed, will use local storage");
+          }
+        } catch (connectionError) {
+          console.error("Error during connection check:", connectionError);
           setConnectionStatus(false);
         }
 

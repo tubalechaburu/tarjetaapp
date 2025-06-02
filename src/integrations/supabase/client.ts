@@ -39,11 +39,22 @@ export const getUserRole = async (userId: string): Promise<'user' | 'superadmin'
   }
 };
 
-// Function to check Supabase connection
+// Function to check Supabase connection - usando una consulta más simple
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.from('profiles').select('id').limit(1);
-    return !error;
+    // Usar una consulta más simple que no dependa de RLS
+    const { error } = await supabase
+      .from('cards')
+      .select('id')
+      .limit(1);
+    
+    if (error) {
+      console.log('Supabase connection check failed:', error.message);
+      return false;
+    }
+    
+    console.log('Supabase connection successful');
+    return true;
   } catch (error) {
     console.error('Supabase connection error:', error);
     return false;
