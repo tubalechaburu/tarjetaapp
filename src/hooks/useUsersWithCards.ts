@@ -75,20 +75,24 @@ export const useUsersWithCards = () => {
         const userCards = cards?.filter(card => card.user_id === profile.id) || [];
         const mappedCards = userCards.map(card => mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard));
         
-        // Mejorar el nombre mostrado - asegurar que siempre hay un nombre visible
-        let displayName = profile.full_name;
-        if (!displayName && profile.email) {
-          // Usar la parte antes del @ del email como nombre
-          displayName = profile.email.split('@')[0];
+        // Garantizar que siempre tenemos un email y nombre visible
+        const email = profile.email || 'Sin email';
+        let fullName = profile.full_name;
+        
+        // Si no hay full_name, usar la parte antes del @ del email
+        if (!fullName && email && email !== 'Sin email') {
+          fullName = email.split('@')[0];
         }
-        if (!displayName) {
-          displayName = 'Usuario sin nombre';
+        
+        // Fallback final si no hay nombre
+        if (!fullName) {
+          fullName = 'Usuario sin nombre';
         }
         
         return {
           id: profile.id,
-          full_name: displayName,
-          email: profile.email || 'Sin email',
+          full_name: fullName,
+          email: email,
           role: profile.role as DatabaseRole,
           cards: mappedCards,
           updated_at: profile.updated_at || ''
@@ -104,7 +108,11 @@ export const useUsersWithCards = () => {
       });
       
       console.log('Final users with cards:', usersWithCards.length);
-      console.log('Users data:', usersWithCards.map(u => ({ name: u.full_name, email: u.email, cards: u.cards.length })));
+      console.log('Users data (with names and emails):', usersWithCards.map(u => ({ 
+        name: u.full_name, 
+        email: u.email, 
+        cards: u.cards.length 
+      })));
       setUsers(usersWithCards);
       
     } catch (error: any) {

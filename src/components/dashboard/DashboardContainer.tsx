@@ -46,11 +46,11 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         const isSuperAdminUser = user.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
         
         // SIEMPRE cargar solo las tarjetas propias del usuario actual para "Mis Tarjetas"
-        console.log("👤 Loading user's own cards only...");
+        console.log("👤 Loading ONLY user's own cards for 'My Cards' section...");
         const { data: ownCardsData, error: ownCardsError } = await supabase
           .from('cards')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id); // CRÍTICO: solo las del usuario actual
         
         if (ownCardsError) {
           console.error("❌ Error loading own cards:", ownCardsError);
@@ -58,7 +58,7 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
           setUserCard(null);
           toast.error("Error al cargar tus tarjetas");
         } else {
-          console.log("✅ Own cards loaded:", ownCardsData?.length || 0);
+          console.log("✅ Own cards loaded for user", user.id, ":", ownCardsData?.length || 0);
           const mappedOwnCards = (ownCardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
           setUserCards(mappedOwnCards);
           
