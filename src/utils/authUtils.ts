@@ -91,9 +91,30 @@ export const resetPassword = async (email: string) => {
 export const loadUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
     console.log("Loading user role for:", userId);
-    const role = await getUserRole(userId);
-    console.log("User role received:", role);
-    return role;
+    
+    // Intentar obtener el rol del usuario con reintentos
+    let retries = 3;
+    let role: UserRole | null = null;
+    
+    while (retries > 0 && !role) {
+      try {
+        role = await getUserRole(userId);
+        if (role) {
+          console.log("User role received:", role);
+          return role;
+        }
+      } catch (error) {
+        console.warn(`Retry ${4 - retries} failed for getUserRole:`, error);
+      }
+      
+      retries--;
+      if (retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500)); // Esperar 500ms antes del siguiente intento
+      }
+    }
+    
+    console.warn("Failed to load user role after retries, defaulting to 'user'");
+    return 'user';
   } catch (error) {
     console.error("Error loading user role:", error);
     return 'user';

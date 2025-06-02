@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(session);
     setUser(session?.user ?? null);
     
-    if (session?.user?.id && event === 'SIGNED_IN') {
+    if (session?.user?.id && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
       console.log("✅ User signed in, loading role for:", session.user.email);
       try {
         const role = await loadUserRole(session.user.id);
@@ -108,6 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Wrapper functions to match the expected interface
   const handleSignIn = async (email: string, password: string): Promise<void> => {
     await signIn(email, password);
+    // Forzar recarga del rol después del login
+    setTimeout(refreshUserRole, 1000);
   };
 
   const handleSignUp = async (email: string, password: string, metadata?: any): Promise<void> => {
