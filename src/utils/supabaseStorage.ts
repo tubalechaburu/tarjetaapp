@@ -1,3 +1,4 @@
+// 1. Actualizar supabaseStorage.ts para mejor manejo de errores y seguridad
 
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
@@ -9,8 +10,26 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
   try {
     console.log("💾 Saving card to Supabase:", card.name);
     
+    // Verificar autenticación antes de guardar
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("❌ User not authenticated");
+      toast.error("Debes estar autenticado para guardar tarjetas");
+      return false;
+    }
+
+    // Verificar que el usuario solo pueda editar sus propias tarjetas
+    if (card.id && card.userId && card.userId !== user.id) {
+      console.error("❌ User trying to edit card they don't own");
+      toast.error("No tienes permisos para editar esta tarjeta");
+      return false;
+    }
+
     // Prepare data for Supabase
-    const supabaseCard = prepareSupabaseCard(card);
+    const supabaseCard = prepareSupabaseCard({
+      ...card,
+      userId: user.id // Ensure correct user ID
+    });
     
     // Try to upsert to Supabase
     const { data, error } = await supabase
@@ -23,7 +42,6 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
       return handleSupabaseError(error, "No se pudo guardar la tarjeta");
     } else {
       console.log("✅ Card saved successfully:", data);
-      handleSupabaseSuccess(data, "Tarjeta guardada correctamente");
       return true;
     }
   } catch (supabaseError) {
@@ -36,12 +54,11 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   try {
     console.log("🔍 Loading cards from Supabase...");
     
-    // Verificar rol del usuario primero
+    // Verificar autenticación
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError || !userData.user) {
       console.error("❌ No user authenticated:", userError);
-      toast.error("Usuario no autenticado");
       return null;
     }
 
@@ -56,21 +73,33 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
 
     if (profileError) {
       console.error("❌ Error getting user profile:", profileError);
-      toast.error("Error al obtener perfil de usuario");
-      return null;
+      // Si no existe perfil, usar rol por defecto
+      console.log("Creating default profile...");
+      
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userData.user.id,
+          email: userData.user.email || '',
+          role: 'user'
+        });
+      
+      if (insertError) {
+        console.error("Error creating profile:", insertError);
+      }
     }
 
-    console.log("🎭 User profile:", profile);
+    const userRole = profile?.role || 'user';
+    console.log("🎭 User role:", userRole);
 
-    // Si es superadmin, usar función especial que bypasea RLS
-    if (profile.role === 'superadmin') {
+    // Si es superadmin, usar función especial
+    if (userRole === 'superadmin') {
       console.log("🔐 Superadmin detected, fetching all cards...");
       
       const { data: allCards, error: allCardsError } = await supabase.rpc('get_all_cards');
       
       if (allCardsError) {
         console.error("❌ Error fetching all cards:", allCardsError);
-        toast.error("Error al cargar todas las tarjetas");
         return null;
       }
       
@@ -81,11 +110,10 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       }
       
       const mappedCards = allCards.map(item => mapSupabaseToBusinessCard(item as unknown as SupabaseBusinessCard));
-      console.log("🗂️ Mapped cards for superadmin:", mappedCards.length);
       return mappedCards;
     }
     
-    // Para usuarios normales, consulta directa con RLS
+    // Para usuarios normales, consulta con RLS
     console.log("👤 Regular user, fetching own cards...");
     const { data, error } = await supabase
       .from('cards')
@@ -94,7 +122,6 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     
     if (error) {
       console.error("❌ Database query error:", error);
-      toast.error("Error al obtener las tarjetas");
       return null;
     }
     
@@ -106,88 +133,45 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     const mappedCards = (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
-    console.log("🗂️ Final mapped user cards:", mappedCards.length);
-    
     return mappedCards;
   } catch (supabaseError) {
     console.error("💥 Error in getCardsSupabase:", supabaseError);
-    toast.error("Error al conectar con la base de datos");
-    return null;
-  }
-};
-
-export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
-  try {
-    console.log("🔍 Loading ALL cards for admin...");
-    
-    // Usar la función RPC que bypasea RLS para admins
-    const { data, error } = await supabase.rpc('get_all_cards');
-    
-    if (error) {
-      console.error("❌ Database query error:", error);
-      toast.error("Error al obtener todas las tarjetas");
-      return null;
-    }
-    
-    console.log("✅ Raw all cards data:", data);
-    console.log("📊 Total cards found:", data?.length || 0);
-    
-    if (isEmptyData(data)) {
-      console.log("📭 No cards found in database");
-      return [];
-    }
-    
-    // Map the data
-    const mappedCards = (data as SupabaseBusinessCard[]).map(item => {
-      console.log("🔄 Mapping card:", item.id, item.name);
-      return mapSupabaseToBusinessCard(item as unknown as SupabaseBusinessCard);
-    });
-    
-    console.log("✅ Final mapped all cards:", mappedCards.length, "cards");
-    
-    return mappedCards;
-  } catch (supabaseError) {
-    console.error("💥 Error in getAllCardsSupabase:", supabaseError);
-    toast.error("Error al conectar con la base de datos");
-    return null;
-  }
-};
-
-export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | null> => {
-  try {
-    console.log(`Fetching card with ID ${id} from Supabase`);
-    
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    
-    if (error) {
-      console.error("Supabase query error:", error);
-      handleSupabaseError(error, "Error al obtener la tarjeta");
-      return null;
-    }
-    
-    if (!data) {
-      console.log(`Card with ID ${id} not found in Supabase`);
-      return null;
-    }
-    
-    console.log(`Card with ID ${id} found in Supabase:`, data);
-    handleSupabaseSuccess(data, "Tarjeta cargada correctamente");
-    
-    const card = mapSupabaseToBusinessCard(data as unknown as SupabaseBusinessCard);
-    return card;
-  } catch (supabaseError) {
-    handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
     return null;
   }
 };
 
 export const deleteCardSupabase = async (id: string): Promise<boolean> => {
   try {
-    console.log(`Deleting card with ID ${id} from Supabase`);
+    console.log(`🗑️ Deleting card with ID ${id} from Supabase`);
+    
+    // Verificar autenticación
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("❌ User not authenticated");
+      toast.error("Debes estar autenticado para eliminar tarjetas");
+      return false;
+    }
+
+    // Verificar que la tarjeta pertenece al usuario (excepto superadmin)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'superadmin') {
+      const { data: card } = await supabase
+        .from('cards')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+
+      if (card && card.user_id !== user.id) {
+        console.error("❌ User trying to delete card they don't own");
+        toast.error("No tienes permisos para eliminar esta tarjeta");
+        return false;
+      }
+    }
     
     const { error } = await supabase
       .from('cards')
@@ -198,7 +182,6 @@ export const deleteCardSupabase = async (id: string): Promise<boolean> => {
       return handleSupabaseError(error, "Error al eliminar la tarjeta");
     }
     
-    handleSupabaseSuccess(null, "Tarjeta eliminada correctamente");
     return true;
   } catch (supabaseError) {
     return handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
