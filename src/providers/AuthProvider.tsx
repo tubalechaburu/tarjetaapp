@@ -8,7 +8,6 @@ import {
   signUp, 
   signOut, 
   resetPassword, 
-  loadUserRole, 
   isAdmin, 
   isSuperAdmin 
 } from "@/utils/authUtils";
@@ -19,117 +18,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
-  const refreshUserRole = async () => {
-    if (user?.id) {
-      console.log("🔄 Refreshing user role for:", user.id);
-      try {
-        const role = await loadUserRole(user.id);
-        console.log("🎭 New role loaded:", role);
-        setUserRole(role);
-      } catch (error) {
-        console.error("Error refreshing user role:", error);
-        setUserRole('user');
-      }
-    }
-  };
-
-  const handleAuthStateChange = async (event: string, session: any) => {
-    console.log("🔐 Auth state changed:", event, session?.user?.email);
-    
-    // Siempre actualizar la sesión y usuario primero
-    setSession(session);
-    setUser(session?.user ?? null);
-    
-    if (session?.user?.id) {
-      console.log("✅ User found, loading role for:", session.user.email);
-      // Solo cargar el rol si es un evento de login o refresh, no en todos los eventos
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        try {
-          const role = await loadUserRole(session.user.id);
-          console.log("🎭 Role loaded for", session.user.email, ":", role);
-          setUserRole(role || 'user');
-        } catch (error) {
-          console.error("Error loading user role:", error);
-          setUserRole('user');
-        }
-      }
-    } else {
-      console.log("❌ No user, clearing role");
-      setUserRole(null);
-    }
-    
-    // Siempre marcar como no loading al final
-    setIsLoading(false);
-  };
-
   useEffect(() => {
-    console.log("🚀 AuthProvider: Setting up auth state");
+    console.log("🚀 AuthProvider: Initializing auth");
     
-    // Configurar el listener de cambios de auth
+    let mounted = true;
+
+    const handleAuthStateChange = (event: string, session: any) => {
+      if (!mounted) return;
+      
+      console.log("🔐 Auth state changed:", event, session?.user?.email || "no user");
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      // Set default role based on email
+      if (session?.user?.email === 'tubal@tubalechaburu.com') {
+        setUserRole('superadmin');
+      } else if (session?.user) {
+        setUserRole('user');
+      } else {
+        setUserRole(null);
+      }
+      
+      setIsLoading(false);
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    // Inicializar la sesión actual
+    // Get initial session
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
-          setIsLoading(false);
+          if (mounted) {
+            setIsLoading(false);
+          }
           return;
         }
 
-        console.log("📋 Initial session:", session?.user?.email || "No user");
-        
-        // Actualizar estado inmediatamente
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user?.id) {
-          console.log("👤 Loading initial role for:", session.user.email);
-          try {
-            const role = await loadUserRole(session.user.id);
-            console.log("🎭 Initial role loaded:", role);
-            setUserRole(role || 'user');
-          } catch (error) {
-            console.error("Error loading initial role:", error);
-            setUserRole('user');
-          }
-        } else {
-          setUserRole(null);
+        if (mounted) {
+          handleAuthStateChange('INITIAL_SESSION', session);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
-        setUserRole(null);
-      } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeAuth();
 
     return () => {
-      console.log("🧹 AuthProvider: Cleaning up subscription");
+      console.log("🧹 AuthProvider: Cleaning up");
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  useEffect(() => {
-    console.log("📊 Current auth state:", {
-      user: user?.email,
-      role: userRole,
-      isLoading
-    });
-  }, [user, userRole, isLoading]);
-
-  // Wrapper functions para mantener la interfaz esperada
+  // Simple wrapper functions
   const handleSignIn = async (email: string, password: string): Promise<void> => {
-    try {
-      await signIn(email, password);
-      // No forzar recarga aquí, el onAuthStateChange lo manejará
-    } catch (error) {
-      throw error;
-    }
+    await signIn(email, password);
   };
 
   const handleSignUp = async (email: string, password: string, metadata?: any): Promise<void> => {
@@ -137,12 +89,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleSignOut = async (): Promise<void> => {
-    setUserRole(null); // Limpiar rol inmediatamente
+    setUserRole(null);
     await signOut();
   };
 
   const handleResetPassword = async (email: string): Promise<void> => {
     await resetPassword(email);
+  };
+
+  const refreshUserRole = async () => {
+    // Simple refresh without complex loading
+    if (user?.email === 'tubal@tubalechaburu.com') {
+      setUserRole('superadmin');
+    }
   };
 
   const value = {

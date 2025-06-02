@@ -1,5 +1,5 @@
 
-import { supabase, getUserRole } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserRole } from "@/types";
 
@@ -86,23 +86,6 @@ export const resetPassword = async (email: string) => {
   }
 
   toast.success("Instrucciones enviadas a tu correo electrónico");
-};
-
-export const loadUserRole = async (userId: string): Promise<UserRole | null> => {
-  try {
-    console.log("Loading user role for:", userId);
-    
-    // Simplificar la carga del rol - un solo intento
-    const role = await getUserRole(userId);
-    console.log("User role received:", role);
-    
-    // Si no obtenemos rol o es null, devolver 'user' por defecto
-    return role || 'user';
-  } catch (error) {
-    console.error("Error loading user role:", error);
-    // En caso de error, devolver 'user' por defecto
-    return 'user';
-  }
 };
 
 export const isAdmin = (userRole: UserRole | null): boolean => {
