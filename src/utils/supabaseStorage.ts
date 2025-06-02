@@ -64,35 +64,57 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
 
     console.log("👤 User authenticated:", userData.user.email);
 
-    // Verificar si es superadmin usando la función simplificada
-    const { data: isSuperAdmin, error: roleError } = await supabase
-      .rpc('is_current_user_superadmin');
-    
-    if (roleError) {
-      console.error("❌ Error checking superadmin status:", roleError);
-      // Continuar como usuario normal si hay error
+    // Verificar perfil del usuario
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email, role')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (profileError) {
+      console.error("❌ Error getting user profile:", profileError);
+      // Si no existe perfil, usar rol por defecto
+      console.log("Creating default profile...");
+      
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userData.user.id,
+          email: userData.user.email || '',
+          role: 'user'
+        });
+      
+      if (insertError) {
+        console.error("Error creating profile:", insertError);
+      }
     }
 
-    console.log("🎭 Is superadmin:", isSuperAdmin);
+    const userRole = profile?.role || 'user';
+    console.log("🎭 User role:", userRole);
 
-    // Si es superadmin, obtener todas las tarjetas
-    if (isSuperAdmin) {
+    // Si es superadmin, usar función especial
+    if (userRole === 'superadmin') {
       console.log("🔐 Superadmin detected, fetching all cards...");
       
       const { data: allCards, error: allCardsError } = await supabase.rpc('get_all_cards');
       
       if (allCardsError) {
         console.error("❌ Error fetching all cards:", allCardsError);
-        // Fallar silenciosamente y obtener solo las propias tarjetas
-      } else if (allCards) {
-        console.log("✅ All cards fetched for superadmin:", allCards.length);
-        const mappedCards = allCards.map(item => mapSupabaseToBusinessCard(item as unknown as SupabaseBusinessCard));
-        return mappedCards;
+        return null;
       }
+      
+      console.log("✅ All cards fetched for superadmin:", allCards?.length || 0);
+      
+      if (!allCards || allCards.length === 0) {
+        return [];
+      }
+      
+      const mappedCards = allCards.map(item => mapSupabaseToBusinessCard(item as unknown as SupabaseBusinessCard));
+      return mappedCards;
     }
     
-    // Para usuarios normales o fallback, consulta con RLS
-    console.log("👤 Fetching user's own cards...");
+    // Para usuarios normales, consulta con RLS
+    console.log("👤 Regular user, fetching own cards...");
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -171,9 +193,13 @@ export const deleteCardSupabase = async (id: string): Promise<boolean> => {
     }
 
     // Verificar que la tarjeta pertenece al usuario (excepto superadmin)
-    const { data: isSuperAdmin } = await supabase.rpc('is_current_user_superadmin');
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-    if (!isSuperAdmin) {
+    if (profile?.role !== 'superadmin') {
       const { data: card } = await supabase
         .from('cards')
         .select('user_id')
@@ -217,9 +243,13 @@ export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     console.log("👤 User authenticated:", userData.user.email);
 
     // Verificar si es superadmin
-    const { data: isSuperAdmin, error: roleError } = await supabase.rpc('is_current_user_superadmin');
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userData.user.id)
+      .single();
 
-    if (roleError || !isSuperAdmin) {
+    if (profile?.role !== 'superadmin') {
       console.error("❌ User is not superadmin");
       return null;
     }
