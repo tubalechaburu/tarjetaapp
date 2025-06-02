@@ -107,6 +107,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_profile: {
+        Args: { profile_user_id: string }
+        Returns: boolean
+      }
       get_user_role_safe: {
         Args: { user_uuid: string }
         Returns: string
