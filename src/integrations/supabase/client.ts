@@ -16,9 +16,9 @@ export const getUserRole = async (userId: string): Promise<'user' | 'superadmin'
   try {
     console.log("Getting user role for:", userId);
     
-    // Use the new safe function instead of querying profiles directly
+    // Use the new get_current_user_role function
     const { data, error } = await supabase
-      .rpc('get_user_role_safe', { user_uuid: userId });
+      .rpc('get_current_user_role');
     
     if (error) {
       console.error('Error fetching user role:', error);

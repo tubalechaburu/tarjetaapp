@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -36,6 +37,20 @@ export const UsersTable = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      // First check if current user is superadmin
+      const { data: isSuperAdmin, error: roleError } = await supabase
+        .rpc('is_current_user_superadmin');
+      
+      if (roleError) {
+        console.error("Error checking superadmin status:", roleError);
+        throw new Error("No tienes permisos para acceder a esta información");
+      }
+      
+      if (!isSuperAdmin) {
+        throw new Error("Solo los superadministradores pueden ver todos los usuarios");
+      }
       
       // Get users from profiles table
       const { data, error } = await supabase
@@ -58,7 +73,6 @@ export const UsersTable = () => {
       })) || [];
       
       setUsers(usersWithData);
-      setError(null);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       setError(error.message);
@@ -115,11 +129,18 @@ export const UsersTable = () => {
   };
 
   if (loading) {
-    return <div>Cargando usuarios...</div>;
+    return <div className="flex justify-center p-4">Cargando usuarios...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="text-center p-4">
+        <div className="text-red-600 mb-4">Error: {error}</div>
+        <Button onClick={fetchUsers} variant="outline">
+          Reintentar
+        </Button>
+      </div>
+    );
   }
 
   return (

@@ -18,7 +18,21 @@ export const useUsersWithCards = () => {
   const fetchUsersWithCards = async () => {
     try {
       setLoading(true);
+      setError(null);
       console.log("Fetching users and cards...");
+      
+      // First check if current user is superadmin
+      const { data: isSuperAdmin, error: roleError } = await supabase
+        .rpc('is_current_user_superadmin');
+      
+      if (roleError) {
+        console.error("Error checking superadmin status:", roleError);
+        throw new Error("No tienes permisos para acceder a esta información");
+      }
+      
+      if (!isSuperAdmin) {
+        throw new Error("Solo los superadministradores pueden ver todos los usuarios");
+      }
       
       // Get profiles from database
       const { data: profiles, error: profilesError } = await supabase
@@ -69,7 +83,6 @@ export const useUsersWithCards = () => {
       
       console.log('Final users with cards:', usersWithCards.length);
       setUsers(usersWithCards);
-      setError(null);
       
     } catch (error: any) {
       console.error('Error fetching users with cards:', error);
