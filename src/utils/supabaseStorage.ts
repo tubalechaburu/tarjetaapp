@@ -32,11 +32,28 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
 
 export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   try {
-    console.log("Fetching all cards from Supabase");
+    console.log("Fetching cards from Supabase");
     
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*');
+    // Check if user is superadmin first
+    const { data: isSuperAdmin, error: roleError } = await supabase
+      .rpc('is_current_user_superadmin');
+    
+    if (roleError) {
+      console.error("Error checking admin status:", roleError);
+      // Continue as regular user if role check fails
+    }
+    
+    let query = supabase.from('cards').select('*');
+    
+    // If not superadmin, only get user's own cards
+    if (!isSuperAdmin) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        query = query.eq('user_id', user.id);
+      }
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       handleSupabaseError(error, "Error al obtener las tarjetas");
@@ -44,12 +61,14 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     if (isEmptyData(data)) {
-      console.log("No data found in Supabase");
+      console.log("No cards found in Supabase");
       return [];
     }
     
+    console.log(`Loaded ${data.length} cards from Supabase`);
     handleSupabaseSuccess(data, "Tarjetas cargadas correctamente");
-    // Explicitly cast the data as SupabaseBusinessCard[]
+    
+    // Map the data to BusinessCard format
     return (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
   } catch (supabaseError) {
     handleSupabaseError(supabaseError, "Error al conectar con la base de datos");
@@ -61,7 +80,6 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
   try {
     console.log(`Fetching card with ID ${id} from Supabase`);
     
-    // Intentamos buscar la tarjeta exacta
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -82,8 +100,6 @@ export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | nu
     console.log(`Card with ID ${id} found in Supabase:`, data);
     handleSupabaseSuccess(data, "Tarjeta cargada correctamente");
     
-    // Convertimos los datos de Supabase al formato BusinessCard usando nuestra función auxiliar
-    // Aseguramos que los tipos sean compatibles con lo esperado
     const card = mapSupabaseToBusinessCard(data as unknown as SupabaseBusinessCard);
     return card;
   } catch (supabaseError) {

@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
-import { getCards } from "@/utils/storage";
+import { getCardsSupabase } from "@/utils/supabaseStorage";
 import { checkSupabaseConnection } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +41,7 @@ const Index = () => {
         setError(null);
         console.log("Starting page initialization...");
         
-        // Check Supabase connection con mejor manejo de errores
+        // Check Supabase connection
         try {
           console.log("Checking Supabase connection...");
           const connected = await checkSupabaseConnection();
@@ -50,40 +51,26 @@ const Index = () => {
           if (connected) {
             console.log("✅ Supabase connection successful");
           } else {
-            console.log("⚠️ Supabase connection failed, will use local storage");
+            console.log("⚠️ Supabase connection failed");
           }
         } catch (connectionError) {
           console.error("Error during connection check:", connectionError);
           setConnectionStatus(false);
         }
 
-        // Load cards
+        // Load cards from Supabase only
         try {
-          console.log("Loading cards for user:", user.id);
+          console.log("Loading cards from Supabase for user:", user.id);
           setLoading(true);
-          const fetchedCards = await getCards();
-          console.log("Fetched cards:", fetchedCards);
+          const fetchedCards = await getCardsSupabase();
+          console.log("Fetched cards from Supabase:", fetchedCards);
           
           if (fetchedCards && Array.isArray(fetchedCards)) {
-            // Remove duplicates by keeping only the latest card per user
-            const uniqueCards = fetchedCards.reduce((acc: BusinessCard[], card) => {
-              const existingIndex = acc.findIndex(c => c.userId === card.userId);
-              if (existingIndex >= 0) {
-                // Keep the one with the latest createdAt timestamp
-                if ((card.createdAt || 0) > (acc[existingIndex].createdAt || 0)) {
-                  acc[existingIndex] = card;
-                }
-              } else {
-                acc.push(card);
-              }
-              return acc;
-            }, []);
-            
-            console.log("Unique cards:", uniqueCards);
-            setCards(uniqueCards);
+            console.log("Setting cards:", fetchedCards);
+            setCards(fetchedCards);
             
             // Find user's card
-            const foundUserCard = uniqueCards.find(card => card.userId === user.id);
+            const foundUserCard = fetchedCards.find(card => card.userId === user.id);
             console.log("Found user card:", foundUserCard);
             setUserCard(foundUserCard || null);
             
@@ -160,7 +147,7 @@ const Index = () => {
         />
 
         {loading ? (
-          <LoadingState message="Cargando tarjetas..." />
+          <LoadingState message="Cargando tarjetas desde Supabase..." />
         ) : userCard ? (
           <UserCardDisplay 
             userCard={userCard} 
