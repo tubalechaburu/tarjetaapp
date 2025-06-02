@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
-import { getCardsSupabase, getAllCardsSupabase } from "@/utils/supabaseStorage";
+import { getCardsSupabase } from "@/utils/supabaseStorage";
 import { checkSupabaseConnection } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,6 @@ import Footer from "@/components/Footer";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { UserCardDisplay } from "@/components/dashboard/UserCardDisplay";
 import { NoCardsState } from "@/components/dashboard/NoCardsState";
-import { SuperAdminPanel } from "@/components/dashboard/SuperAdminPanel";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 
@@ -19,7 +18,6 @@ const Index = () => {
   const { user, userRole, isSuperAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [cards, setCards] = useState<BusinessCard[]>([]);
-  const [allCards, setAllCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
@@ -82,16 +80,6 @@ const Index = () => {
             setUserCard(foundUserCard || null);
           }
 
-          // If user is superadmin, also load all cards
-          if (isSuperAdmin()) {
-            console.log("🔐 User is superadmin, loading all cards...");
-            const allCardsResult = await getAllCardsSupabase();
-            if (allCardsResult && Array.isArray(allCardsResult)) {
-              console.log("✅ Setting all cards for superadmin:", allCardsResult.length);
-              setAllCards(allCardsResult);
-            }
-          }
-
         } catch (error) {
           console.error("💥 Error loading cards:", error);
           setError("Error al cargar las tarjetas. Intenta refrescar la página.");
@@ -113,11 +101,6 @@ const Index = () => {
   const handleUserCardDeleted = () => {
     setUserCard(null);
     setCards(prev => prev.filter(card => card.id !== userCard?.id));
-  };
-
-  const handleCardDeleted = (cardId: string) => {
-    setCards(prev => prev.filter(card => card.id !== cardId));
-    setAllCards(prev => prev.filter(card => card.id !== cardId));
   };
 
   // Don't render anything if redirecting
@@ -169,14 +152,6 @@ const Index = () => {
           />
         ) : (
           <NoCardsState />
-        )}
-
-        {/* Show all cards for superadmin */}
-        {isSuperAdmin() && (
-          <SuperAdminPanel 
-            cards={allCards} 
-            onCardDeleted={handleCardDeleted} 
-          />
         )}
       </div>
       

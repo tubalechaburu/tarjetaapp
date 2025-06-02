@@ -51,12 +51,10 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     // Simplificamos: solo obtenemos las tarjetas del usuario actual
-    // Los superadmins verán todas las tarjetas en el componente de administración
     console.log("📋 Loading user cards from Supabase...");
     const { data, error } = await supabase
       .from('cards')
-      .select('*')
-      .eq('user_id', user.id);
+      .select('*');
     
     if (error) {
       console.error("❌ Supabase query error:", error);
@@ -86,59 +84,6 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   } catch (supabaseError) {
     console.error("💥 Error in getCardsSupabase:", supabaseError);
     toast.error("Error al conectar con la base de datos");
-    return null;
-  }
-};
-
-export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
-  try {
-    console.log("🔍 Starting getAllCardsSupabase for admin...");
-    
-    // Get current user first
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      console.error("❌ Error getting user for admin:", userError);
-      return null;
-    }
-    
-    // Check if user is superadmin
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-    
-    if (profileError || profileData?.role !== 'superadmin') {
-      console.log("❌ User is not superadmin");
-      return null;
-    }
-    
-    // Get all cards for superadmin
-    console.log("📋 Loading all cards for superadmin...");
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*');
-    
-    if (error) {
-      console.error("❌ Supabase query error:", error);
-      toast.error("Error al obtener todas las tarjetas");
-      return null;
-    }
-    
-    if (isEmptyData(data)) {
-      return [];
-    }
-    
-    // Map the data
-    const mappedCards = (data as SupabaseBusinessCard[]).map(item => 
-      mapSupabaseToBusinessCard(item)
-    );
-    
-    console.log("✅ Admin loaded all cards:", mappedCards.length);
-    return mappedCards;
-  } catch (error) {
-    console.error("💥 Error in getAllCardsSupabase:", error);
     return null;
   }
 };
