@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
-import { getCardsSupabase, getAllCardsSupabase } from "@/utils/supabaseStorage";
+import { getCardsSupabase } from "@/utils/supabaseStorage";
 import { useAuth } from "@/providers/AuthContext";
 import { Header } from "@/components/Header";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
@@ -21,7 +21,6 @@ interface DashboardContainerProps {
 export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps) => {
   const { user, userRole, isSuperAdmin } = useAuth();
   const [cards, setCards] = useState<BusinessCard[]>([]);
-  const [allCards, setAllCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,12 +34,12 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
       }
       
       try {
-        console.log("🔄 Loading data for user:", user.id, user.email);
+        console.log("🔄 Loading cards for user:", user.id, user.email, "Role:", userRole);
         setError(null);
         setLoading(true);
         
-        // Load user cards
-        console.log("📋 Fetching user cards...");
+        // Load cards - RLS will automatically filter based on user role
+        console.log("📋 Fetching cards...");
         const fetchedCards = await getCardsSupabase();
         
         if (fetchedCards === null) {
@@ -52,7 +51,8 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
           return;
         }
         
-        console.log("✅ User cards loaded:", fetchedCards.length);
+        console.log("✅ Cards loaded:", fetchedCards.length);
+        console.log("📋 Cards details:", fetchedCards.map(c => ({ id: c.id, name: c.name, userId: c.userId })));
         setCards(fetchedCards);
         
         // Find user's own card
@@ -60,20 +60,9 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         console.log("👤 User card found:", foundUserCard ? foundUserCard.name : "None");
         setUserCard(foundUserCard || null);
 
-        // Load all cards for superadmin
-        if (isSuperAdmin()) {
-          console.log("👑 Loading all cards for superadmin...");
-          const allCardsData = await getAllCardsSupabase();
-          if (allCardsData && Array.isArray(allCardsData)) {
-            console.log("✅ All cards loaded for superadmin:", allCardsData.length);
-            setAllCards(allCardsData);
-          } else {
-            console.log("❌ Failed to load all cards or empty result");
-            setAllCards([]);
-          }
+        if (fetchedCards.length > 0) {
+          toast.success(`${fetchedCards.length} tarjetas cargadas correctamente`);
         }
-
-        toast.success(`${fetchedCards.length} tarjetas cargadas correctamente`);
 
       } catch (error) {
         console.error("💥 Error loading data:", error);
@@ -85,7 +74,7 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
     };
 
     loadData();
-  }, [user, isSuperAdmin]);
+  }, [user, userRole, isSuperAdmin]);
 
   const handleUserCardDeleted = () => {
     setUserCard(null);
@@ -94,11 +83,10 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
   };
 
   const handleCardDeleted = (cardId: string) => {
-    setAllCards(prev => prev.filter(card => card.id !== cardId));
+    setCards(prev => prev.filter(card => card.id !== cardId));
     if (userCard?.id === cardId) {
       setUserCard(null);
     }
-    setCards(prev => prev.filter(card => card.id !== cardId));
     toast.success("Tarjeta eliminada correctamente");
   };
 
@@ -127,15 +115,16 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         {/* Debug info */}
         <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
           <p><strong>Debug:</strong> Usuario: {user?.email}, Rol: {userRole}</p>
-          <p><strong>Tarjetas usuario:</strong> {cards.length}, <strong>Todas las tarjetas:</strong> {allCards.length}</p>
+          <p><strong>Tarjetas cargadas:</strong> {cards.length}</p>
           <p><strong>Es superadmin:</strong> {isSuperAdmin() ? 'Sí' : 'No'}</p>
+          <p><strong>Tarjeta propia:</strong> {userCard ? userCard.name : 'Ninguna'}</p>
         </div>
 
         {/* Superadmin panel for all cards */}
-        {isSuperAdmin() && allCards.length > 0 && (
+        {isSuperAdmin() && (
           <div className="mb-6">
             <SuperAdminPanel 
-              cards={allCards} 
+              cards={cards} 
               onCardDeleted={handleCardDeleted} 
             />
           </div>

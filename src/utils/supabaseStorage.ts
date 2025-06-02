@@ -1,3 +1,4 @@
+
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,30 +34,12 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
 
 export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   try {
-    console.log("🔍 Starting getCardsSupabase...");
+    console.log("🔍 Loading user cards from Supabase...");
     
-    // Get current user first
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("👤 Current user:", user?.id, user?.email);
-    
-    if (userError) {
-      console.error("❌ Error getting user:", userError);
-      toast.error("Error de autenticación");
-      return null;
-    }
-    
-    if (!user) {
-      console.log("❌ No user authenticated");
-      toast.error("Usuario no autenticado");
-      return null;
-    }
-    
-    // Query cards directly with RLS policies
-    console.log("📋 Loading user cards directly from table...");
+    // Query cards directly - RLS will handle the filtering
     const { data, error } = await supabase
       .from('cards')
-      .select('*')
-      .eq('user_id', user.id);
+      .select('*');
     
     if (error) {
       console.error("❌ Database query error:", error);
@@ -73,7 +56,6 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     // Map the data
-    console.log("🔄 Mapping cards...");
     const mappedCards = (data as SupabaseBusinessCard[]).map(item => {
       console.log("🔄 Mapping card:", item.id, item.name);
       return mapSupabaseToBusinessCard(item);
@@ -91,26 +73,9 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
 
 export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   try {
-    console.log("🔍 Starting getAllCardsSupabase for admin...");
+    console.log("🔍 Loading ALL cards for admin...");
     
-    // Check if user is superadmin first
-    const { data: isSuperAdmin, error: adminError } = await supabase
-      .rpc('is_current_user_superadmin');
-    
-    if (adminError) {
-      console.error("❌ Error checking admin status:", adminError);
-      toast.error("Error verificando permisos de administrador");
-      return null;
-    }
-    
-    if (!isSuperAdmin) {
-      console.log("❌ User is not superadmin");
-      toast.error("No tienes permisos de administrador");
-      return null;
-    }
-    
-    // Query all cards directly (RLS will handle permissions)
-    console.log("📋 Loading all cards directly from table...");
+    // Query all cards directly - RLS will handle the filtering based on superadmin role
     const { data, error } = await supabase
       .from('cards')
       .select('*');
@@ -130,7 +95,6 @@ export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     }
     
     // Map the data
-    console.log("🔄 Mapping all cards...");
     const mappedCards = (data as SupabaseBusinessCard[]).map(item => {
       console.log("🔄 Mapping card:", item.id, item.name);
       return mapSupabaseToBusinessCard(item);
