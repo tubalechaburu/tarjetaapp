@@ -11,13 +11,13 @@ import {
   deleteCardLocally 
 } from "../localStorage";
 
-// Import Supabase storage operations
+// Import Supabase storage operations from new modular structure
 import { 
   saveCardSupabase, 
   getCardsSupabase, 
   getCardByIdSupabase, 
   deleteCardSupabase 
-} from "../supabaseStorage";
+} from "../supabase/cardOperations";
 
 // Main storage API that handles both Supabase and local storage
 export const saveCard = async (card: BusinessCard): Promise<BusinessCard> => {
