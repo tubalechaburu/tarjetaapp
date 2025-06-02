@@ -54,7 +54,7 @@ const Index = () => {
           setConnectionStatus(false);
         }
 
-        // Load user cards from Supabase
+        // Load user cards from Supabase using the new function
         try {
           console.log("📋 Loading user cards from Supabase for user:", user.id);
           setLoading(true);

@@ -11,10 +11,13 @@ export type Database = {
     Tables: {
       cards: {
         Row: {
+          company: string | null
           created_at: string
+          description: string | null
           email: string | null
           id: string
           links: Json
+          logo: string | null
           name: string
           phone: string | null
           photo: string | null
@@ -22,12 +25,16 @@ export type Database = {
           title: string | null
           updated_at: string
           user_id: string
+          visible_fields: Json | null
         }
         Insert: {
+          company?: string | null
           created_at?: string
+          description?: string | null
           email?: string | null
           id?: string
           links?: Json
+          logo?: string | null
           name: string
           phone?: string | null
           photo?: string | null
@@ -35,12 +42,16 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id: string
+          visible_fields?: Json | null
         }
         Update: {
+          company?: string | null
           created_at?: string
+          description?: string | null
           email?: string | null
           id?: string
           links?: Json
+          logo?: string | null
           name?: string
           phone?: string | null
           photo?: string | null
@@ -48,6 +59,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+          visible_fields?: Json | null
         }
         Relationships: []
       }
@@ -111,9 +123,49 @@ export type Database = {
         Args: { profile_user_id: string }
         Returns: boolean
       }
+      get_all_cards: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          title: string
+          company: string
+          email: string
+          phone: string
+          photo: string
+          logo: string
+          description: string
+          links: Json
+          theme: Json
+          visible_fields: Json
+          user_id: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_cards: {
+        Args: { user_uuid: string }
+        Returns: {
+          id: string
+          name: string
+          title: string
+          company: string
+          email: string
+          phone: string
+          photo: string
+          logo: string
+          description: string
+          links: Json
+          theme: Json
+          visible_fields: Json
+          user_id: string
+          created_at: string
+          updated_at: string
+        }[]
       }
       get_user_role_safe: {
         Args: { user_uuid: string }

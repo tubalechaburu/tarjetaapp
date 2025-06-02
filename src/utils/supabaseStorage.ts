@@ -50,19 +50,19 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       return null;
     }
     
-    // Simplificamos: solo obtenemos las tarjetas del usuario actual
-    console.log("📋 Loading user cards from Supabase...");
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*');
+    // Use the database function to get user cards
+    console.log("📋 Loading user cards using database function...");
+    const { data, error } = await supabase.rpc('get_user_cards', {
+      user_uuid: user.id
+    });
     
     if (error) {
-      console.error("❌ Supabase query error:", error);
+      console.error("❌ Database function error:", error);
       toast.error("Error al obtener las tarjetas");
       return null;
     }
     
-    console.log("✅ Raw cards data:", data);
+    console.log("✅ Raw cards data from function:", data);
     console.log("📊 Number of cards found:", data?.length || 0);
     
     if (isEmptyData(data)) {
