@@ -1,3 +1,4 @@
+
 import { BusinessCard, SupabaseBusinessCard } from "../types";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,47 +32,79 @@ export const saveCardSupabase = async (card: BusinessCard): Promise<boolean> => 
 
 export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   try {
-    console.log("Fetching cards from Supabase");
+    console.log("🔍 Starting getCardsSupabase...");
     
-    // Check if user is superadmin first using the simplified function
-    const { data: isSuperAdmin, error: roleError } = await supabase
-      .rpc('is_current_user_superadmin');
+    // Get current user first
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log("👤 Current user:", user?.id, user?.email);
     
-    if (roleError) {
-      console.error("Error checking admin status:", roleError);
-      // Continue as regular user if role check fails
+    if (userError) {
+      console.error("❌ Error getting user:", userError);
+      toast.error("Error de autenticación");
+      return null;
     }
     
+    if (!user) {
+      console.log("❌ No user authenticated");
+      toast.error("Usuario no autenticado");
+      return null;
+    }
+    
+    // Check if user is superadmin using direct query (avoid RPC for now)
+    console.log("🔍 Checking if user is superadmin...");
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    
+    console.log("👥 Profile data:", profileData, "Error:", profileError);
+    
+    const isSuperAdmin = profileData?.role === 'superadmin';
+    console.log("🔐 Is superadmin:", isSuperAdmin);
+    
+    // Build query based on role
+    console.log("📋 Building cards query...");
     let query = supabase.from('cards').select('*');
     
-    // If not superadmin, only get user's own cards
     if (!isSuperAdmin) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        query = query.eq('user_id', user.id);
-      }
+      console.log("🔒 User is not superadmin, filtering by user_id:", user.id);
+      query = query.eq('user_id', user.id);
+    } else {
+      console.log("🔓 User is superadmin, fetching all cards");
     }
     
+    // Execute query
+    console.log("⚡ Executing cards query...");
     const { data, error } = await query;
     
     if (error) {
-      console.error("Supabase query error:", error);
+      console.error("❌ Supabase query error:", error);
       toast.error("Error al obtener las tarjetas");
       return null;
     }
     
+    console.log("✅ Raw cards data:", data);
+    console.log("📊 Number of cards found:", data?.length || 0);
+    
     if (isEmptyData(data)) {
-      console.log("No cards found in Supabase");
+      console.log("📭 No cards found in Supabase");
       return [];
     }
     
-    console.log(`Loaded ${data.length} cards from Supabase`);
-    toast.success("Tarjetas cargadas correctamente");
+    // Map the data
+    console.log("🔄 Mapping cards...");
+    const mappedCards = (data as SupabaseBusinessCard[]).map(item => {
+      console.log("🔄 Mapping card:", item.id, item.name);
+      return mapSupabaseToBusinessCard(item);
+    });
     
-    // Map the data to BusinessCard format
-    return (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
+    console.log("✅ Final mapped cards:", mappedCards.length, "cards");
+    toast.success(`${mappedCards.length} tarjetas cargadas correctamente`);
+    
+    return mappedCards;
   } catch (supabaseError) {
-    console.error("Error in getCardsSupabase:", supabaseError);
+    console.error("💥 Error in getCardsSupabase:", supabaseError);
     toast.error("Error al conectar con la base de datos");
     return null;
   }

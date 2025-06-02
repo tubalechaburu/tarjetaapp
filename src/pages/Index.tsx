@@ -35,46 +35,58 @@ const Index = () => {
   useEffect(() => {
     const initPage = async () => {
       // Solo cargar datos si hay usuario autenticado
-      if (!user || authLoading) return;
+      if (!user || authLoading) {
+        console.log("❌ No user or auth loading, skipping initialization");
+        return;
+      }
       
       try {
         setError(null);
-        console.log("Starting page initialization...");
+        console.log("🚀 Starting page initialization for user:", user.id);
         
         // Check Supabase connection
         try {
-          console.log("Checking Supabase connection...");
+          console.log("🔍 Checking Supabase connection...");
           const connected = await checkSupabaseConnection();
-          console.log("Connection check result:", connected);
+          console.log("📡 Connection check result:", connected);
           setConnectionStatus(connected);
         } catch (connectionError) {
-          console.error("Error during connection check:", connectionError);
+          console.error("💥 Error during connection check:", connectionError);
           setConnectionStatus(false);
         }
 
-        // Load cards from Supabase only
+        // Load cards from Supabase
         try {
-          console.log("Loading cards from Supabase for user:", user.id);
+          console.log("📋 Loading cards from Supabase for user:", user.id);
           setLoading(true);
-          const fetchedCards = await getCardsSupabase();
-          console.log("Fetched cards from Supabase:", fetchedCards);
           
-          if (fetchedCards && Array.isArray(fetchedCards)) {
-            console.log("Setting cards:", fetchedCards);
+          const fetchedCards = await getCardsSupabase();
+          console.log("📦 Fetched cards result:", fetchedCards);
+          
+          if (fetchedCards === null) {
+            console.log("❌ getCardsSupabase returned null");
+            setError("Error al cargar las tarjetas desde Supabase");
+            setCards([]);
+            setUserCard(null);
+            return;
+          }
+          
+          if (Array.isArray(fetchedCards)) {
+            console.log("✅ Setting cards:", fetchedCards.length, "cards found");
             setCards(fetchedCards);
             
             // Find user's card
             const foundUserCard = fetchedCards.find(card => card.userId === user.id);
-            console.log("Found user card:", foundUserCard);
+            console.log("👤 Found user card:", foundUserCard ? "Yes" : "No");
             setUserCard(foundUserCard || null);
-            
           } else {
-            console.log("No cards returned or invalid format");
+            console.log("❌ Invalid cards format returned");
+            setError("Formato de datos inválido");
             setCards([]);
             setUserCard(null);
           }
         } catch (error) {
-          console.error("Error loading cards:", error);
+          console.error("💥 Error loading cards:", error);
           setError("Error al cargar las tarjetas. Intenta refrescar la página.");
           setCards([]);
           setUserCard(null);
@@ -82,7 +94,7 @@ const Index = () => {
           setLoading(false);
         }
       } catch (error) {
-        console.error("Error in page initialization:", error);
+        console.error("💥 Error in page initialization:", error);
         setError("Error al inicializar la página");
         setLoading(false);
       }
