@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 /**
@@ -19,14 +20,22 @@ export const downloadSvgAsPng = async (
     console.log("SVG element found:", !!svgElement);
     console.log("Size:", size, "Filename:", filename);
     
-    // Create a deep clone of the SVG element to avoid modifying the original
-    const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+    // Get the actual QR code SVG (without extra padding from the container)
+    const qrSvg = svgElement.querySelector('svg') || svgElement;
     
-    // Set explicit dimensions on the cloned SVG
-    clonedSvg.setAttribute('width', size.toString());
-    clonedSvg.setAttribute('height', size.toString());
+    // Create a deep clone of the QR SVG element
+    const clonedSvg = qrSvg.cloneNode(true) as SVGSVGElement;
     
-    // Create a canvas with higher resolution
+    // Set explicit dimensions for a clean QR code
+    const qrSize = 400; // Fixed size for better quality
+    clonedSvg.setAttribute('width', qrSize.toString());
+    clonedSvg.setAttribute('height', qrSize.toString());
+    clonedSvg.setAttribute('viewBox', `0 0 ${qrSize} ${qrSize}`);
+    
+    // Ensure white background
+    clonedSvg.style.backgroundColor = '#ffffff';
+    
+    // Create a canvas with the exact QR size
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -35,25 +44,26 @@ export const downloadSvgAsPng = async (
       return;
     }
     
-    // Set canvas dimensions with scale for better quality
-    const scale = 2;
-    canvas.width = size * scale;
-    canvas.height = size * scale;
+    // Set canvas dimensions (no extra scaling needed)
+    canvas.width = qrSize;
+    canvas.height = qrSize;
     
     // Fill white background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Convert SVG to string
+    // Convert SVG to string with proper encoding
     const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(clonedSvg);
+    let svgString = serializer.serializeToString(clonedSvg);
+    
+    // Ensure proper XML declaration and encoding
+    if (!svgString.includes('xmlns')) {
+      svgString = svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    
     console.log("SVG serializado correctamente, length:", svgString.length);
     
-    // Create a blob from the SVG string and convert to URL
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(svgBlob);
-    
-    // Create a new image
+    // Create image element
     const img = new Image();
     
     // Create a promise to handle the image loading
@@ -62,12 +72,8 @@ export const downloadSvgAsPng = async (
         try {
           console.log("Imagen cargada en canvas");
           
-          // Draw the image to canvas with scaling
-          ctx.scale(scale, scale);
-          ctx.drawImage(img, 0, 0, size, size);
-          
-          // Clean up object URL
-          URL.revokeObjectURL(url);
+          // Draw the image to canvas (1:1 ratio, no scaling)
+          ctx.drawImage(img, 0, 0, qrSize, qrSize);
           
           // Convert canvas to blob and download
           canvas.toBlob((blob) => {
@@ -102,13 +108,21 @@ export const downloadSvgAsPng = async (
       
       img.onerror = (e) => {
         console.error("Error al cargar la imagen:", e);
-        URL.revokeObjectURL(url);
         toast.error("Error al procesar el código QR");
         reject(new Error("Failed to load image"));
       };
       
+      // Convert SVG to data URL
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
       // Set source after defining handlers
       img.src = url;
+      
+      // Clean up after a timeout
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
     });
   } catch (error) {
     console.error("Error downloading QR code:", error);
