@@ -1,33 +1,88 @@
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
+  const [profileChecked, setProfileChecked] = useState(false);
 
   useEffect(() => {
-    console.log("🔒 AuthGuard state:", { user: user?.email, isLoading });
-    
-    if (!isLoading && !user) {
-      console.log("❌ No user found, redirecting to auth...");
-      navigate('/auth', { replace: true });
-    }
+    const checkUserProfile = async () => {
+      console.log("🔒 AuthGuard checking user profile...");
+      
+      if (isLoading) {
+        console.log("⏳ Auth is still loading...");
+        return;
+      }
+
+      if (!user) {
+        console.log("❌ No user found, redirecting to auth...");
+        navigate('/auth', { replace: true });
+        return;
+      }
+
+      console.log("👤 User found:", user.email);
+
+      try {
+        // Verificar si el perfil existe
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('id, email, role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error checking profile:", error);
+        }
+
+        if (!profile) {
+          console.log("📝 Creating missing profile for user:", user.email);
+          
+          // Crear perfil si no existe
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              role: 'user',
+              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (insertError) {
+            console.error("Error creating profile:", insertError);
+          } else {
+            console.log("✅ Profile created successfully");
+          }
+        } else {
+          console.log("✅ Profile exists:", profile.email, "Role:", profile.role);
+        }
+      } catch (error) {
+        console.error("Error in profile check:", error);
+      } finally {
+        setProfileChecked(true);
+      }
+    };
+
+    checkUserProfile();
   }, [user, isLoading, navigate]);
 
-  // Show loading while auth is loading
-  if (isLoading) {
-    console.log("⏳ Auth is loading...");
+  // Show loading while auth is loading or profile is being checked
+  if (isLoading || !profileChecked) {
+    console.log("⏳ Auth/Profile loading...");
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-20">
-          <p className="text-lg">Cargando...</p>
-          <p className="text-sm text-gray-500 mt-2">Verificando autenticación...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-lg">Verificando autenticación...</p>
+          <p className="text-sm text-gray-500 mt-2">Cargando perfil de usuario...</p>
         </div>
       </div>
     );
@@ -39,6 +94,6 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     return null;
   }
 
-  console.log("✅ User authenticated, rendering children");
+  console.log("✅ User authenticated and profile checked, rendering children");
   return <>{children}</>;
 };
