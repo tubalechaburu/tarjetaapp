@@ -33,7 +33,6 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
     
     console.log("LoginForm: handleSubmit called with:", { email: data.email });
     
-    // Validación básica
     if (!data.email || !data.password) {
       toast.error("Por favor completa todos los campos");
       return;
@@ -46,7 +45,6 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
       console.log("LoginForm: onSubmit completed successfully");
     } catch (error: any) {
       console.error("LoginForm: Error during submit:", error);
-      // El error ya se maneja en authUtils.ts
     } finally {
       setIsSubmitting(false);
     }

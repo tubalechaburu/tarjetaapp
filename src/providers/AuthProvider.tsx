@@ -35,19 +35,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (session?.user?.id && event === 'SIGNED_IN') {
       console.log("✅ User signed in, loading role for:", session.user.email);
-      // Use setTimeout to avoid potential deadlocks
-      setTimeout(async () => {
-        try {
-          const role = await loadUserRole(session.user.id);
-          console.log("🎭 Role loaded for", session.user.email, ":", role);
-          setUserRole(role || 'user');
-        } catch (error) {
-          console.error("Error loading user role:", error);
-          setUserRole('user'); // Fallback to user role
-        } finally {
-          setIsLoading(false);
-        }
-      }, 100);
+      try {
+        const role = await loadUserRole(session.user.id);
+        console.log("🎭 Role loaded for", session.user.email, ":", role);
+        setUserRole(role || 'user');
+      } catch (error) {
+        console.error("Error loading user role:", error);
+        setUserRole('user');
+      } finally {
+        setIsLoading(false);
+      }
     } else if (!session?.user) {
       console.log("❌ No user, clearing role");
       setUserRole(null);
@@ -58,10 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log("🚀 AuthProvider: Setting up auth state");
     
-    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    // Then get initial session
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -76,7 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Load user role if user exists
         if (session?.user?.id) {
           console.log("👤 Loading initial role for:", session.user.email);
           try {
@@ -103,7 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Log current state for debugging
   useEffect(() => {
     console.log("📊 Current auth state:", {
       user: user?.email,
@@ -112,15 +105,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, [user, userRole, isLoading]);
 
+  // Wrapper functions to match the expected interface
+  const handleSignIn = async (email: string, password: string): Promise<void> => {
+    await signIn(email, password);
+  };
+
+  const handleSignUp = async (email: string, password: string, metadata?: any): Promise<void> => {
+    await signUp(email, password, metadata);
+  };
+
+  const handleSignOut = async (): Promise<void> => {
+    await signOut();
+  };
+
+  const handleResetPassword = async (email: string): Promise<void> => {
+    await resetPassword(email);
+  };
+
   const value = {
     user,
     session,
     isLoading,
     userRole,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
+    signIn: handleSignIn,
+    signUp: handleSignUp,
+    signOut: handleSignOut,
+    resetPassword: handleResetPassword,
     isAdmin: () => isAdmin(userRole),
     isSuperAdmin: () => isSuperAdmin(userRole),
     refreshUserRole,
