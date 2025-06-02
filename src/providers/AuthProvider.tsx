@@ -7,9 +7,7 @@ import {
   signIn, 
   signUp, 
   signOut, 
-  resetPassword, 
-  isAdmin, 
-  isSuperAdmin 
+  resetPassword
 } from "@/utils/authUtils";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -23,7 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     let mounted = true;
 
-    const handleAuthStateChange = (event: string, session: any) => {
+    const handleAuthStateChange = async (event: string, session: any) => {
       if (!mounted) return;
       
       console.log("🔐 Auth state changed:", event, session?.user?.email || "no user");
@@ -31,11 +29,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Set default role based on email
-      if (session?.user?.email === 'tubal@tubalechaburu.com') {
-        setUserRole('superadmin');
-      } else if (session?.user) {
-        setUserRole('user');
+      // Load user role if user is authenticated
+      if (session?.user) {
+        try {
+          // Verificar si es superadmin usando la función de la base de datos
+          const { data: isSuperAdmin, error: roleError } = await supabase
+            .rpc('is_current_user_superadmin');
+          
+          if (roleError) {
+            console.error("Error checking superadmin status:", roleError);
+            setUserRole('user'); // Default fallback
+          } else {
+            setUserRole(isSuperAdmin ? 'superadmin' : 'user');
+            console.log("✅ User role determined:", isSuperAdmin ? 'superadmin' : 'user');
+          }
+        } catch (error) {
+          console.error("Error loading user role:", error);
+          setUserRole('user'); // Default fallback
+        }
       } else {
         setUserRole(null);
       }
@@ -60,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (mounted) {
-          handleAuthStateChange('INITIAL_SESSION', session);
+          await handleAuthStateChange('INITIAL_SESSION', session);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -98,10 +109,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUserRole = async () => {
-    // Simple refresh without complex loading
-    if (user?.email === 'tubal@tubalechaburu.com') {
-      setUserRole('superadmin');
+    if (!user) return;
+    
+    try {
+      const { data: isSuperAdmin, error } = await supabase.rpc('is_current_user_superadmin');
+      
+      if (error) {
+        console.error("Error refreshing user role:", error);
+        return;
+      }
+      
+      setUserRole(isSuperAdmin ? 'superadmin' : 'user');
+      console.log("✅ User role refreshed:", isSuperAdmin ? 'superadmin' : 'user');
+    } catch (error) {
+      console.error("Error refreshing user role:", error);
     }
+  };
+
+  const isAdmin = (): boolean => {
+    return userRole === 'superadmin';
+  };
+
+  const isSuperAdmin = (): boolean => {
+    return userRole === 'superadmin';
   };
 
   const value = {
@@ -113,8 +143,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp: handleSignUp,
     signOut: handleSignOut,
     resetPassword: handleResetPassword,
-    isAdmin: () => isAdmin(userRole),
-    isSuperAdmin: () => isSuperAdmin(userRole),
+    isAdmin,
+    isSuperAdmin,
     refreshUserRole,
   };
 

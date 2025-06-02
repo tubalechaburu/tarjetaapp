@@ -21,18 +21,27 @@ export const useUsersWithCards = () => {
       setError(null);
       console.log("Fetching users and cards...");
       
-      // First check if current user is superadmin using the simplified function
+      // Verificar autenticación primero
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // Verificar si es superadmin usando la función simplificada
       const { data: isSuperAdmin, error: roleError } = await supabase
         .rpc('is_current_user_superadmin');
       
       if (roleError) {
         console.error("Error checking superadmin status:", roleError);
-        throw new Error("No tienes permisos para acceder a esta información");
+        throw new Error("Error verificando permisos de administrador");
       }
       
       if (!isSuperAdmin) {
         throw new Error("Solo los superadministradores pueden ver todos los usuarios");
       }
+      
+      console.log("✅ Superadmin verified, fetching users...");
       
       // Get profiles from database
       const { data: profiles, error: profilesError } = await supabase
