@@ -6,24 +6,24 @@ import { SuperAdminUsersTable } from "@/components/admin/SuperAdminUsersTable";
 import { toast } from "sonner";
 
 export const SuperAdminPanel = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, isSuperAdmin } = useAuth();
   
   useEffect(() => {
     console.log("SuperAdminPanel - Current role:", userRole);
     console.log("SuperAdminPanel - User:", user);
     
-    // Verificar si es el email específico de superadmin o tiene el rol correcto
-    const isSuperAdminUser = user?.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin';
+    // Remove hardcoded email check - use only secure role-based authorization
+    const hasValidAccess = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
     
-    if (user && !isSuperAdminUser) {
-      toast.error(`Necesitas permisos de superadmin para acceder a este panel. Rol actual: ${userRole || 'no asignado'}`);
+    if (user && !hasValidAccess) {
+      toast.error(`Access denied. Superadmin role required. Current role: ${userRole || 'no role assigned'}`);
     }
-  }, [user, userRole]);
+  }, [user, userRole, isSuperAdmin]);
 
-  // Permitir acceso si es el email específico o tiene rol superadmin
-  const canAccess = user?.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin';
+  // Use only role-based authorization - no hardcoded email checks
+  const canAccess = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
 
-  // No renderizar el panel si el usuario no está autenticado o no puede acceder
+  // Enhanced security check - don't render if unauthorized
   if (!user || !canAccess) {
     return null;
   }
