@@ -57,8 +57,10 @@ export const useUsersWithCards = () => {
       
       console.log("Profiles fetched:", profiles?.length || 0);
       
-      // Get all cards using the new function
-      const { data: cards, error: cardsError } = await supabase.rpc('get_all_cards');
+      // Get all cards directly from cards table
+      const { data: cards, error: cardsError } = await supabase
+        .from('cards')
+        .select('*');
         
       if (cardsError) {
         console.error("Error fetching cards:", cardsError);
@@ -86,7 +88,7 @@ export const useUsersWithCards = () => {
         return {
           id: profile.id,
           full_name: displayName,
-          email: profile.email || 'Sin email', // Asegurar que siempre se muestre algo
+          email: profile.email || 'Sin email',
           role: profile.role as DatabaseRole,
           cards: mappedCards,
           updated_at: profile.updated_at || ''
@@ -102,6 +104,7 @@ export const useUsersWithCards = () => {
       });
       
       console.log('Final users with cards:', usersWithCards.length);
+      console.log('Users data:', usersWithCards.map(u => ({ name: u.full_name, email: u.email, cards: u.cards.length })));
       setUsers(usersWithCards);
       
     } catch (error: any) {

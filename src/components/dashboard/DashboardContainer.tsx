@@ -45,29 +45,7 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         // Verificar si es superadmin
         const isSuperAdminUser = user.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
         
-        if (isSuperAdminUser) {
-          console.log("🔐 Superadmin detected, loading all cards...");
-          
-          // Para superadmin: intentar cargar todas las tarjetas usando consulta directa
-          const { data: allSystemCards, error: allCardsError } = await supabase
-            .from('cards')
-            .select('*');
-          
-          if (allCardsError) {
-            console.error("❌ Error loading all cards:", allCardsError);
-            setAllCards([]);
-            toast.error("Error al cargar las tarjetas del sistema");
-          } else {
-            console.log("✅ All system cards loaded:", allSystemCards?.length || 0);
-            const mappedAllCards = (allSystemCards || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
-            setAllCards(mappedAllCards);
-            toast.success(`${mappedAllCards.length} tarjetas cargadas (vista de administrador)`);
-          }
-        } else {
-          setAllCards([]); // Usuarios normales no ven todas las tarjetas
-        }
-        
-        // Cargar SOLO las tarjetas propias del usuario actual
+        // SIEMPRE cargar solo las tarjetas propias del usuario actual para "Mis Tarjetas"
         console.log("👤 Loading user's own cards only...");
         const { data: ownCardsData, error: ownCardsError } = await supabase
           .from('cards')
@@ -90,8 +68,30 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
           console.log("👤 User's own card:", foundUserCard ? foundUserCard.name : "None");
           
           if (mappedOwnCards.length > 0) {
-            toast.success("Tarjetas cargadas correctamente");
+            toast.success("Tus tarjetas cargadas correctamente");
           }
+        }
+
+        // Para superadmin: cargar TODAS las tarjetas del sistema para el panel de administración
+        if (isSuperAdminUser) {
+          console.log("🔐 Superadmin detected, loading all system cards for admin panel...");
+          
+          const { data: allSystemCards, error: allCardsError } = await supabase
+            .from('cards')
+            .select('*');
+          
+          if (allCardsError) {
+            console.error("❌ Error loading all cards:", allCardsError);
+            setAllCards([]);
+            toast.error("Error al cargar las tarjetas del sistema");
+          } else {
+            console.log("✅ All system cards loaded for admin panel:", allSystemCards?.length || 0);
+            const mappedAllCards = (allSystemCards || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+            setAllCards(mappedAllCards);
+            toast.success(`${mappedAllCards.length} tarjetas cargadas en el panel de administración`);
+          }
+        } else {
+          setAllCards([]); // Usuarios normales no ven el panel de administración
         }
 
       } catch (error) {
@@ -109,15 +109,19 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
   const handleUserCardDeleted = () => {
     setUserCard(null);
     setUserCards(prev => prev.filter(card => card.id !== userCard?.id));
-    setAllCards(prev => prev.filter(card => card.id !== userCard?.id));
+    // Solo eliminar del panel de admin si es la misma tarjeta
+    if (userCard) {
+      setAllCards(prev => prev.filter(card => card.id !== userCard.id));
+    }
     toast.success("Tarjeta eliminada correctamente");
   };
 
   const handleCardDeleted = (cardId: string) => {
     setAllCards(prev => prev.filter(card => card.id !== cardId));
-    setUserCards(prev => prev.filter(card => card.id !== cardId));
+    // Solo eliminar de las tarjetas del usuario si es su propia tarjeta
     if (userCard?.id === cardId) {
       setUserCard(null);
+      setUserCards(prev => prev.filter(card => card.id !== cardId));
     }
     toast.success("Tarjeta eliminada correctamente");
   };
@@ -151,10 +155,10 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
             <p><strong>Debug:</strong> Usuario: {user?.email}, Rol: {userRole}</p>
-            <p><strong>Tarjetas propias:</strong> {userCards.length}</p>
-            <p><strong>Todas las tarjetas (admin):</strong> {allCards.length}</p>
+            <p><strong>Tarjetas propias (Mis Tarjetas):</strong> {userCards.length}</p>
+            <p><strong>Todas las tarjetas (Panel Admin):</strong> {allCards.length}</p>
             <p><strong>Es superadmin:</strong> {isSuperAdminUser ? 'Sí' : 'No'}</p>
-            <p><strong>Tarjeta propia:</strong> {userCard ? userCard.name : 'Ninguna'}</p>
+            <p><strong>Mi tarjeta:</strong> {userCard ? userCard.name : 'Ninguna'}</p>
           </div>
         )}
 

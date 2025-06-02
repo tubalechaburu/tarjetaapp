@@ -17,7 +17,7 @@ export const SuperAdminUsersTable = () => {
 
   const exportAllData = () => {
     const exportData = users.map(user => ({
-      name: user.full_name || 'Sin nombre',
+      name: user.full_name || user.email?.split('@')[0] || 'Sin nombre',
       email: user.email || 'Sin email',
       role: user.role,
       cards_count: user.cards.length,
@@ -67,7 +67,7 @@ export const SuperAdminUsersTable = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Usuario</TableHead>
+            <TableHead>Nombre</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Rol</TableHead>
             <TableHead>Tarjetas</TableHead>
