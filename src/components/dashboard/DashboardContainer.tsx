@@ -38,8 +38,8 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         setError(null);
         setLoading(true);
         
-        // Load cards - RLS will automatically filter based on user role
-        console.log("📋 Fetching cards...");
+        // Cargar tarjetas usando la nueva función simplificada
+        console.log("📋 Fetching cards using simplified method...");
         const fetchedCards = await getCardsSupabase();
         
         if (fetchedCards === null) {
@@ -51,17 +51,35 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
           return;
         }
         
-        console.log("✅ Cards loaded:", fetchedCards.length);
-        console.log("📋 Cards details:", fetchedCards.map(c => ({ id: c.id, name: c.name, userId: c.userId })));
+        console.log("✅ Cards loaded successfully:", fetchedCards.length);
+        console.log("📋 Cards details:", fetchedCards.map(c => ({ 
+          id: c.id, 
+          name: c.name, 
+          userId: c.userId,
+          userEmail: user.email
+        })));
+        
         setCards(fetchedCards);
         
-        // Find user's own card
-        const foundUserCard = fetchedCards.find(card => card.userId === user.id);
-        console.log("👤 User card found:", foundUserCard ? foundUserCard.name : "None");
-        setUserCard(foundUserCard || null);
+        // Para superadmin, mostrar todas las tarjetas en el panel
+        if (isSuperAdmin()) {
+          console.log("🔐 Superadmin view - showing all cards in admin panel");
+          // Buscar si el superadmin tiene su propia tarjeta
+          const foundUserCard = fetchedCards.find(card => card.userId === user.id);
+          console.log("👤 Superadmin's own card:", foundUserCard ? foundUserCard.name : "None");
+          setUserCard(foundUserCard || null);
+        } else {
+          // Para usuarios normales, mostrar solo su tarjeta
+          const foundUserCard = fetchedCards.find(card => card.userId === user.id);
+          console.log("👤 User card found:", foundUserCard ? foundUserCard.name : "None");
+          setUserCard(foundUserCard || null);
+        }
 
         if (fetchedCards.length > 0) {
-          toast.success(`${fetchedCards.length} tarjetas cargadas correctamente`);
+          const message = isSuperAdmin() 
+            ? `${fetchedCards.length} tarjetas cargadas (vista de administrador)`
+            : `${fetchedCards.length} tarjetas cargadas correctamente`;
+          toast.success(message);
         }
 
       } catch (error) {
@@ -112,15 +130,18 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
           isSuperAdmin={isSuperAdmin()} 
         />
 
-        {/* Debug info */}
+        {/* Debug info mejorado */}
         <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
           <p><strong>Debug:</strong> Usuario: {user?.email}, Rol: {userRole}</p>
           <p><strong>Tarjetas cargadas:</strong> {cards.length}</p>
           <p><strong>Es superadmin:</strong> {isSuperAdmin() ? 'Sí' : 'No'}</p>
           <p><strong>Tarjeta propia:</strong> {userCard ? userCard.name : 'Ninguna'}</p>
+          {isSuperAdmin() && (
+            <p><strong>Vista admin:</strong> Mostrando {cards.length} tarjetas totales del sistema</p>
+          )}
         </div>
 
-        {/* Superadmin panel for all cards */}
+        {/* Panel de superadmin para todas las tarjetas */}
         {isSuperAdmin() && (
           <div className="mb-6">
             <SuperAdminPanel 
