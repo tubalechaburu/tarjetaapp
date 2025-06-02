@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
-import { getCardsSupabase, getAllCardsSupabase } from "@/utils/supabaseStorage";
+import { getCardsSupabase } from "@/utils/supabaseStorage";
 import { useAuth } from "@/providers/AuthContext";
 import { Header } from "@/components/Header";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
@@ -42,58 +42,47 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         // Verificar si es superadmin
         const isSuperAdminUser = user.email === 'tubal@tubalechaburu.com' || userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
         
+        // Cargar tarjetas usando getCardsSupabase - esta función ya maneja superadmin vs usuario normal
+        console.log("🔍 Loading cards...");
+        const fetchedCards = await getCardsSupabase();
+        
+        if (fetchedCards === null) {
+          console.error("❌ Error loading cards");
+          setError("Error al cargar las tarjetas");
+          setAllCards([]);
+          setUserCards([]);
+          setUserCard(null);
+          toast.error("Error al cargar las tarjetas");
+          return;
+        }
+        
+        console.log("✅ Cards loaded:", fetchedCards.length);
+        
         if (isSuperAdminUser) {
-          // Para superadmin: cargar TODAS las tarjetas del sistema
-          console.log("🔐 Loading ALL cards for superadmin...");
-          const allSystemCards = await getAllCardsSupabase();
-          
-          if (allSystemCards === null) {
-            console.error("❌ Error loading all cards");
-            setError("Error al cargar las tarjetas del sistema");
-            setAllCards([]);
-            toast.error("Error al cargar las tarjetas del sistema");
-            return;
-          }
-          
-          console.log("✅ All system cards loaded:", allSystemCards.length);
-          setAllCards(allSystemCards);
+          // Para superadmin: mostrar todas las tarjetas
+          setAllCards(fetchedCards);
           
           // También cargar las tarjetas propias del usuario
-          const ownCards = allSystemCards.filter(card => card.userId === user.id);
+          const ownCards = fetchedCards.filter(card => card.userId === user.id);
           setUserCards(ownCards);
           
           // Buscar la tarjeta propia
           const foundUserCard = ownCards.find(card => card.userId === user.id);
           setUserCard(foundUserCard || null);
           
-          toast.success(`${allSystemCards.length} tarjetas cargadas (vista de administrador)`);
+          toast.success(`${fetchedCards.length} tarjetas cargadas (vista de administrador)`);
           
         } else {
-          // Para usuarios normales: cargar solo sus propias tarjetas
-          console.log("👤 Loading own cards for regular user...");
-          const fetchedCards = await getCardsSupabase();
-          
-          if (fetchedCards === null) {
-            console.error("❌ Error loading user cards");
-            setError("Error al cargar las tarjetas");
-            setUserCards([]);
-            setUserCard(null);
-            toast.error("Error al cargar las tarjetas");
-            return;
-          }
-          
-          // Filtrar para asegurar que solo se muestran las tarjetas del usuario actual
-          const ownCards = fetchedCards.filter(card => card.userId === user.id);
-          console.log("✅ User's own cards loaded:", ownCards.length);
-          setUserCards(ownCards);
+          // Para usuarios normales: solo sus propias tarjetas
+          setUserCards(fetchedCards);
           setAllCards([]); // No mostrar todas las tarjetas a usuarios normales
           
           // Buscar la tarjeta del usuario actual
-          const foundUserCard = ownCards.find(card => card.userId === user.id);
+          const foundUserCard = fetchedCards.find(card => card.userId === user.id);
           console.log("👤 User's own card:", foundUserCard ? foundUserCard.name : "None");
           setUserCard(foundUserCard || null);
           
-          if (ownCards.length > 0) {
+          if (fetchedCards.length > 0) {
             toast.success("Tarjetas cargadas correctamente");
           }
         }
