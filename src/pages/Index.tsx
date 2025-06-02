@@ -15,7 +15,7 @@ import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 
 const Index = () => {
-  const { user, userRole, isSuperAdmin, isLoading: authLoading } = useAuth();
+  const { user, userRole, isSuperAdmin, isLoading: authLoading, refreshUserRole } = useAuth();
   const navigate = useNavigate();
   const [cards, setCards] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ const Index = () => {
   // Handle navigation when not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      console.log("No user found, redirecting to auth...");
+      console.log("❌ No user found, redirecting to auth...");
       navigate('/auth', { replace: true });
     }
   }, [user, authLoading, navigate]);
@@ -37,54 +37,61 @@ const Index = () => {
     const initPage = async () => {
       // Solo cargar datos si hay usuario autenticado
       if (!user || authLoading) {
-        console.log("❌ No user or auth loading, skipping initialization");
+        console.log("⏳ Waiting for auth or no user, skipping initialization");
         return;
       }
       
       try {
         setError(null);
-        console.log("🚀 Starting page initialization for user:", user.id);
-        console.log("👤 User email:", user.email);
-        console.log("🔑 User role:", userRole);
+        console.log("🚀 Starting page initialization for user:", user.email);
+        console.log("🎭 Current user role:", userRole);
+        
+        // Force refresh role if it's null or 'user' for tubal@tubalechaburu.com
+        if (user.email === 'tubal@tubalechaburu.com' && (!userRole || userRole === 'user')) {
+          console.log("🔄 Forcing role refresh for superadmin user");
+          await refreshUserRole();
+          // Wait a bit for the role to update
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
         
         // Check Supabase connection
         try {
           console.log("🔍 Checking Supabase connection...");
           const connected = await checkSupabaseConnection();
-          console.log("📡 Connection check result:", connected);
+          console.log("📡 Connection status:", connected ? "✅ Connected" : "❌ Failed");
           setConnectionStatus(connected);
         } catch (connectionError) {
-          console.error("💥 Error during connection check:", connectionError);
+          console.error("💥 Connection check error:", connectionError);
           setConnectionStatus(false);
         }
 
-        // Debug data to see what's actually in the database
+        // Debug data check for troubleshooting
         try {
           console.log("🔍 Running debug data check...");
           const debugResult = await debugDataCheck();
-          console.log("📊 Debug data result:", debugResult);
+          console.log("📊 Debug data:", debugResult);
           setDebugData(debugResult);
         } catch (debugError) {
-          console.error("💥 Error in debug data check:", debugError);
+          console.error("💥 Debug check error:", debugError);
         }
 
-        // Get system stats for debugging
+        // Get system stats
         try {
           console.log("📊 Getting system stats...");
           const stats = await getSystemStats();
           console.log("📊 System stats:", stats);
           setSystemStats(stats);
         } catch (statsError) {
-          console.error("💥 Error getting system stats:", statsError);
+          console.error("💥 Stats error:", statsError);
         }
 
-        // Load user cards from Supabase using the new function
+        // Load user cards
         try {
-          console.log("📋 Loading user cards from Supabase for user:", user.id);
+          console.log("📋 Loading user cards for:", user.email);
           setLoading(true);
           
           const fetchedCards = await getCardsSupabase();
-          console.log("📦 Fetched user cards result:", fetchedCards);
+          console.log("📦 Fetched cards result:", fetchedCards?.length || 0, "cards");
           
           if (fetchedCards === null) {
             console.log("❌ getCardsSupabase returned null");
@@ -120,7 +127,7 @@ const Index = () => {
     };
 
     initPage();
-  }, [user, authLoading, userRole, isSuperAdmin]);
+  }, [user, authLoading, userRole, refreshUserRole]);
 
   const handleUserCardDeleted = () => {
     setUserCard(null);
@@ -154,6 +161,13 @@ const Index = () => {
         {/* Debug information for troubleshooting */}
         {isSuperAdmin() && (
           <div className="mt-4 space-y-4">
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <h4 className="font-semibold text-red-900">Estado de autenticación:</h4>
+              <p className="text-sm">Usuario: {user?.email}</p>
+              <p className="text-sm">Rol actual: {userRole || 'No definido'}</p>
+              <p className="text-sm">Es superadmin: {isSuperAdmin() ? 'Sí' : 'No'}</p>
+            </div>
+            
             {systemStats && (
               <div className="p-4 bg-gray-100 rounded">
                 <h4 className="font-semibold">Estadísticas del sistema:</h4>
@@ -199,6 +213,15 @@ const Index = () => {
         {/* Debug information for superadmins */}
         {isSuperAdmin() && (
           <div className="mb-6 space-y-4">
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="font-semibold text-green-900">✅ Estado de superadmin verificado:</h4>
+              <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
+                <div>Usuario: {user?.email}</div>
+                <div>Rol: {userRole}</div>
+                <div>Es superadmin: Sí</div>
+              </div>
+            </div>
+            
             {systemStats && (
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-semibold text-blue-900">Estadísticas del sistema:</h4>
@@ -211,8 +234,8 @@ const Index = () => {
             )}
             
             {debugData && (
-              <div className="p-4 bg-green-50 rounded-lg">
-                <h4 className="font-semibold text-green-900">Datos reales en la base de datos:</h4>
+              <div className="p-4 bg-yellow-50 rounded-lg">
+                <h4 className="font-semibold text-yellow-900">Datos reales en la base de datos:</h4>
                 <div className="mt-2 text-sm space-y-1">
                   {debugData.map((item: any, index: number) => (
                     <div key={index}>

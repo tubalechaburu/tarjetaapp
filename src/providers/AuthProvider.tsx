@@ -21,48 +21,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserRole = async () => {
     if (user?.id) {
+      console.log("🔄 Refreshing user role for:", user.id);
       const role = await loadUserRole(user.id);
+      console.log("🎭 New role loaded:", role);
       setUserRole(role);
     }
   };
 
   const handleAuthStateChange = async (event: string, session: any) => {
-    console.log("Auth state changed:", event, session);
+    console.log("🔐 Auth state changed:", event, session?.user?.email);
     setSession(session);
     setUser(session?.user ?? null);
     setIsLoading(false);
     
     if (session?.user?.id && event === 'SIGNED_IN') {
-      console.log("User signed in, loading role");
-      // Add small delay to ensure RLS policies are stable
+      console.log("✅ User signed in, loading role for:", session.user.email);
+      // Force a fresh role load on signin
       setTimeout(async () => {
         const role = await loadUserRole(session.user.id);
+        console.log("🎭 Role loaded for", session.user.email, ":", role);
         setUserRole(role || 'user');
-      }, 100);
+      }, 200);
     } else if (!session?.user) {
-      console.log("No user, clearing role");
+      console.log("❌ No user, clearing role");
       setUserRole(null);
     }
   };
 
   useEffect(() => {
-    console.log("AuthProvider: Setting up auth state");
+    console.log("🚀 AuthProvider: Setting up auth state");
     
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session:", session);
+      console.log("📋 Initial session:", session?.user?.email || "No user");
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
       
-      // Load user role if user exists and avoid RLS recursion
+      // Load user role if user exists
       if (session?.user?.id) {
-        console.log("Loading role for user:", session.user.id);
-        // Add small delay to ensure RLS policies are stable
+        console.log("👤 Loading initial role for:", session.user.email);
         setTimeout(async () => {
           const role = await loadUserRole(session.user.id);
+          console.log("🎭 Initial role loaded:", role);
           setUserRole(role || 'user');
-        }, 100);
+        }, 200);
       }
     });
 
@@ -70,10 +73,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => {
-      console.log("AuthProvider: Cleaning up subscription");
+      console.log("🧹 AuthProvider: Cleaning up subscription");
       subscription.unsubscribe();
     };
   }, []);
+
+  // Log current state for debugging
+  useEffect(() => {
+    console.log("📊 Current auth state:", {
+      user: user?.email,
+      role: userRole,
+      isLoading
+    });
+  }, [user, userRole, isLoading]);
 
   const value = {
     user,
