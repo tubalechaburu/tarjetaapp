@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Fetch user role from database with better error handling
+      // Fetch user role with better error handling
       if (session?.user) {
         try {
           const { data: isSuperAdminResult, error } = await supabase
