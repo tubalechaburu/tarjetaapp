@@ -1,28 +1,77 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the allowed roles based on the database schema
-type DatabaseRole = 'user' | 'superadmin';
+export type UserRole = 'user' | 'superadmin';
 
-// Function to update a user's role directly in the profiles table
 export const updateUserRole = async (
   userId: string, 
-  role: DatabaseRole,
-  onSuccess?: () => void,
-  onError?: (error: any) => void
+  newRole: UserRole, 
+  onSuccess: () => void, 
+  onError: (error: any) => void
 ) => {
   try {
-    // Update the role directly in the profiles table
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: role })
-      .eq('id', userId);
-        
-    if (error) throw error;
-    
-    if (onSuccess) onSuccess();
+    // Check if user role record exists
+    const { data: existingRole, error: fetchError } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // PGRST116 is "not found" error, which is fine
+      throw fetchError;
+    }
+
+    if (existingRole) {
+      // Update existing role
+      const { error: updateError } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    } else {
+      // Insert new role
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ 
+          user_id: userId, 
+          role: newRole 
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+    }
+
+    onSuccess();
   } catch (error) {
-    if (onError) onError(error);
-    throw error;
+    console.error('Error updating user role:', error);
+    onError(error);
+  }
+};
+
+export const getUserRole = async (userId: string): Promise<UserRole | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No role found, return default
+        return 'user';
+      }
+      throw error;
+    }
+
+    return data.role as UserRole;
+  } catch (error) {
+    console.error('Error fetching user role:', error);
+    return null;
   }
 };

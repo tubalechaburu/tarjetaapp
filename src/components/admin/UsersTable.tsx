@@ -27,9 +27,18 @@ import { Link } from "react-router-dom";
 // Define the allowed roles based on the database schema
 type DatabaseRole = 'user' | 'superadmin';
 
+interface UserWithRole {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  role: DatabaseRole;
+}
+
 export const UsersTable = () => {
   const { toast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -39,9 +48,9 @@ export const UsersTable = () => {
       setLoading(true);
       setError(null);
       
-      // First check if current user is superadmin
+      // First check if current user is superadmin using the correct function name
       const { data: isSuperAdmin, error: roleError } = await supabase
-        .rpc('is_current_user_superadmin');
+        .rpc('is_superadmin', { _user_id: (await supabase.auth.getUser()).data.user?.id });
       
       if (roleError) {
         console.error("Error checking superadmin status:", roleError);
@@ -53,26 +62,35 @@ export const UsersTable = () => {
       }
       
       // Get users from profiles table
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
           id,
           email,
-          role,
-          created_at,
+          full_name,
           updated_at
         `);
       
-      if (error) throw error;
+      if (profilesError) throw profilesError;
       
-      // Map the data to include display name
-      const usersWithData = data?.map(user => ({
-        ...user,
-        full_name: user.email?.split('@')[0] || 'Usuario', // Use email prefix as name fallback
-        role: user.role as DatabaseRole
-      })) || [];
+      // Get user roles separately
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
       
-      setUsers(usersWithData);
+      if (rolesError) throw rolesError;
+      
+      // Combine profiles with roles
+      const usersWithRoles = profilesData?.map(profile => {
+        const userRole = rolesData?.find(role => role.user_id === profile.id);
+        return {
+          ...profile,
+          role: (userRole?.role as DatabaseRole) || 'user',
+          created_at: profile.updated_at // Use updated_at as fallback for created_at
+        };
+      }) || [];
+      
+      setUsers(usersWithRoles);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       setError(error.message);
@@ -221,7 +239,7 @@ export const UsersTable = () => {
               {expandedUser === user.id && (
                 <TableRow>
                   <TableCell colSpan={4} className="bg-muted/30">
-                    <UserCardsSection userId={user.id} userEmail={user.email} />
+                    <UserCardsSection userId={user.id} userEmail={user.email || ''} />
                   </TableCell>
                 </TableRow>
               )}
