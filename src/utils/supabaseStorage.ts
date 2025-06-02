@@ -1,3 +1,4 @@
+
 // 1. Actualizar supabaseStorage.ts para mejor manejo de errores y seguridad
 
 import { BusinessCard, SupabaseBusinessCard } from "../types";
@@ -136,6 +137,46 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
     return mappedCards;
   } catch (supabaseError) {
     console.error("💥 Error in getCardsSupabase:", supabaseError);
+    return null;
+  }
+};
+
+export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | null> => {
+  try {
+    console.log(`🔍 Loading card ${id} from Supabase...`);
+    
+    // Verificar autenticación
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      console.error("❌ No user authenticated:", userError);
+      return null;
+    }
+
+    console.log("👤 User authenticated:", userData.user.email);
+
+    // Obtener la tarjeta directamente - RLS manejará los permisos
+    const { data, error } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("❌ Database query error:", error);
+      return null;
+    }
+    
+    if (!data) {
+      console.log(`📭 Card ${id} not found`);
+      return null;
+    }
+    
+    console.log("✅ Card found:", data.name);
+    const mappedCard = mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
+    return mappedCard;
+  } catch (supabaseError) {
+    console.error("💥 Error in getCardByIdSupabase:", supabaseError);
     return null;
   }
 };
