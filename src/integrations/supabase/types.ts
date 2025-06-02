@@ -12,52 +12,52 @@ export type Database = {
       cards: {
         Row: {
           company: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           email: string | null
           id: string
-          links: Json
+          links: Json | null
           logo: string | null
           name: string
           phone: string | null
           photo: string | null
-          theme: Json
+          theme: Json | null
           title: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
           visible_fields: Json | null
         }
         Insert: {
           company?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           email?: string | null
           id?: string
-          links?: Json
+          links?: Json | null
           logo?: string | null
           name: string
           phone?: string | null
           photo?: string | null
-          theme?: Json
+          theme?: Json | null
           title?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
           visible_fields?: Json | null
         }
         Update: {
           company?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           email?: string | null
           id?: string
-          links?: Json
+          links?: Json | null
           logo?: string | null
           name?: string
           phone?: string | null
           photo?: string | null
-          theme?: Json
+          theme?: Json | null
           title?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
           visible_fields?: Json | null
         }
@@ -65,28 +65,46 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string
-          email: string
+          address: string | null
+          avatar_url: string | null
+          company: string | null
+          description: string | null
+          email: string | null
           full_name: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
+          job_title: string | null
+          linkedin: string | null
+          phone: string | null
+          updated_at: string | null
+          website: string | null
         }
         Insert: {
-          created_at?: string
-          email: string
+          address?: string | null
+          avatar_url?: string | null
+          company?: string | null
+          description?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
+          job_title?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          website?: string | null
         }
         Update: {
-          created_at?: string
-          email?: string
+          address?: string | null
+          avatar_url?: string | null
+          company?: string | null
+          description?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
+          job_title?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -94,23 +112,20 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          role: string
-          updated_at: string | null
-          user_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          role?: string
-          updated_at?: string | null
-          user_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          role?: string
-          updated_at?: string | null
-          user_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -119,81 +134,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_profile: {
-        Args: { profile_user_id: string }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
         Returns: boolean
       }
-      debug_data_check: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          table_name: string
-          row_count: number
-          sample_data: string
-        }[]
-      }
-      get_all_cards: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          name: string
-          title: string
-          company: string
-          email: string
-          phone: string
-          photo: string
-          logo: string
-          description: string
-          links: Json
-          theme: Json
-          visible_fields: Json
-          user_id: string
-          created_at: string
-          updated_at: string
-        }[]
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_system_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          total_profiles: number
-          total_cards: number
-          superadmin_count: number
-        }[]
-      }
-      get_user_cards: {
-        Args: { user_uuid: string }
-        Returns: {
-          id: string
-          name: string
-          title: string
-          company: string
-          email: string
-          phone: string
-          photo: string
-          logo: string
-          description: string
-          links: Json
-          theme: Json
-          visible_fields: Json
-          user_id: string
-          created_at: string
-          updated_at: string
-        }[]
-      }
-      get_user_role_safe: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
-      is_current_user_superadmin: {
-        Args: Record<PropertyKey, never>
+      is_superadmin: {
+        Args: { _user_id: string }
         Returns: boolean
       }
     }
     Enums: {
-      user_role: "user" | "superadmin"
+      app_role: "user" | "admin" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -309,7 +267,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["user", "superadmin"],
+      app_role: ["user", "admin", "superadmin"],
     },
   },
 } as const
