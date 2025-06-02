@@ -2,7 +2,7 @@
 import React, { useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ensureAbsoluteUrl } from "@/utils/qrUtils";
+import { ensureAbsoluteUrl } from "@/utils/qr/urlUtils";
 import QRCodeActions from "./qr/QRCodeActions";
 
 interface QRCodeGeneratorProps {
