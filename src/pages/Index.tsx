@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards, deleteCard } from "@/utils/storage";
@@ -34,82 +33,67 @@ const Index = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    console.log("Index component mounted");
-    console.log("Auth loading:", authLoading);
-    console.log("User:", user);
-    console.log("User role:", userRole);
-    
     const initPage = async () => {
+      // Solo cargar datos si hay usuario autenticado
+      if (!user || authLoading) return;
+      
       try {
         setError(null);
         console.log("Starting page initialization...");
         
-        // Check Supabase connection
+        // Check Supabase connection solo una vez al cargar
         try {
           console.log("Checking Supabase connection...");
           const connected = await checkSupabaseConnection();
           setConnectionStatus(connected);
           console.log("Supabase connection status:", connected);
-          
-          if (!connected) {
-            console.warn("Supabase not connected, showing warning");
-            toast.warning("Conexión a Supabase no disponible. Los datos se guardarán localmente.");
-          }
         } catch (error) {
           console.error("Error checking Supabase connection:", error);
           setConnectionStatus(false);
-          toast.warning("Error de conexión a Supabase");
         }
 
-        // Load cards with better error handling
-        if (user) {
-          try {
-            console.log("Loading cards for user:", user.id);
-            setLoading(true);
-            const fetchedCards = await getCards();
-            console.log("Fetched cards:", fetchedCards);
-            
-            if (fetchedCards && Array.isArray(fetchedCards)) {
-              // Remove duplicates by keeping only the latest card per user
-              const uniqueCards = fetchedCards.reduce((acc: BusinessCard[], card) => {
-                const existingIndex = acc.findIndex(c => c.userId === card.userId);
-                if (existingIndex >= 0) {
-                  // Keep the one with the latest createdAt timestamp
-                  if ((card.createdAt || 0) > (acc[existingIndex].createdAt || 0)) {
-                    acc[existingIndex] = card;
-                  }
-                } else {
-                  acc.push(card);
+        // Load cards
+        try {
+          console.log("Loading cards for user:", user.id);
+          setLoading(true);
+          const fetchedCards = await getCards();
+          console.log("Fetched cards:", fetchedCards);
+          
+          if (fetchedCards && Array.isArray(fetchedCards)) {
+            // Remove duplicates by keeping only the latest card per user
+            const uniqueCards = fetchedCards.reduce((acc: BusinessCard[], card) => {
+              const existingIndex = acc.findIndex(c => c.userId === card.userId);
+              if (existingIndex >= 0) {
+                // Keep the one with the latest createdAt timestamp
+                if ((card.createdAt || 0) > (acc[existingIndex].createdAt || 0)) {
+                  acc[existingIndex] = card;
                 }
-                return acc;
-              }, []);
-              
-              console.log("Unique cards:", uniqueCards);
-              setCards(uniqueCards);
-              
-              // Find user's card
-              const foundUserCard = uniqueCards.find(card => card.userId === user.id);
-              console.log("Found user card:", foundUserCard);
-              setUserCard(foundUserCard || null);
-              
-              if (!foundUserCard) {
-                console.log("No card found for user, they may need to create one");
+              } else {
+                acc.push(card);
               }
-            } else {
-              console.log("No cards returned or invalid format");
-              setCards([]);
-              setUserCard(null);
-            }
-          } catch (error) {
-            console.error("Error loading cards:", error);
-            setError("Error al cargar las tarjetas. Intenta refrescar la página.");
-            toast.error("Error al cargar las tarjetas");
-            // Still set empty arrays to prevent undefined errors
+              return acc;
+            }, []);
+            
+            console.log("Unique cards:", uniqueCards);
+            setCards(uniqueCards);
+            
+            // Find user's card
+            const foundUserCard = uniqueCards.find(card => card.userId === user.id);
+            console.log("Found user card:", foundUserCard);
+            setUserCard(foundUserCard || null);
+            
+          } else {
+            console.log("No cards returned or invalid format");
             setCards([]);
             setUserCard(null);
-          } finally {
-            setLoading(false);
           }
+        } catch (error) {
+          console.error("Error loading cards:", error);
+          setError("Error al cargar las tarjetas. Intenta refrescar la página.");
+          setCards([]);
+          setUserCard(null);
+        } finally {
+          setLoading(false);
         }
       } catch (error) {
         console.error("Error in page initialization:", error);
@@ -118,10 +102,7 @@ const Index = () => {
       }
     };
 
-    // Only initialize if we have a user and auth is not loading
-    if (!authLoading && user) {
-      initPage();
-    }
+    initPage();
   }, [user, authLoading, userRole]);
 
   // Don't render anything if redirecting

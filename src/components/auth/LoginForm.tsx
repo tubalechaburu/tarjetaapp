@@ -33,14 +33,33 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
     
     console.log("LoginForm: handleSubmit called with:", { email: data.email });
     
+    // Validación básica
+    if (!data.email || !data.password) {
+      toast.error("Por favor completa todos los campos");
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       console.log("LoginForm: Calling onSubmit...");
       await onSubmit(data);
       console.log("LoginForm: onSubmit completed successfully");
+      toast.success("Iniciando sesión...");
     } catch (error: any) {
       console.error("LoginForm: Error during submit:", error);
-      toast.error(error.message || "Error al iniciar sesión. Por favor, inténtalo de nuevo.");
+      let errorMessage = "Error al iniciar sesión. Por favor, inténtalo de nuevo.";
+      
+      if (error.message) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión.";
+        } else if (error.message.includes("too many requests")) {
+          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo.";
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
