@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import CardForm from "@/components/CardForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CreateCard = () => {

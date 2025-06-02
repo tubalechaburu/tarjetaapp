@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCards } from "@/utils/storage";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 
 export const useCardValidation = (initialData?: BusinessCard) => {
   const { user, isSuperAdmin } = useAuth();

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { SuperAdminUsersTable } from "@/components/admin/SuperAdminUsersTable";
 import { toast } from "sonner";

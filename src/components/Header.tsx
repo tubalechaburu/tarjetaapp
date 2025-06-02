@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { LogOut, Plus, User, Settings, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 
 export const Header = () => {
   const { user, signOut, userRole, isSuperAdmin } = useAuth();

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 import { ArrowLeft } from "lucide-react";
 import { 
   Card, 

@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { UsersManagementTable } from "@/components/admin/UsersManagementTable";
 import { AllUsersTable } from "@/components/admin/AllUsersTable";

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getCardById } from "@/utils/storage";
 import { BusinessCard } from "@/types";
 import { toast } from "sonner";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/navigation/BackButton";
 import CardActions from "@/components/card/CardActions";

@@ -1,6 +1,6 @@
 
 import { Header } from "@/components/Header";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthContext";
 import { Navigate } from "react-router-dom";
 
 const Settings = () => {
