@@ -123,6 +123,14 @@ export type Database = {
         Args: { profile_user_id: string }
         Returns: boolean
       }
+      debug_data_check: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          row_count: number
+          sample_data: string
+        }[]
+      }
       get_all_cards: {
         Args: Record<PropertyKey, never>
         Returns: {

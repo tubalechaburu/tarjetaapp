@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCardsSupabase } from "@/utils/supabaseStorage";
-import { checkSupabaseConnection, getSystemStats } from "@/integrations/supabase/client";
+import { checkSupabaseConnection, getSystemStats, debugDataCheck } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -23,6 +23,7 @@ const Index = () => {
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [systemStats, setSystemStats] = useState<any>(null);
+  const [debugData, setDebugData] = useState<any>(null);
 
   // Handle navigation when not authenticated
   useEffect(() => {
@@ -43,6 +44,8 @@ const Index = () => {
       try {
         setError(null);
         console.log("🚀 Starting page initialization for user:", user.id);
+        console.log("👤 User email:", user.email);
+        console.log("🔑 User role:", userRole);
         
         // Check Supabase connection
         try {
@@ -53,6 +56,16 @@ const Index = () => {
         } catch (connectionError) {
           console.error("💥 Error during connection check:", connectionError);
           setConnectionStatus(false);
+        }
+
+        // Debug data to see what's actually in the database
+        try {
+          console.log("🔍 Running debug data check...");
+          const debugResult = await debugDataCheck();
+          console.log("📊 Debug data result:", debugResult);
+          setDebugData(debugResult);
+        } catch (debugError) {
+          console.error("💥 Error in debug data check:", debugError);
         }
 
         // Get system stats for debugging
@@ -137,14 +150,35 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <Header />
         <ErrorState error={error} connectionStatus={connectionStatus} />
-        {systemStats && (
-          <div className="mt-4 p-4 bg-gray-100 rounded">
-            <h4 className="font-semibold">Estadísticas del sistema:</h4>
-            <p>Perfiles totales: {systemStats.total_profiles}</p>
-            <p>Tarjetas totales: {systemStats.total_cards}</p>
-            <p>Superadmins: {systemStats.superadmin_count}</p>
+        
+        {/* Debug information for troubleshooting */}
+        {isSuperAdmin() && (
+          <div className="mt-4 space-y-4">
+            {systemStats && (
+              <div className="p-4 bg-gray-100 rounded">
+                <h4 className="font-semibold">Estadísticas del sistema:</h4>
+                <p>Perfiles totales: {systemStats.total_profiles}</p>
+                <p>Tarjetas totales: {systemStats.total_cards}</p>
+                <p>Superadmins: {systemStats.superadmin_count}</p>
+              </div>
+            )}
+            
+            {debugData && (
+              <div className="p-4 bg-blue-50 rounded">
+                <h4 className="font-semibold">Datos de debug:</h4>
+                {debugData.map((item: any, index: number) => (
+                  <div key={index}>
+                    <p><strong>{item.table_name}:</strong> {item.row_count} registros</p>
+                    {item.sample_data && (
+                      <p className="text-sm text-gray-600">Datos: {item.sample_data}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
+        
         <Footer />
       </div>
     );
@@ -162,14 +196,35 @@ const Index = () => {
           isSuperAdmin={isSuperAdmin()} 
         />
 
-        {systemStats && isSuperAdmin() && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-blue-900">Estadísticas del sistema:</h4>
-            <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
-              <div>Perfiles: {systemStats.total_profiles}</div>
-              <div>Tarjetas: {systemStats.total_cards}</div>
-              <div>Superadmins: {systemStats.superadmin_count}</div>
-            </div>
+        {/* Debug information for superadmins */}
+        {isSuperAdmin() && (
+          <div className="mb-6 space-y-4">
+            {systemStats && (
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold text-blue-900">Estadísticas del sistema:</h4>
+                <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
+                  <div>Perfiles: {systemStats.total_profiles}</div>
+                  <div>Tarjetas: {systemStats.total_cards}</div>
+                  <div>Superadmins: {systemStats.superadmin_count}</div>
+                </div>
+              </div>
+            )}
+            
+            {debugData && (
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-semibold text-green-900">Datos reales en la base de datos:</h4>
+                <div className="mt-2 text-sm space-y-1">
+                  {debugData.map((item: any, index: number) => (
+                    <div key={index}>
+                      <strong>{item.table_name}:</strong> {item.row_count} registros
+                      {item.sample_data && item.sample_data !== '' && (
+                        <div className="ml-4 text-gray-600">→ {item.sample_data}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

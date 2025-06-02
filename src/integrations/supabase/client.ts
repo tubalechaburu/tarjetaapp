@@ -77,3 +77,22 @@ export const getSystemStats = async () => {
     return null;
   }
 };
+
+// Function to debug data - check what's actually in the database
+export const debugDataCheck = async () => {
+  try {
+    console.log("🔍 Debugging data in database...");
+    const { data, error } = await supabase.rpc('debug_data_check');
+    
+    if (error) {
+      console.error('Error in debug data check:', error);
+      return null;
+    }
+    
+    console.log("📊 Database debug data:", data);
+    return data;
+  } catch (error) {
+    console.error('Error in debugDataCheck:', error);
+    return null;
+  }
+};
