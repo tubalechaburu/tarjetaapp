@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Fetch user role from database instead of hardcoded email check
+      // Fetch user role from database with better error handling
       if (session?.user) {
         try {
           const { data: isSuperAdminResult, error } = await supabase
@@ -42,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUserRole('user'); // Default to user on error
           } else {
             setUserRole(isSuperAdminResult ? 'superadmin' : 'user');
+            console.log("✅ User role set:", isSuperAdminResult ? 'superadmin' : 'user');
           }
         } catch (error) {
           console.error("Error fetching user role:", error);

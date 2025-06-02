@@ -50,10 +50,13 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         
         if (cardsError) {
           console.error("❌ Error loading cards:", cardsError);
+          // Don't show error for permission denied - it's expected for new users
+          if (!cardsError.message?.includes('permission denied')) {
+            toast.error("Error al cargar las tarjetas");
+          }
           setUserCards([]);
           setAllCards([]);
           setUserCard(null);
-          toast.error("Error al cargar las tarjetas");
         } else {
           console.log("✅ Cards loaded (RLS-filtered):", cardsData?.length || 0);
           const mappedCards = (cardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
@@ -69,7 +72,9 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
             const ownCards = mappedCards.filter(card => card.userId === user.id);
             setUserCards(ownCards);
             setUserCard(ownCards.length > 0 ? ownCards[0] : null);
-            toast.success(`${mappedCards.length} tarjetas cargadas en el panel de administración`);
+            if (mappedCards.length > 0) {
+              toast.success(`${mappedCards.length} tarjetas cargadas en el panel de administración`);
+            }
           } else {
             // Regular user sees only their own cards
             setUserCards(mappedCards);
@@ -84,13 +89,25 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
       } catch (error) {
         console.error("💥 Error loading data:", error);
         setError("Error al cargar los datos");
-        toast.error("Error al cargar los datos");
+        // Don't show toast for every error to avoid spam
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
+    // Only load data when we have a user and role information
+    if (user && userRole !== null) {
+      loadData();
+    } else if (user && userRole === null) {
+      // Wait a bit for role to be loaded
+      const timeout = setTimeout(() => {
+        if (userRole === null) {
+          console.log("⏳ Role still loading, proceeding anyway...");
+          loadData();
+        }
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
   }, [user, userRole, isSuperAdmin]);
 
   const handleUserCardDeleted = () => {

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,7 @@ const AuthConfirm = () => {
         const token_hash = searchParams.get('token_hash');
         const token = searchParams.get('token');
         const type = searchParams.get('type') || 'signup';
-        const redirect_to = searchParams.get('redirect_to') || '/';
+        const redirect_to = searchParams.get('redirect_to') || '/dashboard';
 
         console.log('Confirming auth with:', { token_hash, token, type, redirect_to });
 
@@ -119,8 +120,8 @@ const AuthConfirm = () => {
               <p className="text-sm text-gray-500">
                 Serás redirigido automáticamente en unos segundos...
               </p>
-              <Button onClick={() => navigate('/')} className="w-full">
-                Ir a la aplicación
+              <Button onClick={() => navigate('/dashboard')} className="w-full">
+                Ir al dashboard
               </Button>
             </div>
           )}
@@ -130,7 +131,7 @@ const AuthConfirm = () => {
               <Button onClick={() => navigate('/auth')} className="w-full">
                 Volver al login
               </Button>
-              <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+              <Button variant="outline" onClick={() => navigate('/landing')} className="w-full">
                 Ir al inicio
               </Button>
             </div>

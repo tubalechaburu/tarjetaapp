@@ -31,21 +31,22 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
       console.log("👤 User found:", user.email);
 
       try {
-        // Verificar si el perfil existe - removed role selection
+        // Check if profile exists with better error handling
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('id, email')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error("Error checking profile:", error);
+          // Continue anyway, don't block user
         }
 
         if (!profile) {
           console.log("📝 Creating missing profile for user:", user.email);
           
-          // Crear perfil si no existe
+          // Create profile if it doesn't exist
           const { error: insertError } = await supabase
             .from('profiles')
             .insert({
@@ -57,6 +58,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
 
           if (insertError) {
             console.error("Error creating profile:", insertError);
+            // Don't block user, continue anyway
           } else {
             console.log("✅ Profile created successfully");
           }
@@ -65,6 +67,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
         }
       } catch (error) {
         console.error("Error in profile check:", error);
+        // Don't block user for profile errors
       } finally {
         setProfileChecked(true);
       }

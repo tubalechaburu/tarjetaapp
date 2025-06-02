@@ -71,7 +71,7 @@ export const UsersTable = () => {
         .from('user_roles')
         .select('user_id, role');
       
-      if (rolesError) {
+      if (rolesError && !rolesError.message?.includes('permission denied')) {
         console.error("Error loading roles:", rolesError);
         // Continue without roles if there's an error
       }

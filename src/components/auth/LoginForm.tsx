@@ -45,6 +45,7 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
       console.log("LoginForm: onSubmit completed successfully");
     } catch (error: any) {
       console.error("LoginForm: Error during submit:", error);
+      // Error handling is done in the parent component or authUtils
     } finally {
       setIsSubmitting(false);
     }
