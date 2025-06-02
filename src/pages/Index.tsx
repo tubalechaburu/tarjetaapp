@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCardsSupabase } from "@/utils/supabaseStorage";
-import { checkSupabaseConnection } from "@/integrations/supabase/client";
+import { checkSupabaseConnection, getSystemStats } from "@/integrations/supabase/client";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -22,6 +22,7 @@ const Index = () => {
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
   const [userCard, setUserCard] = useState<BusinessCard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [systemStats, setSystemStats] = useState<any>(null);
 
   // Handle navigation when not authenticated
   useEffect(() => {
@@ -52,6 +53,16 @@ const Index = () => {
         } catch (connectionError) {
           console.error("💥 Error during connection check:", connectionError);
           setConnectionStatus(false);
+        }
+
+        // Get system stats for debugging
+        try {
+          console.log("📊 Getting system stats...");
+          const stats = await getSystemStats();
+          console.log("📊 System stats:", stats);
+          setSystemStats(stats);
+        } catch (statsError) {
+          console.error("💥 Error getting system stats:", statsError);
         }
 
         // Load user cards from Supabase using the new function
@@ -126,6 +137,14 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <Header />
         <ErrorState error={error} connectionStatus={connectionStatus} />
+        {systemStats && (
+          <div className="mt-4 p-4 bg-gray-100 rounded">
+            <h4 className="font-semibold">Estadísticas del sistema:</h4>
+            <p>Perfiles totales: {systemStats.total_profiles}</p>
+            <p>Tarjetas totales: {systemStats.total_cards}</p>
+            <p>Superadmins: {systemStats.superadmin_count}</p>
+          </div>
+        )}
         <Footer />
       </div>
     );
@@ -142,6 +161,17 @@ const Index = () => {
           hasUserCard={!!userCard} 
           isSuperAdmin={isSuperAdmin()} 
         />
+
+        {systemStats && isSuperAdmin() && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-900">Estadísticas del sistema:</h4>
+            <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
+              <div>Perfiles: {systemStats.total_profiles}</div>
+              <div>Tarjetas: {systemStats.total_cards}</div>
+              <div>Superadmins: {systemStats.superadmin_count}</div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <LoadingState message="Cargando tarjetas desde Supabase..." />

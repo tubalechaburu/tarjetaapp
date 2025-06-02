@@ -147,6 +147,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_system_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_profiles: number
+          total_cards: number
+          superadmin_count: number
+        }[]
+      }
       get_user_cards: {
         Args: { user_uuid: string }
         Returns: {

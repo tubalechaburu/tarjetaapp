@@ -88,6 +88,62 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
   }
 };
 
+export const getAllCardsSupabase = async (): Promise<BusinessCard[] | null> => {
+  try {
+    console.log("🔍 Starting getAllCardsSupabase for admin...");
+    
+    // Check if user is superadmin first
+    const { data: isSuperAdmin, error: adminError } = await supabase
+      .rpc('is_current_user_superadmin');
+    
+    if (adminError) {
+      console.error("❌ Error checking admin status:", adminError);
+      toast.error("Error verificando permisos de administrador");
+      return null;
+    }
+    
+    if (!isSuperAdmin) {
+      console.log("❌ User is not superadmin");
+      toast.error("No tienes permisos de administrador");
+      return null;
+    }
+    
+    // Use the database function to get all cards
+    console.log("📋 Loading all cards using database function...");
+    const { data, error } = await supabase.rpc('get_all_cards');
+    
+    if (error) {
+      console.error("❌ Database function error:", error);
+      toast.error("Error al obtener todas las tarjetas");
+      return null;
+    }
+    
+    console.log("✅ Raw all cards data from function:", data);
+    console.log("📊 Total cards found:", data?.length || 0);
+    
+    if (isEmptyData(data)) {
+      console.log("📭 No cards found in Supabase");
+      return [];
+    }
+    
+    // Map the data
+    console.log("🔄 Mapping all cards...");
+    const mappedCards = (data as SupabaseBusinessCard[]).map(item => {
+      console.log("🔄 Mapping card:", item.id, item.name);
+      return mapSupabaseToBusinessCard(item);
+    });
+    
+    console.log("✅ Final mapped all cards:", mappedCards.length, "cards");
+    toast.success(`${mappedCards.length} tarjetas totales cargadas correctamente`);
+    
+    return mappedCards;
+  } catch (supabaseError) {
+    console.error("💥 Error in getAllCardsSupabase:", supabaseError);
+    toast.error("Error al conectar con la base de datos");
+    return null;
+  }
+};
+
 export const getCardByIdSupabase = async (id: string): Promise<BusinessCard | null> => {
   try {
     console.log(`Fetching card with ID ${id} from Supabase`);

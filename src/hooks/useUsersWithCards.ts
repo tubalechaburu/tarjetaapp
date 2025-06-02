@@ -46,10 +46,8 @@ export const useUsersWithCards = () => {
       
       console.log("Profiles fetched:", profiles?.length || 0);
       
-      // Get all cards
-      const { data: cards, error: cardsError } = await supabase
-        .from('cards')
-        .select('*');
+      // Get all cards using the new function
+      const { data: cards, error: cardsError } = await supabase.rpc('get_all_cards');
         
       if (cardsError) {
         console.error("Error fetching cards:", cardsError);

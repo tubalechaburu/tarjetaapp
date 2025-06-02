@@ -58,3 +58,22 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Function to get system statistics
+export const getSystemStats = async () => {
+  try {
+    console.log("Getting system stats...");
+    const { data, error } = await supabase.rpc('get_system_stats');
+    
+    if (error) {
+      console.error('Error fetching system stats:', error);
+      return null;
+    }
+    
+    console.log("System stats:", data);
+    return data?.[0] || null;
+  } catch (error) {
+    console.error('Error in getSystemStats:', error);
+    return null;
+  }
+};
