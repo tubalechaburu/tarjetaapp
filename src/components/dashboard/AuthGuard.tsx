@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/providers/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -30,10 +31,10 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
       console.log("👤 User found:", user.email);
 
       try {
-        // Verificar si el perfil existe
+        // Verificar si el perfil existe - removed role selection
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('id, email, role')
+          .select('id, email')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -50,9 +51,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
             .insert({
               id: user.id,
               email: user.email || '',
-              role: 'user',
               full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
-              created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
 
@@ -62,7 +61,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
             console.log("✅ Profile created successfully");
           }
         } else {
-          console.log("✅ Profile exists:", profile.email, "Role:", profile.role);
+          console.log("✅ Profile exists:", profile.email);
         }
       } catch (error) {
         console.error("Error in profile check:", error);

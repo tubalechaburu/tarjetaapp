@@ -34,9 +34,9 @@ export const useUsersWithCards = () => {
       const isSuperAdmin = userData.user.email === 'tubal@tubalechaburu.com';
       
       if (!isSuperAdmin) {
-        // También verificar usando la función RPC como respaldo
+        // También verificar usando la función RPC correcta
         const { data: rpcResult, error: roleError } = await supabase
-          .rpc('is_current_user_superadmin');
+          .rpc('is_superadmin', { _user_id: userData.user.id });
         
         if (roleError || !rpcResult) {
           throw new Error("Solo los superadministradores pueden ver todos los usuarios");
@@ -45,10 +45,10 @@ export const useUsersWithCards = () => {
       
       console.log("Access granted for superadmin");
       
-      // Get profiles from database with better error handling
+      // Get profiles from database - removing role from selection
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, role, full_name, created_at, updated_at');
+        .select('id, email, full_name, updated_at');
       
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -56,6 +56,16 @@ export const useUsersWithCards = () => {
       }
       
       console.log("Profiles fetched:", profiles?.length || 0);
+      
+      // Get user roles separately
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      if (rolesError) {
+        console.error("Error fetching user roles:", rolesError);
+        // Continue without roles if there's an error
+      }
       
       // Get all cards directly from cards table
       const { data: cards, error: cardsError } = await supabase
@@ -75,6 +85,10 @@ export const useUsersWithCards = () => {
         const userCards = cards?.filter(card => card.user_id === profile.id) || [];
         const mappedCards = userCards.map(card => mapSupabaseToBusinessCard(card as unknown as SupabaseBusinessCard));
         
+        // Get user role from user_roles table
+        const userRole = userRoles?.find(role => role.user_id === profile.id);
+        const role = (userRole?.role as DatabaseRole) || 'user';
+        
         // Garantizar que siempre tenemos un email y nombre visible
         const email = profile.email || 'Sin email';
         let fullName = profile.full_name;
@@ -93,7 +107,7 @@ export const useUsersWithCards = () => {
           id: profile.id,
           full_name: fullName,
           email: email,
-          role: profile.role as DatabaseRole,
+          role: role,
           cards: mappedCards,
           updated_at: profile.updated_at || ''
         };
