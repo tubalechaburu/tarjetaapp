@@ -12,7 +12,7 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // Function to get user role using the new safe function
-export const getUserRole = async (userId: string): Promise<'user' | 'admin' | 'superadmin' | null> => {
+export const getUserRole = async (userId: string): Promise<'user' | 'superadmin' | null> => {
   try {
     console.log("Getting user role for:", userId);
     
@@ -26,7 +26,13 @@ export const getUserRole = async (userId: string): Promise<'user' | 'admin' | 's
     }
     
     console.log("User role data:", data);
-    return data || 'user';
+    
+    // Ensure the returned value matches our expected types
+    if (data === 'superadmin' || data === 'user') {
+      return data;
+    }
+    
+    return 'user'; // Default fallback
   } catch (error) {
     console.error('Error in getUserRole:', error);
     return 'user'; // Default to user role instead of null

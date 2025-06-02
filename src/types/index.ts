@@ -1,4 +1,3 @@
-
 export interface AuthContextType {
   user: any | null;
   session: any | null;
@@ -13,7 +12,7 @@ export interface AuthContextType {
   refreshUserRole?: () => Promise<void>; // Nueva función opcional
 }
 
-export type UserRole = 'user' | 'admin' | 'superadmin' | null;
+export type UserRole = 'user' | 'superadmin' | null;
 
 export interface CardLink {
   id?: string;
