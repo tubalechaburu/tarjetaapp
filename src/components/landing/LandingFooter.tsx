@@ -8,11 +8,13 @@ const LandingFooter = () => {
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <img 
-                src="/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png" 
-                alt="TarjetaVisita Logo" 
-                className="w-8 h-8 rounded-lg object-contain"
-              />
+              <div className="bg-white p-1 rounded-lg">
+                <img 
+                  src="/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png" 
+                  alt="TarjetaVisita Logo" 
+                  className="w-24 h-24 rounded-lg object-contain"
+                />
+              </div>
               <h3 className="text-xl font-bold">TarjetaVisita</h3>
             </div>
             <p className="text-gray-400">
