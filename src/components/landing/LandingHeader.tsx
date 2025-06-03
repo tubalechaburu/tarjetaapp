@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,21 +9,19 @@ const LandingHeader = () => {
     <header className="container mx-auto px-4 py-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-white p-2 rounded-lg">
-            <img 
-              src="/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png" 
-              alt="TarjetaVisita Logo" 
-              className="w-30 h-30 rounded-lg object-contain"
-              onError={(e) => {
-                console.error('Error loading logo in landing header:', e);
-                console.log('Trying to load from:', e.currentTarget.src);
-                e.currentTarget.style.display = 'none';
-              }}
-              onLoad={() => {
-                console.log('Landing header logo loaded successfully from:', '/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png');
-              }}
-            />
-          </div>
+          <img 
+            src="/lovable-uploads/17402972-39f6-46e1-99a9-29b842645e67.png" 
+            alt="TarjetaVisita Logo" 
+            className="w-10 h-10 object-contain"
+            onError={(e) => {
+              console.error('Error loading logo in landing header:', e);
+              console.log('Trying to load from:', e.currentTarget.src);
+              e.currentTarget.style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log('Landing header logo loaded successfully from:', '/lovable-uploads/17402972-39f6-46e1-99a9-29b842645e67.png');
+            }}
+          />
         </div>
         <div className="flex gap-3">
           <Link to="/auth">
@@ -38,3 +37,4 @@ const LandingHeader = () => {
 };
 
 export default LandingHeader;
+
