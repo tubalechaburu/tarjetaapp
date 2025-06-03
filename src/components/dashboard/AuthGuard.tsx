@@ -10,29 +10,29 @@ interface AuthGuardProps {
 export const AuthGuard = ({ children }: AuthGuardProps) => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [isReady, setIsReady] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
-    console.log("🔒 AuthGuard checking auth state...");
+    console.log("🔒 AuthGuard - user:", !!user, "isLoading:", isLoading);
     
     if (isLoading) {
-      console.log("⏳ Auth is still loading...");
+      console.log("⏳ Still loading auth...");
+      setShouldRender(false);
       return;
     }
 
     if (!user) {
-      console.log("❌ No user found, redirecting to auth...");
+      console.log("❌ No user, redirecting to auth");
       navigate('/auth', { replace: true });
+      setShouldRender(false);
       return;
     }
 
-    console.log("✅ User authenticated:", user.email);
-    setIsReady(true);
+    console.log("✅ User found, allowing access");
+    setShouldRender(true);
   }, [user, isLoading, navigate]);
 
-  // Show loading while auth is loading
   if (isLoading) {
-    console.log("⏳ Auth loading...");
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-20">
@@ -43,12 +43,9 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
-  // Don't render anything if no user (will redirect)
-  if (!user || !isReady) {
-    console.log("❌ No user or not ready, not rendering children");
+  if (!user || !shouldRender) {
     return null;
   }
 
-  console.log("✅ User authenticated, rendering children");
   return <>{children}</>;
 };

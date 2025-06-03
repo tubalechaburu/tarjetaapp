@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,23 +30,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Fetch user role with better error handling
+      // Simplified role fetching - don't block the auth flow
       if (session?.user) {
-        try {
-          const { data: isSuperAdminResult, error } = await supabase
-            .rpc('is_superadmin', { _user_id: session.user.id });
-          
-          if (error) {
-            console.error("Error checking user role:", error);
-            setUserRole('user'); // Default to user on error
-          } else {
-            setUserRole(isSuperAdminResult ? 'superadmin' : 'user');
-            console.log("✅ User role set:", isSuperAdminResult ? 'superadmin' : 'user');
+        console.log("👤 User authenticated, setting default role and fetching actual role in background");
+        // Set default role immediately to unblock UI
+        setUserRole('user');
+        
+        // Fetch actual role in background without blocking
+        setTimeout(async () => {
+          try {
+            const { data: isSuperAdminResult, error } = await supabase
+              .rpc('is_superadmin', { _user_id: session.user.id });
+            
+            if (!error && mounted) {
+              const actualRole = isSuperAdminResult ? 'superadmin' : 'user';
+              setUserRole(actualRole);
+              console.log("✅ User role updated:", actualRole);
+            } else if (error) {
+              console.log("⚠️ Could not fetch role, keeping default:", error.message);
+              // Keep default 'user' role
+            }
+          } catch (error) {
+            console.log("⚠️ Error fetching user role, keeping default:", error);
+            // Keep default 'user' role
           }
-        } catch (error) {
-          console.error("Error fetching user role:", error);
-          setUserRole('user'); // Default to user on error
-        }
+        }, 100);
       } else {
         setUserRole(null);
       }
