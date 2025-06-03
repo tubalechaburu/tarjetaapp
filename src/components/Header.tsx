@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthContext";
@@ -24,15 +23,15 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-3">
             <img 
-              src="/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png" 
-              alt="Logo" 
+              src="/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png" 
+              alt="TarjetaVisita Logo" 
               className="w-10 h-10 rounded-lg object-contain"
               onError={(e) => {
                 console.error('Error loading logo in header:', e);
                 console.log('Trying to load from:', e.currentTarget.src);
                 e.currentTarget.style.display = 'none';
               }}
-              onLoad={() => console.log('Header logo loaded successfully from:', '/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png')}
+              onLoad={() => console.log('Header logo loaded successfully from:', '/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png')}
             />
           </Link>
 

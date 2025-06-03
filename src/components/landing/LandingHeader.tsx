@@ -9,8 +9,8 @@ const LandingHeader = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img 
-            src="/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png" 
-            alt="Logo" 
+            src="/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png" 
+            alt="TarjetaVisita Logo" 
             className="w-10 h-10 rounded-lg object-contain"
             onError={(e) => {
               console.error('Error loading logo in landing header:', e);
@@ -18,7 +18,7 @@ const LandingHeader = () => {
               e.currentTarget.style.display = 'none';
             }}
             onLoad={() => {
-              console.log('Landing header logo loaded successfully from:', '/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png');
+              console.log('Landing header logo loaded successfully from:', '/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png');
             }}
           />
         </div>

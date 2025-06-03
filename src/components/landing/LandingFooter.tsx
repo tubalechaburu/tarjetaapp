@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 
@@ -10,7 +9,7 @@ const LandingFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <img 
-                src="/tarjetavisita-logo.png" 
+                src="/lovable-uploads/2d3feecf-3d11-47db-9088-b7ab4ce1bd38.png" 
                 alt="TarjetaVisita Logo" 
                 className="w-8 h-8 rounded-lg object-contain"
               />
