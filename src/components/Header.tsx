@@ -25,7 +25,7 @@ const Header = () => {
           <Link to="/" className="flex items-center space-x-3">
             <img 
               src="/tarjetavisita-logo.png" 
-              alt="TarjetaVisita Logo" 
+              alt="Logo" 
               className="w-10 h-10 rounded-lg object-contain"
               onError={(e) => {
                 console.error('Error loading logo:', e);
@@ -33,7 +33,6 @@ const Header = () => {
               }}
               onLoad={() => console.log('Logo loaded successfully')}
             />
-            <h1 className="text-xl font-bold text-gray-900">TarjetaVisita</h1>
           </Link>
 
           {/* Navigation for authenticated users */}

@@ -10,7 +10,7 @@ const LandingHeader = () => {
         <div className="flex items-center gap-3">
           <img 
             src="/tarjetavisita-logo.png" 
-            alt="TarjetaVisita Logo" 
+            alt="Logo" 
             className="w-10 h-10 rounded-lg object-contain"
             onError={(e) => {
               console.error('Error loading logo in landing:', e);
@@ -18,7 +18,6 @@ const LandingHeader = () => {
             }}
             onLoad={() => console.log('Landing logo loaded successfully')}
           />
-          <h1 className="text-2xl font-bold text-gray-900">TarjetaVisita</h1>
         </div>
         <div className="flex gap-3">
           <Link to="/auth">
