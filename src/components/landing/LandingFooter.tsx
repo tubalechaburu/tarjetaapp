@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 
@@ -12,7 +11,7 @@ const LandingFooter = () => {
               <img 
                 src="/lovable-uploads/17402972-39f6-46e1-99a9-29b842645e67.png" 
                 alt="TarjetaVisita Logo" 
-                className="w-8 h-8 object-contain"
+                className="w-12 h-12 object-contain"
               />
               <h3 className="text-xl font-bold">TarjetaVisita</h3>
             </div>
@@ -55,4 +54,3 @@ const LandingFooter = () => {
 };
 
 export default LandingFooter;
-

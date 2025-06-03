@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthContext";
@@ -27,7 +25,7 @@ const Header = () => {
             <img 
               src="/lovable-uploads/17402972-39f6-46e1-99a9-29b842645e67.png" 
               alt="TarjetaVisita Logo" 
-              className="w-10 h-10 object-contain"
+              className="w-15 h-15 object-contain"
               onError={(e) => {
                 console.error('Error loading logo in header:', e);
                 console.log('Trying to load from:', e.currentTarget.src);
@@ -101,4 +99,3 @@ const Header = () => {
 };
 
 export default Header;
-
