@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ const LandingHeader = () => {
           <img 
             src="/lovable-uploads/17402972-39f6-46e1-99a9-29b842645e67.png" 
             alt="TarjetaVisita Logo" 
-            className="w-15 h-15 object-contain"
+            className="w-10 h-10 object-contain"
             onError={(e) => {
               console.error('Error loading logo in landing header:', e);
               console.log('Trying to load from:', e.currentTarget.src);
