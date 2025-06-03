@@ -1,5 +1,5 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ensureAbsoluteUrl } from "@/utils/qr/urlUtils";
@@ -15,9 +15,22 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   size = 200 
 }) => {
   const qrRef = useRef<SVGSVGElement>(null);
+  const [qrElement, setQrElement] = useState<SVGSVGElement | null>(null);
   
   // Ensure URL is absolute with the current origin
   const fullUrl = ensureAbsoluteUrl(url);
+  
+  useEffect(() => {
+    // Set the QR element when the ref is available
+    const timer = setTimeout(() => {
+      if (qrRef.current) {
+        console.log("QR element ready in QRCodeGenerator");
+        setQrElement(qrRef.current);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [url]);
   
   console.log("QR Code generated for URL:", fullUrl);
   
@@ -49,9 +62,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         </div>
         
         <QRCodeActions 
-          qrRef={qrRef} 
+          qrElement={qrElement}
           fullUrl={fullUrl} 
-          size={size} 
         />
       </CardContent>
     </Card>
