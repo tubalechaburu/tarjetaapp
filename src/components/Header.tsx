@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthContext";
@@ -28,10 +27,7 @@ const Header = () => {
               alt="TarjetaVisita Logo" 
               className="w-10 h-10 rounded-lg object-contain"
             />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">TarjetaVisita</h1>
-              <p className="text-xs text-gray-500">Tu tarjeta digital profesional</p>
-            </div>
+            <h1 className="text-xl font-bold text-gray-900">TarjetaVisita</h1>
           </Link>
 
           {/* Navigation for authenticated users */}
