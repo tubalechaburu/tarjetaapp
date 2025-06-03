@@ -12,74 +12,55 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ url, size, onSvgRef }) =>
   const qrRef = useRef<SVGSVGElement>(null);
   
   useEffect(() => {
-    console.log("QRCodeDisplay: useEffect triggered");
-    console.log("QRCodeDisplay: qrRef.current available:", !!qrRef.current);
-    console.log("QRCodeDisplay: onSvgRef available:", !!onSvgRef);
+    console.log("QRCodeDisplay: useEffect triggered with URL:", url);
     
-    // Multiple strategies to ensure the SVG is captured
-    const captureQRRef = () => {
+    // Wait for the QR code to be fully rendered
+    const waitForQRRender = () => {
       const svgElement = qrRef.current;
-      
-      if (svgElement && onSvgRef) {
-        console.log("QRCodeDisplay: SVG element found, checking content...");
-        
-        // Check if SVG has content (paths, rects, etc.)
-        const hasContent = svgElement.querySelector('path, rect, circle, polygon');
-        
-        if (hasContent) {
-          console.log("QRCodeDisplay: SVG has content, setting reference");
-          onSvgRef(svgElement);
-          return true;
-        } else {
-          console.log("QRCodeDisplay: SVG found but no content yet");
-          return false;
-        }
+      if (!svgElement) {
+        console.log("QRCodeDisplay: SVG element not found");
+        return false;
       }
+
+      // Check if the QR code has actual content
+      const pathElements = svgElement.querySelectorAll('path');
+      const rectElements = svgElement.querySelectorAll('rect');
+      
+      console.log("QRCodeDisplay: Found paths:", pathElements.length, "rects:", rectElements.length);
+      
+      if (pathElements.length > 0 || rectElements.length > 0) {
+        console.log("QRCodeDisplay: QR code is ready, calling onSvgRef");
+        if (onSvgRef) {
+          onSvgRef(svgElement);
+        }
+        return true;
+      }
+      
       return false;
     };
 
     // Try immediately
-    if (captureQRRef()) {
+    if (waitForQRRender()) {
       return;
     }
 
-    // Try with multiple timeouts to catch the SVG when it's ready
-    const timeouts = [100, 250, 500, 1000, 2000];
-    const timeoutIds: NodeJS.Timeout[] = [];
+    // If not ready, wait with multiple attempts
+    const attempts = [100, 300, 600, 1000, 1500, 2000];
+    const timeouts: NodeJS.Timeout[] = [];
 
-    timeouts.forEach((delay) => {
-      const timeoutId = setTimeout(() => {
-        if (captureQRRef()) {
-          // Clear remaining timeouts if successful
-          timeoutIds.forEach(clearTimeout);
+    attempts.forEach((delay) => {
+      const timeout = setTimeout(() => {
+        if (waitForQRRender()) {
+          // Clear remaining timeouts
+          timeouts.forEach(clearTimeout);
         }
       }, delay);
-      timeoutIds.push(timeoutId);
+      timeouts.push(timeout);
     });
 
-    // Also try with a MutationObserver to detect when content is added
-    let observer: MutationObserver | null = null;
-    
-    if (qrRef.current) {
-      observer = new MutationObserver(() => {
-        if (captureQRRef()) {
-          observer?.disconnect();
-          timeoutIds.forEach(clearTimeout);
-        }
-      });
-      
-      observer.observe(qrRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true
-      });
-    }
-
     return () => {
-      timeoutIds.forEach(clearTimeout);
-      observer?.disconnect();
+      timeouts.forEach(clearTimeout);
     };
-    
   }, [url, onSvgRef]);
 
   return (

@@ -12,9 +12,13 @@ const Landing = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="text-2xl">📱</div>
-            <h1 className="text-2xl font-bold text-gray-900">TarjetaApp</h1>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/logo.png" 
+              alt="TarjetaVisita Logo" 
+              className="w-10 h-10 rounded-lg object-contain"
+            />
+            <h1 className="text-2xl font-bold text-gray-900">TarjetaVisita</h1>
           </div>
           <div className="flex gap-3">
             <Link to="/auth">
@@ -188,8 +192,12 @@ const Landing = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="text-2xl">📱</div>
-                <h3 className="text-xl font-bold">TarjetaApp</h3>
+                <img 
+                  src="/logo.png" 
+                  alt="TarjetaVisita Logo" 
+                  className="w-8 h-8 rounded-lg object-contain"
+                />
+                <h3 className="text-xl font-bold">TarjetaVisita</h3>
               </div>
               <p className="text-gray-400">
                 La plataforma líder en tarjetas de presentación digitales
@@ -222,7 +230,7 @@ const Landing = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 TarjetaApp - Todos los derechos reservados.</p>
+            <p>&copy; 2025 TarjetaVisita - Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

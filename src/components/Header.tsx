@@ -26,17 +26,8 @@ const Header = () => {
             <img 
               src="/logo.png" 
               alt="TarjetaVisita Logo" 
-              className="w-10 h-10 rounded-lg"
-              onError={(e) => {
-                // Fallback if logo doesn't load
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
+              className="w-10 h-10 rounded-lg object-contain"
             />
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold hidden">
-              🎴
-            </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">TarjetaVisita</h1>
               <p className="text-xs text-gray-500">Tu tarjeta digital profesional</p>
