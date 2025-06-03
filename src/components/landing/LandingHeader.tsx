@@ -9,18 +9,16 @@ const LandingHeader = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img 
-            src="/tarjetavisita-logo.png" 
+            src="/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png" 
             alt="Logo" 
             className="w-10 h-10 rounded-lg object-contain"
             onError={(e) => {
               console.error('Error loading logo in landing header:', e);
               console.log('Trying to load from:', e.currentTarget.src);
-              console.log('Full URL would be:', window.location.origin + e.currentTarget.src);
               e.currentTarget.style.display = 'none';
             }}
             onLoad={() => {
-              console.log('Landing header logo loaded successfully from:', '/tarjetavisita-logo.png');
-              console.log('Full URL:', window.location.origin + '/tarjetavisita-logo.png');
+              console.log('Landing header logo loaded successfully from:', '/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png');
             }}
           />
         </div>

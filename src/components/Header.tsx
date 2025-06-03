@@ -24,7 +24,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-3">
             <img 
-              src="/tarjetavisita-logo.png" 
+              src="/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png" 
               alt="Logo" 
               className="w-10 h-10 rounded-lg object-contain"
               onError={(e) => {
@@ -32,7 +32,7 @@ const Header = () => {
                 console.log('Trying to load from:', e.currentTarget.src);
                 e.currentTarget.style.display = 'none';
               }}
-              onLoad={() => console.log('Header logo loaded successfully from:', '/tarjetavisita-logo.png')}
+              onLoad={() => console.log('Header logo loaded successfully from:', '/lovable-uploads/964348b3-5623-47ae-a007-61e35c8a9ade.png')}
             />
           </Link>
 
