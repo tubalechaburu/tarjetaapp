@@ -28,10 +28,11 @@ const Header = () => {
               alt="Logo" 
               className="w-10 h-10 rounded-lg object-contain"
               onError={(e) => {
-                console.error('Error loading logo:', e);
+                console.error('Error loading logo in header:', e);
+                console.log('Trying to load from:', e.currentTarget.src);
                 e.currentTarget.style.display = 'none';
               }}
-              onLoad={() => console.log('Logo loaded successfully')}
+              onLoad={() => console.log('Header logo loaded successfully from:', '/tarjetavisita-logo.png')}
             />
           </Link>
 

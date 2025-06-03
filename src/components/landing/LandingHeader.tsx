@@ -13,10 +13,15 @@ const LandingHeader = () => {
             alt="Logo" 
             className="w-10 h-10 rounded-lg object-contain"
             onError={(e) => {
-              console.error('Error loading logo in landing:', e);
+              console.error('Error loading logo in landing header:', e);
+              console.log('Trying to load from:', e.currentTarget.src);
+              console.log('Full URL would be:', window.location.origin + e.currentTarget.src);
               e.currentTarget.style.display = 'none';
             }}
-            onLoad={() => console.log('Landing logo loaded successfully')}
+            onLoad={() => {
+              console.log('Landing header logo loaded successfully from:', '/tarjetavisita-logo.png');
+              console.log('Full URL:', window.location.origin + '/tarjetavisita-logo.png');
+            }}
           />
         </div>
         <div className="flex gap-3">
