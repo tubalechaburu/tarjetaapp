@@ -31,7 +31,7 @@ const HeroSection = () => {
       {/* Imagen de ejemplo de la tarjeta */}
       <div className="max-w-sm mx-auto">
         <img
-          src="/lovable-uploads/80bd2469-a8e8-4a1b-8741-7d640baf9ae8.png"
+          src="/lovable-uploads/2cd34382-1627-440f-b873-9731b1a81f44.png"
           alt="Ejemplo de tarjeta digital - María González"
           className="w-full rounded-lg shadow-2xl"
         />

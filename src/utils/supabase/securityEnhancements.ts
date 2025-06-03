@@ -51,6 +51,21 @@ export const sanitizeUserInput = (input: string, maxLength: number = 500): strin
   return sanitized.substring(0, maxLength);
 };
 
+export const sanitizeErrorMessage = (error: any): string => {
+  if (!error) return 'Error desconocido';
+  
+  // Extract safe error message
+  const message = error.message || error.toString() || 'Error en la operación';
+  
+  // Remove sensitive information
+  return message
+    .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[IP]') // Remove IP addresses
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]') // Remove emails
+    .replace(/password/gi, '[CREDENTIAL]') // Remove password references
+    .replace(/token/gi, '[TOKEN]') // Remove token references
+    .substring(0, 200); // Limit length
+};
+
 export const validateImageFile = (file: File): { isValid: boolean; error?: string } => {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   const maxSize = 5 * 1024 * 1024; // 5MB
