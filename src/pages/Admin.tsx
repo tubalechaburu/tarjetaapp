@@ -1,11 +1,10 @@
-
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthContext";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { UsersManagementTable } from "@/components/admin/UsersManagementTable";
 import { toast } from "sonner";
-import { Header } from "@/components/Header";
+import Header from "@/components/Header";
 
 const Admin = () => {
   const { user, userRole } = useAuth();

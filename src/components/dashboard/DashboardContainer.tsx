@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCardsSupabase } from "@/utils/supabaseStorage";
 import { useAuth } from "@/providers/AuthContext";
-import { Header } from "@/components/Header";
+import Header from "@/components/Header";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import Footer from "@/components/Footer";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
