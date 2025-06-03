@@ -1,102 +1,47 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { downloadSvgAsPng } from "@/utils/qr/qrDownloader";
+import { downloadQRAsPNG } from "@/utils/qr/simpleQRDownloader";
 import { createAndDownloadShortcut } from "@/utils/qr/shortcutCreator";
 
 interface QRCodeActionsProps {
-  qrRef: React.RefObject<SVGSVGElement>;
+  qrElement: SVGSVGElement | null;
   fullUrl: string;
-  size: number;
 }
 
 const QRCodeActions: React.FC<QRCodeActionsProps> = ({ 
-  qrRef,
-  fullUrl, 
-  size 
+  qrElement,
+  fullUrl 
 }) => {
-  const [isQrReady, setIsQrReady] = useState(false);
-
-  // Enhanced QR readiness detection
-  useEffect(() => {
-    console.log("QRCodeActions: Setting up QR readiness check");
-    
-    const checkQrReady = () => {
-      const svgElement = qrRef.current;
-      if (!svgElement) {
-        console.log("QRCodeActions: No SVG element found");
-        return false;
-      }
-
-      const pathElements = svgElement.querySelectorAll('path');
-      const rectElements = svgElement.querySelectorAll('rect');
-      const isReady = pathElements.length > 0 || rectElements.length > 0;
-      
-      console.log("QRCodeActions: QR ready check - paths:", pathElements.length, "rects:", rectElements.length, "ready:", isReady);
-      
-      if (isReady && !isQrReady) {
-        console.log("QRCodeActions: QR is now ready!");
-        setIsQrReady(true);
-      }
-      
-      return isReady;
-    };
-
-    // Check immediately
-    if (checkQrReady()) {
-      return;
-    }
-
-    // Check periodically with increasing intervals
-    const intervals = [200, 500, 1000];
-    const timeouts: NodeJS.Timeout[] = [];
-
-    intervals.forEach((delay) => {
-      const timeout = setTimeout(() => {
-        checkQrReady();
-      }, delay);
-      timeouts.push(timeout);
-    });
-
-    return () => {
-      timeouts.forEach(clearTimeout);
-    };
-  }, [qrRef, isQrReady]);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const getCardName = () => {
     return document.querySelector('h1')?.textContent?.replace('Tarjeta de ', '') || 'Contacto';
   };
 
   const handleDownloadQR = async () => {
-    console.log("QRCodeActions: Download button clicked");
-    console.log("QRCodeActions: QR ref available:", !!qrRef.current);
-    console.log("QRCodeActions: Is QR ready:", isQrReady);
-    
-    if (!qrRef.current) {
-      console.error("QRCodeActions: No QR ref available");
-      toast.error("Error: El código QR no está disponible.");
+    if (!qrElement) {
+      toast.error("El código QR no está disponible");
       return;
     }
 
-    if (!isQrReady) {
-      console.error("QRCodeActions: QR not ready yet");
-      toast.error("El código QR aún se está cargando. Espera un momento...");
+    if (isDownloading) {
       return;
     }
 
-    const cardName = getCardName();
-    const filename = `QR_${cardName.replace(/\s+/g, '_')}.png`;
-    
-    console.log("QRCodeActions: Attempting download with filename:", filename);
+    setIsDownloading(true);
     
     try {
-      await downloadSvgAsPng(qrRef.current, size, filename);
-      console.log("QRCodeActions: Download successful");
+      const cardName = getCardName();
+      const filename = `QR_${cardName.replace(/\s+/g, '_')}.png`;
+      await downloadQRAsPNG(qrElement, filename);
     } catch (error) {
-      console.error("QRCodeActions: Download failed:", error);
+      console.error("Download failed:", error);
       toast.error("Error al descargar el código QR");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -121,10 +66,10 @@ const QRCodeActions: React.FC<QRCodeActionsProps> = ({
         onClick={handleDownloadQR} 
         variant="default" 
         className="flex items-center gap-2 w-full"
-        disabled={!isQrReady}
+        disabled={!qrElement || isDownloading}
       >
         <Download className="h-4 w-4" />
-        {isQrReady ? "Descargar código QR" : "Cargando QR..."}
+        {isDownloading ? "Descargando..." : "Descargar código QR"}
       </Button>
       
       <div className="grid grid-cols-2 gap-2">
