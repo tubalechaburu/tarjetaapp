@@ -3,7 +3,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { downloadSvgAsPng, createAndDownloadShortcut } from "@/utils/qrDownloader";
+import { downloadSvgAsPng } from "@/utils/qr/qrDownloader";
+import { createAndDownloadShortcut } from "@/utils/qr/shortcutCreator";
 
 interface QRCodeActionsProps {
   qrRef: React.RefObject<SVGSVGElement>;
@@ -22,8 +23,21 @@ const QRCodeActions: React.FC<QRCodeActionsProps> = ({
   };
 
   const handleDownloadQR = async () => {
+    console.log("QRCodeActions: Download button clicked");
+    console.log("QRCodeActions: QR ref available:", !!qrRef.current);
+    
+    if (!qrRef.current) {
+      toast.error("Error: El código QR no está disponible. Espera un momento e inténtalo de nuevo.");
+      return;
+    }
+
     const cardName = getCardName();
-    await downloadSvgAsPng(qrRef.current, size, `QR_${cardName.replace(/\s+/g, '_')}.png`);
+    try {
+      await downloadSvgAsPng(qrRef.current, size, `QR_${cardName.replace(/\s+/g, '_')}.png`);
+    } catch (error) {
+      console.error("Error al descargar el QR:", error);
+      toast.error("Error al descargar el código QR");
+    }
   };
 
   const handleCopyUrl = async () => {
@@ -47,9 +61,11 @@ const QRCodeActions: React.FC<QRCodeActionsProps> = ({
         onClick={handleDownloadQR} 
         variant="default" 
         className="flex items-center gap-2 w-full"
+        disabled={!qrRef.current}
       >
         <Download className="h-4 w-4" />
         Descargar código QR
+        {!qrRef.current && <span className="text-xs opacity-75">(Cargando...)</span>}
       </Button>
       
       <div className="grid grid-cols-2 gap-2">

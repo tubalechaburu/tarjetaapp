@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Share2, Copy } from "lucide-react";
+import { Download, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { BusinessCard } from "@/types";
 import QRCodeDisplay from "@/components/qr/QRCodeDisplay";
-import { downloadSvgAsPng, createAndDownloadShortcut } from "@/utils/qrDownloader";
+import { downloadSvgAsPng } from "@/utils/qr/qrDownloader";
+import { createAndDownloadShortcut } from "@/utils/qr/shortcutCreator";
 
 interface QRCodeSectionProps {
   card: BusinessCard;
@@ -14,6 +15,7 @@ interface QRCodeSectionProps {
 
 const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => {
   const [qrRef, setQrRef] = useState<SVGSVGElement | null>(null);
+  const [isQrReady, setIsQrReady] = useState(false);
 
   // Use useCallback to prevent the function from being recreated on every render
   const handleQRRef = useCallback((ref: SVGSVGElement | null) => {
@@ -21,27 +23,32 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => 
     if (ref) {
       console.log("QRCodeSection: Setting QR reference");
       setQrRef(ref);
+      // Add a small delay to ensure the SVG is fully rendered
+      setTimeout(() => {
+        setIsQrReady(true);
+      }, 500);
     }
   }, []);
 
   // Add a check to ensure the button is enabled when qrRef is available
   useEffect(() => {
-    console.log("QRCodeSection: qrRef state changed:", !!qrRef);
-  }, [qrRef]);
+    console.log("QRCodeSection: qrRef state changed:", !!qrRef, "isReady:", isQrReady);
+  }, [qrRef, isQrReady]);
 
   const handleDownloadQR = async () => {
     console.log("QRCodeSection: Download button clicked");
     console.log("QRCodeSection: Card available:", !!card);
     console.log("QRCodeSection: QR ref available:", !!qrRef);
+    console.log("QRCodeSection: QR ready:", isQrReady);
     
     if (!card) {
       toast.error("Error: No hay datos de la tarjeta");
       return;
     }
     
-    if (!qrRef) {
+    if (!qrRef || !isQrReady) {
       toast.error("Error: El código QR no está disponible. Espera un momento e inténtalo de nuevo.");
-      console.error("QR reference not available");
+      console.error("QR reference not available or not ready");
       return;
     }
     
@@ -89,11 +96,11 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ card, fullShareUrl }) => 
             onClick={handleDownloadQR} 
             variant="default" 
             className="flex items-center gap-2 w-full"
-            disabled={!qrRef}
+            disabled={!qrRef || !isQrReady}
           >
             <Download className="h-4 w-4" />
             Descargar código QR
-            {!qrRef && <span className="text-xs opacity-75">(Cargando...)</span>}
+            {(!qrRef || !isQrReady) && <span className="text-xs opacity-75">(Cargando...)</span>}
           </Button>
           
           <div className="grid grid-cols-2 gap-2">

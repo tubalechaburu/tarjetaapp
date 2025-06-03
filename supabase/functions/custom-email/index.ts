@@ -48,24 +48,24 @@ serve(async (req) => {
       case "signup":
         subject = "¡Bienvenido a TarjetaVisita! Confirma tu cuenta";
         greeting = "¡Bienvenido a TarjetaVisita!";
-        mainMessage = "Gracias por registrarte en TarjetaVisita. Para activar tu cuenta, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo:";
-        buttonText = "Confirmar mi cuenta";
+        mainMessage = "Gracias por registrarte en TarjetaVisita, la plataforma líder para crear tarjetas de presentación digitales profesionales. Para comenzar a crear tus tarjetas personalizadas, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo:";
+        buttonText = "Confirmar mi cuenta y empezar";
         break;
       case "recovery":
         subject = "Restablecer contraseña - TarjetaVisita";
         greeting = "Restablece tu contraseña";
-        mainMessage = "Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para crear una nueva contraseña:";
+        mainMessage = "Hemos recibido una solicitud para restablecer tu contraseña de TarjetaVisita. Haz clic en el botón de abajo para crear una nueva contraseña:";
         buttonText = "Restablecer contraseña";
         break;
       case "email_change":
         subject = "Confirmar cambio de email - TarjetaVisita";
         greeting = "Confirma tu nuevo email";
-        mainMessage = "Por favor, confirma tu nueva dirección de correo electrónico haciendo clic en el botón de abajo:";
+        mainMessage = "Por favor, confirma tu nueva dirección de correo electrónico para continuar usando TarjetaVisita:";
         buttonText = "Confirmar nuevo email";
         break;
     }
 
-    // Enhanced email template with TarjetaVisita branding
+    // Enhanced email template with TarjetaVisita branding and logo
     const template = `
     <!DOCTYPE html>
     <html lang="es">
@@ -96,12 +96,26 @@ serve(async (req) => {
           overflow: hidden;
         }
         .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
           color: white;
           text-align: center;
           padding: 40px 20px;
         }
+        .logo-section {
+          margin-bottom: 20px;
+        }
         .logo {
+          width: 80px;
+          height: 80px;
+          margin: 0 auto 15px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 40px;
+        }
+        .brand-name {
           font-size: 28px;
           font-weight: bold;
           margin-bottom: 8px;
@@ -128,7 +142,7 @@ serve(async (req) => {
         }
         .button {
           display: inline-block;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
           color: white;
           text-decoration: none;
           padding: 16px 32px;
@@ -146,7 +160,7 @@ serve(async (req) => {
           padding: 20px;
           margin: 30px 0;
           border-radius: 8px;
-          border-left: 4px solid #667eea;
+          border-left: 4px solid #8B5CF6;
         }
         .link-text {
           font-size: 14px;
@@ -155,11 +169,41 @@ serve(async (req) => {
         }
         .copy-link {
           font-size: 12px;
-          color: #667eea;
+          color: #8B5CF6;
           word-break: break-all;
           background-color: #edf2f7;
           padding: 10px;
           border-radius: 4px;
+        }
+        .features {
+          background-color: #faf5ff;
+          padding: 25px;
+          margin: 25px 0;
+          border-radius: 8px;
+          border: 1px solid #e9d5ff;
+        }
+        .features-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #553c9a;
+          margin-bottom: 15px;
+          text-align: center;
+        }
+        .features-list {
+          list-style: none;
+          padding: 0;
+        }
+        .features-list li {
+          font-size: 14px;
+          color: #553c9a;
+          padding: 5px 0;
+          padding-left: 20px;
+          position: relative;
+        }
+        .features-list li:before {
+          content: "✨";
+          position: absolute;
+          left: 0;
         }
         .footer {
           background-color: #f7fafc;
@@ -173,7 +217,7 @@ serve(async (req) => {
           margin-bottom: 10px;
         }
         .footer-link {
-          color: #667eea;
+          color: #8B5CF6;
           text-decoration: none;
         }
         .security-note {
@@ -210,8 +254,11 @@ serve(async (req) => {
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">🎴 TarjetaVisita</div>
-          <div class="subtitle">Tu tarjeta de presentación digital</div>
+          <div class="logo-section">
+            <div class="logo">🎴</div>
+          </div>
+          <div class="brand-name">TarjetaVisita</div>
+          <div class="subtitle">Tu tarjeta de presentación digital profesional</div>
         </div>
         
         <div class="content">
@@ -219,6 +266,19 @@ serve(async (req) => {
           <p class="message">${mainMessage}</p>
           
           <a href="${confirmationUrl}" class="button">${buttonText}</a>
+          
+          ${type === 'signup' ? `
+          <div class="features">
+            <div class="features-title">¿Qué puedes hacer con TarjetaVisita?</div>
+            <ul class="features-list">
+              <li>Crear tarjetas digitales profesionales</li>
+              <li>Compartir tus contactos con códigos QR</li>
+              <li>Personalizar diseños y colores</li>
+              <li>Gestionar múltiples tarjetas</li>
+              <li>Acceso desde cualquier dispositivo</li>
+            </ul>
+          </div>
+          ` : ''}
           
           <div class="link-section">
             <p class="link-text">O copia y pega el siguiente enlace en tu navegador:</p>

@@ -21,11 +21,20 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ url, size, onSvgRef }) =>
       console.log(`QRCodeDisplay: Checking SVG availability, attempt ${attempt}`);
       
       if (qrRef.current && onSvgRef) {
-        console.log("QRCodeDisplay: SVG element is available, setting reference");
-        onSvgRef(qrRef.current);
-      } else if (attempt < 5) {
+        // Check if the SVG has actual content
+        const svgContent = qrRef.current.querySelector('path, rect, circle');
+        if (svgContent) {
+          console.log("QRCodeDisplay: SVG element is available with content, setting reference");
+          onSvgRef(qrRef.current);
+        } else if (attempt < 10) {
+          // Try again with exponential backoff
+          setTimeout(() => checkAndSetRef(attempt + 1), attempt * 100);
+        } else {
+          console.log("QRCodeDisplay: Failed to get SVG reference with content after multiple attempts");
+        }
+      } else if (attempt < 10) {
         // Try again with exponential backoff
-        setTimeout(() => checkAndSetRef(attempt + 1), attempt * 200);
+        setTimeout(() => checkAndSetRef(attempt + 1), attempt * 100);
       } else {
         console.log("QRCodeDisplay: Failed to get SVG reference after multiple attempts");
       }
