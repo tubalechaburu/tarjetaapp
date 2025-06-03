@@ -12,6 +12,11 @@ const LandingHeader = () => {
             src="/tarjetavisita-logo.png" 
             alt="TarjetaVisita Logo" 
             className="w-10 h-10 rounded-lg object-contain"
+            onError={(e) => {
+              console.error('Error loading logo in landing:', e);
+              e.currentTarget.style.display = 'none';
+            }}
+            onLoad={() => console.log('Landing logo loaded successfully')}
           />
           <h1 className="text-2xl font-bold text-gray-900">TarjetaVisita</h1>
         </div>
