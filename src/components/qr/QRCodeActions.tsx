@@ -22,11 +22,6 @@ const QRCodeActions: React.FC<QRCodeActionsProps> = ({
   };
 
   const handleDownloadQR = async () => {
-    if (!qrElement) {
-      toast.error("El código QR no está disponible");
-      return;
-    }
-
     if (isDownloading) {
       return;
     }
@@ -34,9 +29,33 @@ const QRCodeActions: React.FC<QRCodeActionsProps> = ({
     setIsDownloading(true);
     
     try {
+      // Try to find the QR SVG element if not provided
+      let svgToDownload = qrElement;
+      
+      if (!svgToDownload) {
+        console.log("No QR element provided, searching in DOM...");
+        // Try to find it in the DOM
+        const qrContainer = document.querySelector('.qr-code-container');
+        if (qrContainer) {
+          svgToDownload = qrContainer.querySelector('svg') as SVGSVGElement;
+        }
+        
+        // If still not found, try a broader search
+        if (!svgToDownload) {
+          svgToDownload = document.querySelector('svg') as SVGSVGElement;
+        }
+      }
+      
+      if (!svgToDownload) {
+        toast.error("No se pudo encontrar el código QR");
+        return;
+      }
+
       const cardName = getCardName();
       const filename = `QR_${cardName.replace(/\s+/g, '_')}.png`;
-      await downloadQRAsPNG(qrElement, filename);
+      
+      console.log("Downloading QR with element:", svgToDownload);
+      await downloadQRAsPNG(svgToDownload, filename);
     } catch (error) {
       console.error("Download failed:", error);
       toast.error("Error al descargar el código QR");
@@ -66,7 +85,7 @@ const QRCodeActions: React.FC<QRCodeActionsProps> = ({
         onClick={handleDownloadQR} 
         variant="default" 
         className="flex items-center gap-2 w-full"
-        disabled={!qrElement || isDownloading}
+        disabled={isDownloading}
       >
         <Download className="h-4 w-4" />
         {isDownloading ? "Descargando..." : "Descargar código QR"}
