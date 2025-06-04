@@ -34,12 +34,17 @@ export const SuperAdminUserTableRow = ({
     }
   };
 
-  const handleToggleExpansion = () => {
+  const handleToggleExpansion = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log("🔄 SuperAdminUserTableRow - Toggle clicked for user:", user.id);
+    console.log("🔄 SuperAdminUserTableRow - Current isExpanded:", isExpanded);
     onToggleExpansion(user.id);
   };
 
-  const openCardInNewTab = (url: string) => {
+  const openCardInNewTab = (url: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -83,7 +88,7 @@ export const SuperAdminUserTableRow = ({
                 variant="ghost" 
                 size="sm" 
                 className="gap-1"
-                onClick={() => openCardInNewTab(`/card/${user.cards[0].id}`)}
+                onClick={(e) => openCardInNewTab(`/card/${user.cards[0].id}`, e)}
               >
                 <Eye className="h-4 w-4" />
                 Ver
@@ -92,12 +97,21 @@ export const SuperAdminUserTableRow = ({
                 variant="ghost" 
                 size="sm" 
                 className="gap-1"
-                onClick={() => openCardInNewTab(`/edit/${user.cards[0].id}`)}
+                onClick={(e) => openCardInNewTab(`/edit/${user.cards[0].id}`, e)}
               >
                 <Edit className="h-4 w-4" />
                 Editar
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1 text-red-600">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-1 text-red-600"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("Delete clicked for card:", user.cards[0].id);
+                }}
+              >
                 <Trash2 className="h-4 w-4" />
                 Eliminar
               </Button>

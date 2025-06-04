@@ -10,7 +10,9 @@ interface SuperAdminUserExpandedRowProps {
 }
 
 export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowProps) => {
-  const openCardInNewTab = (url: string) => {
+  const openCardInNewTab = (url: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -48,7 +50,7 @@ export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowPro
                           variant="outline" 
                           size="sm" 
                           className="gap-1"
-                          onClick={() => openCardInNewTab(`/card/${card.id}`)}
+                          onClick={(e) => openCardInNewTab(`/card/${card.id}`, e)}
                         >
                           <Eye className="h-4 w-4" />
                           Ver
@@ -57,7 +59,7 @@ export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowPro
                           variant="outline" 
                           size="sm" 
                           className="gap-1"
-                          onClick={() => openCardInNewTab(`/edit/${card.id}`)}
+                          onClick={(e) => openCardInNewTab(`/edit/${card.id}`, e)}
                         >
                           <Edit className="h-4 w-4" />
                           Editar

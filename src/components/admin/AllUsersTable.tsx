@@ -70,12 +70,13 @@ export const AllUsersTable = () => {
   };
 
   const toggleUserExpansion = (userId: string) => {
-    console.log("🔄 AllUsersTable - Toggling expansion for user:", userId);
+    console.log("🔄 AllUsersTable - Toggle clicked for user:", userId);
     console.log("🔄 AllUsersTable - Current expandedUser:", expandedUser);
-    setExpandedUser(prev => {
-      const newValue = prev === userId ? null : userId;
-      console.log("🔄 AllUsersTable - Setting expandedUser to:", newValue);
-      return newValue;
+    
+    setExpandedUser(prevExpanded => {
+      const newExpanded = prevExpanded === userId ? null : userId;
+      console.log("🔄 AllUsersTable - Setting expandedUser to:", newExpanded);
+      return newExpanded;
     });
   };
 
@@ -135,6 +136,7 @@ export const AllUsersTable = () => {
       <div className="p-3 bg-yellow-50 rounded text-sm">
         <p><strong>Debug:</strong> Usuarios cargados: {users.length}, Tarjetas totales: {allCards.length}</p>
         <p><strong>Usuario expandido:</strong> {expandedUser || 'Ninguno'}</p>
+        <p><strong>Función de toggle:</strong> {typeof toggleUserExpansion}</p>
       </div>
       
       <Table>
