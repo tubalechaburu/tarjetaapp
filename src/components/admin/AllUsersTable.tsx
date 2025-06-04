@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUsersWithCards } from "@/hooks/useUsersWithCards";
 import { getAllCardsSupabase } from "@/utils/supabaseStorage";
@@ -13,7 +12,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { SuperAdminUserRow } from "./SuperAdminUserRow";
+import { SuperAdminUserTableRow } from "./SuperAdminUserTableRow";
 
 export const AllUsersTable = () => {
   const { users, loading, error, refetch } = useUsersWithCards();
@@ -112,10 +111,12 @@ export const AllUsersTable = () => {
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <SuperAdminUserRow 
+            <SuperAdminUserTableRow 
               key={user.id} 
-              user={user} 
-              onUserUpdated={refetch}
+              user={user}
+              isExpanded={false}
+              onToggleExpansion={() => {}}
+              onRoleUpdate={() => {}}
             />
           ))}
         </TableBody>
