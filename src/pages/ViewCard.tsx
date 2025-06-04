@@ -87,6 +87,16 @@ const ViewCard = () => {
     }
   };
 
+  // Determinar a dónde debe llevar el botón volver
+  const getBackRoute = () => {
+    // Si el usuario está autenticado, llevarlo al dashboard
+    if (user) {
+      return "/dashboard";
+    }
+    // Si no está autenticado, llevarlo a la landing
+    return "/";
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
@@ -100,7 +110,7 @@ const ViewCard = () => {
       <div className="container mx-auto px-4 py-8 text-center">
         <h2 className="text-xl font-semibold mb-4">Tarjeta no encontrada</h2>
         <p className="mb-6">La tarjeta que estás buscando no existe o ha sido eliminada.</p>
-        <Link to="/">
+        <Link to={getBackRoute()}>
           <Button>Volver al inicio</Button>
         </Link>
         <Footer />
@@ -110,14 +120,14 @@ const ViewCard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <BackButton to="/" />
+      <BackButton to={getBackRoute()} />
 
       <div className="max-w-md mx-auto">
         <CardActions 
           card={card} 
           isOwner={isOwner()} 
           shareUrl={fullShareUrl}
-          onDelete={() => navigate("/")}
+          onDelete={() => navigate(getBackRoute())}
         />
 
         <ViewCardContent 
