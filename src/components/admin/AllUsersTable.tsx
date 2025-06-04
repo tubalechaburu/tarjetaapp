@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useUsersWithCards } from "@/hooks/useUsersWithCards";
 import { getAllCardsSupabase } from "@/utils/supabaseStorage";
@@ -13,11 +14,17 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { SuperAdminUserTableRow } from "./SuperAdminUserTableRow";
+import { SuperAdminUserExpandedRow } from "./SuperAdminUserExpandedRow";
+import { updateUserRole } from "@/utils/userRoleUtils";
+import { useToast } from "@/components/ui/use-toast";
+import React from "react";
 
 export const AllUsersTable = () => {
   const { users, loading, error, refetch } = useUsersWithCards();
+  const { toast } = useToast();
   const [allCards, setAllCards] = useState<BusinessCard[]>([]);
   const [cardsLoading, setCardsLoading] = useState(false);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   // Load all cards for admin view
   useEffect(() => {
@@ -41,6 +48,36 @@ export const AllUsersTable = () => {
 
     loadAllCards();
   }, []);
+
+  const handleRoleUpdate = async (userId: string, newRole: 'user' | 'superadmin', userName: string) => {
+    try {
+      await updateUserRole(userId, newRole, () => {
+        toast({
+          title: "Rol actualizado",
+          description: `Rol de ${userName} actualizado a ${newRole}`,
+        });
+        refetch();
+      }, (error: any) => {
+        toast({
+          title: "Error al actualizar el rol",
+          description: error.message,
+          variant: "destructive"
+        });
+      });
+    } catch (error: any) {
+      console.error("Error updating user role:", error);
+    }
+  };
+
+  const toggleUserExpansion = (userId: string) => {
+    console.log("Toggling expansion for user:", userId);
+    console.log("Current expandedUser:", expandedUser);
+    setExpandedUser(prev => {
+      const newValue = prev === userId ? null : userId;
+      console.log("Setting expandedUser to:", newValue);
+      return newValue;
+    });
+  };
 
   const exportAllData = () => {
     const exportData = users.map(user => ({
@@ -111,13 +148,18 @@ export const AllUsersTable = () => {
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <SuperAdminUserTableRow 
-              key={user.id} 
-              user={user}
-              isExpanded={false}
-              onToggleExpansion={() => {}}
-              onRoleUpdate={() => {}}
-            />
+            <React.Fragment key={user.id}>
+              <SuperAdminUserTableRow 
+                user={user}
+                isExpanded={expandedUser === user.id}
+                onToggleExpansion={toggleUserExpansion}
+                onRoleUpdate={handleRoleUpdate}
+              />
+              
+              {expandedUser === user.id && (
+                <SuperAdminUserExpandedRow user={user} />
+              )}
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>
