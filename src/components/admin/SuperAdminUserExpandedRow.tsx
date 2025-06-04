@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,8 @@ export const SuperAdminUserExpandedRow = ({ user, onUserDeleted }: SuperAdminUse
 
       toast.success(`Usuario ${user.full_name || user.email} eliminado correctamente`);
       
-      // Notificar al componente padre para actualizar la lista
+      // Notificar al componente padre para actualizar la lista inmediatamente
+      console.log("🔄 Notificando eliminación al componente padre");
       if (onUserDeleted) {
         onUserDeleted(user.id);
       }

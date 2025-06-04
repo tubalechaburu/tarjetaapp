@@ -29,8 +29,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/landing" replace />} />
             <Route path="/landing" element={<Landing />} />
+            <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Index />} />
             <Route path="/create" element={<CreateCard />} />
             <Route path="/card/:id" element={<ViewCard />} />

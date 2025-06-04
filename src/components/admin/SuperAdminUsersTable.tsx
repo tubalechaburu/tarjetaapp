@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Table, TableHeader, TableBody, TableHead, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -73,7 +72,9 @@ export const SuperAdminUsersTable = () => {
     }
   };
 
-  const handleUserDeleted = (userId: string) => {
+  const handleUserDeleted = async (userId: string) => {
+    console.log("🔥 Usuario eliminado, actualizando lista:", userId);
+    
     // Colapsar la fila expandida si estaba abierta
     setExpandedUsers(prev => {
       const newSet = new Set(prev);
@@ -81,8 +82,15 @@ export const SuperAdminUsersTable = () => {
       return newSet;
     });
     
-    // Recargar la lista de usuarios
-    refetch();
+    // Recargar la lista de usuarios inmediatamente
+    try {
+      await refetch();
+      console.log("✅ Lista de usuarios actualizada después de eliminar");
+    } catch (error) {
+      console.error("❌ Error al actualizar la lista después de eliminar:", error);
+      // Si falla el refetch automático, mostrar un mensaje para refrescar manualmente
+      toast.info("Usuario eliminado. Presiona 'Actualizar' si no ves los cambios.");
+    }
   };
 
   const exportAllUsers = () => {
