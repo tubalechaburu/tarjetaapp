@@ -64,11 +64,6 @@ const EditCard = () => {
     return "/";
   };
 
-  const handleSave = () => {
-    toast.success("Tarjeta actualizada correctamente");
-    navigate(getBackRoute());
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -101,11 +96,7 @@ const EditCard = () => {
       
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Editar Tarjeta</h1>
-        <CardForm 
-          initialCard={card} 
-          onSave={handleSave}
-          isEditing={true}
-        />
+        <CardForm initialData={card} />
       </div>
       
       <Footer />
