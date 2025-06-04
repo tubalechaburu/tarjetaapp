@@ -70,11 +70,11 @@ export const AllUsersTable = () => {
   };
 
   const toggleUserExpansion = (userId: string) => {
-    console.log("Toggling expansion for user:", userId);
-    console.log("Current expandedUser:", expandedUser);
+    console.log("🔄 AllUsersTable - Toggling expansion for user:", userId);
+    console.log("🔄 AllUsersTable - Current expandedUser:", expandedUser);
     setExpandedUser(prev => {
       const newValue = prev === userId ? null : userId;
-      console.log("Setting expandedUser to:", newValue);
+      console.log("🔄 AllUsersTable - Setting expandedUser to:", newValue);
       return newValue;
     });
   };
@@ -134,6 +134,7 @@ export const AllUsersTable = () => {
       {/* Debug info for admin */}
       <div className="p-3 bg-yellow-50 rounded text-sm">
         <p><strong>Debug:</strong> Usuarios cargados: {users.length}, Tarjetas totales: {allCards.length}</p>
+        <p><strong>Usuario expandido:</strong> {expandedUser || 'Ninguno'}</p>
       </div>
       
       <Table>
@@ -147,20 +148,25 @@ export const AllUsersTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => (
-            <React.Fragment key={user.id}>
-              <SuperAdminUserTableRow 
-                user={user}
-                isExpanded={expandedUser === user.id}
-                onToggleExpansion={toggleUserExpansion}
-                onRoleUpdate={handleRoleUpdate}
-              />
-              
-              {expandedUser === user.id && (
-                <SuperAdminUserExpandedRow user={user} />
-              )}
-            </React.Fragment>
-          ))}
+          {users.map((user) => {
+            const isExpanded = expandedUser === user.id;
+            console.log(`🔍 AllUsersTable - Rendering user ${user.id}, expanded: ${isExpanded}`);
+            
+            return (
+              <React.Fragment key={user.id}>
+                <SuperAdminUserTableRow 
+                  user={user}
+                  isExpanded={isExpanded}
+                  onToggleExpansion={toggleUserExpansion}
+                  onRoleUpdate={handleRoleUpdate}
+                />
+                
+                {isExpanded && (
+                  <SuperAdminUserExpandedRow user={user} />
+                )}
+              </React.Fragment>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

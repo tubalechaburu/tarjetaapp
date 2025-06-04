@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Eye, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { UserRole } from "@/types";
-import { Link } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +34,15 @@ export const SuperAdminUserTableRow = ({
     }
   };
 
+  const handleToggleExpansion = () => {
+    console.log("🔄 SuperAdminUserTableRow - Toggle clicked for user:", user.id);
+    onToggleExpansion(user.id);
+  };
+
+  const openCardInNewTab = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <TableRow className="hover:bg-muted/50">
       <TableCell>
@@ -42,7 +50,7 @@ export const SuperAdminUserTableRow = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onToggleExpansion(user.id)}
+            onClick={handleToggleExpansion}
             className="p-1 h-8 w-8 hover:bg-gray-100 flex items-center justify-center shrink-0"
           >
             {isExpanded ? (
@@ -71,18 +79,24 @@ export const SuperAdminUserTableRow = ({
         <div className="flex gap-1 justify-end">
           {user.cards.length > 0 && (
             <>
-              <Link to={`/card/${user.cards[0].id}`} target="_blank">
-                <Button variant="ghost" size="sm" className="gap-1">
-                  <Eye className="h-4 w-4" />
-                  Ver
-                </Button>
-              </Link>
-              <Link to={`/edit/${user.cards[0].id}`} target="_blank">
-                <Button variant="ghost" size="sm" className="gap-1">
-                  <Edit className="h-4 w-4" />
-                  Editar
-                </Button>
-              </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => openCardInNewTab(`/card/${user.cards[0].id}`)}
+              >
+                <Eye className="h-4 w-4" />
+                Ver
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => openCardInNewTab(`/edit/${user.cards[0].id}`)}
+              >
+                <Edit className="h-4 w-4" />
+                Editar
+              </Button>
               <Button variant="ghost" size="sm" className="gap-1 text-red-600">
                 <Trash2 className="h-4 w-4" />
                 Eliminar

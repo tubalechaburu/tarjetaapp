@@ -3,7 +3,6 @@ import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit } from "lucide-react";
-import { Link } from "react-router-dom";
 import { UserWithCards } from "@/types/admin";
 
 interface SuperAdminUserExpandedRowProps {
@@ -11,6 +10,10 @@ interface SuperAdminUserExpandedRowProps {
 }
 
 export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowProps) => {
+  const openCardInNewTab = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <TableRow className="bg-muted/30">
       <TableCell colSpan={5} className="p-6">
@@ -41,18 +44,24 @@ export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowPro
                         {card.phone && <p className="text-sm text-gray-500">{card.phone}</p>}
                       </div>
                       <div className="flex gap-2">
-                        <Link to={`/card/${card.id}`} target="_blank">
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Eye className="h-4 w-4" />
-                            Ver
-                          </Button>
-                        </Link>
-                        <Link to={`/edit/${card.id}`} target="_blank">
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Edit className="h-4 w-4" />
-                            Editar
-                          </Button>
-                        </Link>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-1"
+                          onClick={() => openCardInNewTab(`/card/${card.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          Ver
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-1"
+                          onClick={() => openCardInNewTab(`/edit/${card.id}`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                          Editar
+                        </Button>
                       </div>
                     </div>
                   </div>
