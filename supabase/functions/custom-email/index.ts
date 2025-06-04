@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,7 +64,7 @@ serve(async (req) => {
         break;
     }
 
-    // Enhanced email template with TarjetaVisita branding and logo
+    // Enhanced email template with TarjetaVisita branding and real logo
     const template = `
     <!DOCTYPE html>
     <html lang="es">
@@ -113,7 +112,12 @@ serve(async (req) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 40px;
+          overflow: hidden;
+        }
+        .logo img {
+          width: 60px;
+          height: 60px;
+          object-fit: contain;
         }
         .brand-name {
           font-size: 28px;
@@ -255,7 +259,9 @@ serve(async (req) => {
       <div class="container">
         <div class="header">
           <div class="logo-section">
-            <div class="logo">🎴</div>
+            <div class="logo">
+              <img src="https://tarjetavisita.app/tarjetavisita-logo.png" alt="TarjetaVisita Logo" />
+            </div>
           </div>
           <div class="brand-name">TarjetaVisita</div>
           <div class="subtitle">Tu tarjeta de presentación digital profesional</div>
