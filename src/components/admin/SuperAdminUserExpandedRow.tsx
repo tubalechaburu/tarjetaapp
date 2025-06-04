@@ -2,15 +2,16 @@
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit } from "lucide-react";
+import { Eye, Edit, Trash2, UserX } from "lucide-react";
 import { UserWithCards } from "@/types/admin";
 import { useNavigate } from "react-router-dom";
 
 interface SuperAdminUserExpandedRowProps {
   user: UserWithCards;
+  onUserDeleted?: (userId: string) => void;
 }
 
-export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowProps) => {
+export const SuperAdminUserExpandedRow = ({ user, onUserDeleted }: SuperAdminUserExpandedRowProps) => {
   const navigate = useNavigate();
 
   const navigateToCard = (url: string, e: React.MouseEvent) => {
@@ -21,11 +22,45 @@ export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowPro
     navigate(url);
   };
 
+  const handleDeleteUser = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const confirmMessage = `¿Estás seguro de que quieres eliminar al usuario ${user.full_name || user.email}? Esta acción eliminará el usuario y todas sus tarjetas de forma permanente.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      // Here we would implement the actual deletion logic
+      console.log("Eliminar usuario:", user.id);
+      
+      if (onUserDeleted) {
+        onUserDeleted(user.id);
+      }
+    } catch (error) {
+      console.error("Error al eliminar usuario:", error);
+    }
+  };
+
   return (
     <TableRow className="bg-muted/30">
       <TableCell colSpan={5} className="p-6">
         <div className="space-y-4">
-          <h4 className="font-semibold text-lg">Información del usuario</h4>
+          <div className="flex justify-between items-start">
+            <h4 className="font-semibold text-lg">Información del usuario</h4>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleDeleteUser}
+            >
+              <UserX className="h-4 w-4" />
+              Eliminar Usuario
+            </Button>
+          </div>
+          
           <div className="grid grid-cols-2 gap-6 text-sm">
             <div className="space-y-2">
               <div><span className="font-medium">ID:</span> <span className="text-gray-600">{user.id}</span></div>

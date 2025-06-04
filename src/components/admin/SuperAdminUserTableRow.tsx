@@ -2,7 +2,7 @@
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Eye, Edit, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { UserRole } from "@/types";
 import {
@@ -80,7 +80,7 @@ export const SuperAdminUserTableRow = ({
       </TableCell>
       <TableCell>
         {user.cards.length > 0 ? (
-          <span className="text-green-600 font-medium">Sí ({user.cards[0].name})</span>
+          <span className="text-green-600 font-medium">Sí ({user.cards.length})</span>
         ) : (
           <span className="text-gray-500">No</span>
         )}
@@ -106,19 +106,6 @@ export const SuperAdminUserTableRow = ({
               >
                 <Edit className="h-4 w-4" />
                 Editar
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-1 text-red-600"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("Delete clicked for card:", user.cards[0].id);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-                Eliminar
               </Button>
             </>
           )}
