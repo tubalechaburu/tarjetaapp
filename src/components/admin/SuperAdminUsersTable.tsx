@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useUsersWithCards } from "@/hooks/useUsersWithCards";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -49,6 +50,7 @@ export const SuperAdminUsersTable = () => {
   };
 
   const toggleUserExpansion = (userId: string) => {
+    console.log("Toggling expansion for user:", userId);
     setExpandedUser(expandedUser === userId ? null : userId);
   };
 
@@ -91,7 +93,7 @@ export const SuperAdminUsersTable = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleUserExpansion(user.id)}
-                      className="p-1"
+                      className="p-1 h-6 w-6"
                     >
                       {expandedUser === user.id ? (
                         <ChevronUp className="h-4 w-4" />
