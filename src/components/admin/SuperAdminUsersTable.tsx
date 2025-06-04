@@ -84,8 +84,8 @@ export const SuperAdminUsersTable = () => {
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <>
-              <TableRow key={user.id}>
+            <React.Fragment key={user.id}>
+              <TableRow>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Button
@@ -216,7 +216,7 @@ export const SuperAdminUsersTable = () => {
                   </TableCell>
                 </TableRow>
               )}
-            </>
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>
