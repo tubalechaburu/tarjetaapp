@@ -1,5 +1,4 @@
 
-
 import React, { useState } from "react";
 import { useUsersWithCards } from "@/hooks/useUsersWithCards";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -53,9 +52,11 @@ export const SuperAdminUsersTable = () => {
   const toggleUserExpansion = (userId: string) => {
     console.log("Toggling expansion for user:", userId);
     console.log("Current expandedUser:", expandedUser);
-    const newExpandedUser = expandedUser === userId ? null : userId;
-    console.log("Setting expandedUser to:", newExpandedUser);
-    setExpandedUser(newExpandedUser);
+    setExpandedUser(prev => {
+      const newValue = prev === userId ? null : userId;
+      console.log("Setting expandedUser to:", newValue);
+      return newValue;
+    });
   };
 
   if (loading) {
@@ -97,7 +98,7 @@ export const SuperAdminUsersTable = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleUserExpansion(user.id)}
-                      className="p-2 h-8 w-8 hover:bg-gray-100 flex items-center justify-center"
+                      className="p-1 h-8 w-8 hover:bg-gray-100 flex items-center justify-center shrink-0"
                     >
                       {expandedUser === user.id ? (
                         <ChevronUp className="h-4 w-4" />
@@ -237,4 +238,3 @@ export const SuperAdminUsersTable = () => {
     </div>
   );
 };
-
