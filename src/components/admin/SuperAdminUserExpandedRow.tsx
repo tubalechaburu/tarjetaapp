@@ -1,10 +1,11 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2, UserX } from "lucide-react";
+import { Eye, Edit, UserX, Loader2 } from "lucide-react";
 import { UserWithCards } from "@/types/admin";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SuperAdminUserExpandedRowProps {
   user: UserWithCards;
@@ -13,6 +14,7 @@ interface SuperAdminUserExpandedRowProps {
 
 export const SuperAdminUserExpandedRow = ({ user, onUserDeleted }: SuperAdminUserExpandedRowProps) => {
   const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const navigateToCard = (url: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -32,15 +34,71 @@ export const SuperAdminUserExpandedRow = ({ user, onUserDeleted }: SuperAdminUse
       return;
     }
 
+    setIsDeleting(true);
+
     try {
-      // Here we would implement the actual deletion logic
-      console.log("Eliminar usuario:", user.id);
+      console.log("Iniciando eliminación del usuario:", user.id);
       
+      // 1. Eliminar todas las tarjetas del usuario
+      const { error: cardsError } = await supabase
+        .from('cards')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (cardsError) {
+        throw new Error(`Error al eliminar tarjetas: ${cardsError.message}`);
+      }
+      console.log("✅ Tarjetas eliminadas");
+
+      // 2. Eliminar roles del usuario
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (roleError) {
+        console.warn('Error eliminando roles del usuario:', roleError);
+        // No fallar aquí, continuar con la eliminación
+      } else {
+        console.log("✅ Roles eliminados");
+      }
+
+      // 3. Eliminar perfil del usuario
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) {
+        throw new Error(`Error al eliminar perfil: ${profileError.message}`);
+      }
+      console.log("✅ Perfil eliminado");
+
+      // 4. Intentar eliminar el usuario de Auth (requiere permisos de admin)
+      try {
+        const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+        if (authError) {
+          console.warn('Error eliminando usuario de Auth (puede requerir permisos adicionales):', authError);
+          // No fallar aquí ya que los datos principales han sido eliminados
+        } else {
+          console.log("✅ Usuario eliminado de Auth");
+        }
+      } catch (authError) {
+        console.warn('No se pudo eliminar el usuario de Auth:', authError);
+      }
+
+      toast.success(`Usuario ${user.full_name || user.email} eliminado correctamente`);
+      
+      // Notificar al componente padre para actualizar la lista
       if (onUserDeleted) {
         onUserDeleted(user.id);
       }
-    } catch (error) {
-      console.error("Error al eliminar usuario:", error);
+
+    } catch (error: any) {
+      console.error('Error eliminando usuario:', error);
+      toast.error(`Error al eliminar usuario: ${error.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,9 +113,14 @@ export const SuperAdminUserExpandedRow = ({ user, onUserDeleted }: SuperAdminUse
               size="sm" 
               className="gap-2"
               onClick={handleDeleteUser}
+              disabled={isDeleting}
             >
-              <UserX className="h-4 w-4" />
-              Eliminar Usuario
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserX className="h-4 w-4" />
+              )}
+              {isDeleting ? 'Eliminando...' : 'Eliminar Usuario'}
             </Button>
           </div>
           

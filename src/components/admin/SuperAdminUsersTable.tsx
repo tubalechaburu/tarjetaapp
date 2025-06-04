@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const SuperAdminUsersTable = () => {
   const { users, loading, error, refetch } = useUsersWithCards();
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-  const [deletingUsers, setDeletingUsers] = useState<Set<string>>(new Set());
 
   const handleToggleExpansion = (userId: string) => {
     console.log("🔄 SuperAdminUsersTable - Toggle expansion for user:", userId);
@@ -74,62 +73,16 @@ export const SuperAdminUsersTable = () => {
     }
   };
 
-  const handleUserDeleted = async (userId: string) => {
-    if (deletingUsers.has(userId)) return;
+  const handleUserDeleted = (userId: string) => {
+    // Colapsar la fila expandida si estaba abierta
+    setExpandedUsers(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(userId);
+      return newSet;
+    });
     
-    setDeletingUsers(prev => new Set(prev).add(userId));
-
-    try {
-      // First delete all user's cards
-      const { error: cardsError } = await supabase
-        .from('cards')
-        .delete()
-        .eq('user_id', userId);
-
-      if (cardsError) {
-        throw new Error(`Error al eliminar tarjetas: ${cardsError.message}`);
-      }
-
-      // Delete user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      if (roleError) {
-        console.warn('Error deleting user role:', roleError);
-      }
-
-      // Delete user profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (profileError) {
-        throw new Error(`Error al eliminar perfil: ${profileError.message}`);
-      }
-
-      // Finally delete the user from auth (this requires admin privileges)
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-      if (authError) {
-        console.warn('Error deleting auth user (may require additional permissions):', authError);
-        // Don't throw here as the main data is already deleted
-      }
-
-      toast.success("Usuario eliminado correctamente");
-      refetch();
-    } catch (error: any) {
-      console.error('Error deleting user:', error);
-      toast.error(`Error al eliminar usuario: ${error.message}`);
-    } finally {
-      setDeletingUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
-      });
-    }
+    // Recargar la lista de usuarios
+    refetch();
   };
 
   const exportAllUsers = () => {
