@@ -89,6 +89,14 @@ const ViewCard = () => {
 
   // Determinar a dónde debe llevar el botón volver
   const getBackRoute = () => {
+    // Check if we came from admin panel
+    const returnToAdmin = sessionStorage.getItem('returnToAdmin');
+    if (returnToAdmin === 'true') {
+      // Clear the flag and return to admin
+      sessionStorage.removeItem('returnToAdmin');
+      return "/admin";
+    }
+    
     // Si el usuario está autenticado, llevarlo al dashboard
     if (user) {
       return "/dashboard";

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserWithCards } from "@/types/admin";
+import { useNavigate } from "react-router-dom";
 
 interface SuperAdminUserTableRowProps {
   user: UserWithCards;
@@ -27,6 +28,8 @@ export const SuperAdminUserTableRow = ({
   onToggleExpansion,
   onRoleUpdate
 }: SuperAdminUserTableRowProps) => {
+  const navigate = useNavigate();
+
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'superadmin': return 'bg-red-500 text-white';
@@ -42,10 +45,12 @@ export const SuperAdminUserTableRow = ({
     onToggleExpansion(user.id);
   };
 
-  const openCardInNewTab = (url: string, e: React.MouseEvent) => {
+  const navigateToCard = (url: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Store the current admin route to return to it later
+    sessionStorage.setItem('returnToAdmin', 'true');
+    navigate(url);
   };
 
   return (
@@ -88,7 +93,7 @@ export const SuperAdminUserTableRow = ({
                 variant="ghost" 
                 size="sm" 
                 className="gap-1"
-                onClick={(e) => openCardInNewTab(`/card/${user.cards[0].id}`, e)}
+                onClick={(e) => navigateToCard(`/card/${user.cards[0].id}`, e)}
               >
                 <Eye className="h-4 w-4" />
                 Ver
@@ -97,7 +102,7 @@ export const SuperAdminUserTableRow = ({
                 variant="ghost" 
                 size="sm" 
                 className="gap-1"
-                onClick={(e) => openCardInNewTab(`/edit/${user.cards[0].id}`, e)}
+                onClick={(e) => navigateToCard(`/edit/${user.cards[0].id}`, e)}
               >
                 <Edit className="h-4 w-4" />
                 Editar

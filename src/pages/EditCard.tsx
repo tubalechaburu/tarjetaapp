@@ -1,35 +1,43 @@
 
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { getCardById } from "@/utils/storage";
+import { useParams, useNavigate } from "react-router-dom";
 import { BusinessCard } from "@/types";
-import CardForm from "@/components/CardForm";
-import { ArrowLeft } from "lucide-react";
+import { getCardById } from "@/utils/storage";
+import { useAuth } from "@/providers/AuthContext";
 import { toast } from "sonner";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import BackButton from "@/components/navigation/BackButton";
+import CardForm from "@/components/CardForm";
 
 const EditCard = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCard = async () => {
       if (id) {
-        setLoading(true);
         try {
           const foundCard = await getCardById(id);
           if (foundCard) {
+            // Verificar que el usuario es el propietario de la tarjeta
+            if (user && foundCard.userId !== user.id) {
+              toast.error("No tienes permisos para editar esta tarjeta");
+              navigate("/dashboard");
+              return;
+            }
             setCard(foundCard);
           } else {
             toast.error("Tarjeta no encontrada");
-            navigate("/");
+            navigate("/dashboard");
           }
         } catch (error) {
           console.error("Error al cargar la tarjeta:", error);
           toast.error("Error al cargar la tarjeta");
-          navigate("/");
+          navigate("/dashboard");
         } finally {
           setLoading(false);
         }
@@ -37,41 +45,70 @@ const EditCard = () => {
     };
 
     fetchCard();
-  }, [id, navigate]);
+  }, [id, navigate, user]);
+
+  const getBackRoute = () => {
+    // Check if we came from admin panel
+    const returnToAdmin = sessionStorage.getItem('returnToAdmin');
+    if (returnToAdmin === 'true') {
+      // Clear the flag and return to admin
+      sessionStorage.removeItem('returnToAdmin');
+      return "/admin";
+    }
+    
+    // Si el usuario está autenticado, llevarlo al dashboard
+    if (user) {
+      return "/dashboard";
+    }
+    // Si no está autenticado, llevarlo a la landing
+    return "/";
+  };
+
+  const handleSave = () => {
+    toast.success("Tarjeta actualizada correctamente");
+    navigate(getBackRoute());
+  };
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <p>Cargando...</p>
+      <div className="container mx-auto px-4 py-8">
+        <Header />
+        <div className="text-center">
+          <p>Cargando tarjeta...</p>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   if (!card) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-xl font-semibold mb-4">Tarjeta no encontrada</h2>
-        <p className="mb-6">La tarjeta que estás buscando no existe o ha sido eliminada.</p>
-        <Link to="/">
-          <Button>Volver al inicio</Button>
-        </Link>
+      <div className="container mx-auto px-4 py-8">
+        <Header />
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Tarjeta no encontrada</h2>
+          <p>La tarjeta que intentas editar no existe.</p>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link to={`/card/${id}`}>
-        <Button variant="ghost" className="mb-4 gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Volver a la tarjeta
-        </Button>
-      </Link>
+      <Header />
+      <BackButton to={getBackRoute()} />
       
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center">Editar Tarjeta</h1>
-        <CardForm initialData={card} />
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">Editar Tarjeta</h1>
+        <CardForm 
+          initialCard={card} 
+          onSave={handleSave}
+          isEditing={true}
+        />
       </div>
+      
+      <Footer />
     </div>
   );
 };

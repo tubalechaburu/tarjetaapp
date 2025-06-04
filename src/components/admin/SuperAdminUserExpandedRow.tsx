@@ -4,16 +4,21 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit } from "lucide-react";
 import { UserWithCards } from "@/types/admin";
+import { useNavigate } from "react-router-dom";
 
 interface SuperAdminUserExpandedRowProps {
   user: UserWithCards;
 }
 
 export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowProps) => {
-  const openCardInNewTab = (url: string, e: React.MouseEvent) => {
+  const navigate = useNavigate();
+
+  const navigateToCard = (url: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Store the current admin route to return to it later
+    sessionStorage.setItem('returnToAdmin', 'true');
+    navigate(url);
   };
 
   return (
@@ -50,7 +55,7 @@ export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowPro
                           variant="outline" 
                           size="sm" 
                           className="gap-1"
-                          onClick={(e) => openCardInNewTab(`/card/${card.id}`, e)}
+                          onClick={(e) => navigateToCard(`/card/${card.id}`, e)}
                         >
                           <Eye className="h-4 w-4" />
                           Ver
@@ -59,7 +64,7 @@ export const SuperAdminUserExpandedRow = ({ user }: SuperAdminUserExpandedRowPro
                           variant="outline" 
                           size="sm" 
                           className="gap-1"
-                          onClick={(e) => openCardInNewTab(`/edit/${card.id}`, e)}
+                          onClick={(e) => navigateToCard(`/edit/${card.id}`, e)}
                         >
                           <Edit className="h-4 w-4" />
                           Editar
