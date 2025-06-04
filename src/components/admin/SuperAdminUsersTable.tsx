@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import { useUsersWithCards } from "@/hooks/useUsersWithCards";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -51,7 +52,10 @@ export const SuperAdminUsersTable = () => {
 
   const toggleUserExpansion = (userId: string) => {
     console.log("Toggling expansion for user:", userId);
-    setExpandedUser(expandedUser === userId ? null : userId);
+    console.log("Current expandedUser:", expandedUser);
+    const newExpandedUser = expandedUser === userId ? null : userId;
+    console.log("Setting expandedUser to:", newExpandedUser);
+    setExpandedUser(newExpandedUser);
   };
 
   if (loading) {
@@ -86,14 +90,14 @@ export const SuperAdminUsersTable = () => {
         <TableBody>
           {users.map((user) => (
             <React.Fragment key={user.id}>
-              <TableRow>
+              <TableRow className="hover:bg-muted/50">
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleUserExpansion(user.id)}
-                      className="p-1 h-6 w-6"
+                      className="p-2 h-8 w-8 hover:bg-gray-100 flex items-center justify-center"
                     >
                       {expandedUser === user.id ? (
                         <ChevronUp className="h-4 w-4" />
@@ -101,10 +105,10 @@ export const SuperAdminUsersTable = () => {
                         <ChevronDown className="h-4 w-4" />
                       )}
                     </Button>
-                    <span>{user.full_name || "Sin nombre"}</span>
+                    <span className="font-medium">{user.full_name || "Sin nombre"}</span>
                   </div>
                 </TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell className="text-gray-600">{user.email}</TableCell>
                 <TableCell>
                   <Badge className={getRoleBadgeColor(user.role)}>
                     {user.role}
@@ -112,7 +116,7 @@ export const SuperAdminUsersTable = () => {
                 </TableCell>
                 <TableCell>
                   {user.cards.length > 0 ? (
-                    <span className="text-green-600">Sí ({user.cards[0].name})</span>
+                    <span className="text-green-600 font-medium">Sí ({user.cards[0].name})</span>
                   ) : (
                     <span className="text-gray-500">No</span>
                   )}
@@ -166,42 +170,45 @@ export const SuperAdminUsersTable = () => {
                 </TableCell>
               </TableRow>
               
-              {/* Fila expandida para mostrar información adicional del usuario */}
+              {/* Expanded row showing user details */}
               {expandedUser === user.id && (
-                <TableRow>
-                  <TableCell colSpan={5} className="bg-muted/30 p-4">
-                    <div className="space-y-3">
-                      <h4 className="font-medium">Información del usuario</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">ID:</span> {user.id}
+                <TableRow className="bg-muted/30">
+                  <TableCell colSpan={5} className="p-6">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-lg">Información del usuario</h4>
+                      <div className="grid grid-cols-2 gap-6 text-sm">
+                        <div className="space-y-2">
+                          <div><span className="font-medium">ID:</span> <span className="text-gray-600">{user.id}</span></div>
+                          <div><span className="font-medium">Email:</span> <span className="text-gray-600">{user.email}</span></div>
                         </div>
-                        <div>
-                          <span className="font-medium">Última actualización:</span> {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'N/A'}
+                        <div className="space-y-2">
+                          <div><span className="font-medium">Nombre completo:</span> <span className="text-gray-600">{user.full_name || 'No definido'}</span></div>
+                          <div><span className="font-medium">Última actualización:</span> <span className="text-gray-600">{user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'N/A'}</span></div>
                         </div>
                       </div>
                       
                       {user.cards.length > 0 && (
-                        <div className="mt-4">
-                          <h5 className="font-medium mb-2">Tarjetas ({user.cards.length})</h5>
-                          <div className="space-y-2">
+                        <div className="mt-6">
+                          <h5 className="font-semibold mb-3">Tarjetas del usuario ({user.cards.length})</h5>
+                          <div className="space-y-3">
                             {user.cards.map((card) => (
-                              <div key={card.id} className="border rounded p-3 bg-white">
+                              <div key={card.id} className="border rounded-lg p-4 bg-white shadow-sm">
                                 <div className="flex justify-between items-start">
-                                  <div>
-                                    <p className="font-medium">{card.name}</p>
-                                    <p className="text-sm text-gray-600">{card.jobTitle} en {card.company}</p>
+                                  <div className="space-y-1">
+                                    <p className="font-semibold text-base">{card.name}</p>
+                                    <p className="text-sm text-gray-600">{card.jobTitle} {card.company && `en ${card.company}`}</p>
                                     <p className="text-sm text-gray-500">{card.email}</p>
+                                    {card.phone && <p className="text-sm text-gray-500">{card.phone}</p>}
                                   </div>
-                                  <div className="flex gap-1">
+                                  <div className="flex gap-2">
                                     <Link to={`/card/${card.id}`} target="_blank">
-                                      <Button variant="ghost" size="sm" className="gap-1">
+                                      <Button variant="outline" size="sm" className="gap-1">
                                         <Eye className="h-4 w-4" />
                                         Ver
                                       </Button>
                                     </Link>
                                     <Link to={`/edit/${card.id}`} target="_blank">
-                                      <Button variant="ghost" size="sm" className="gap-1">
+                                      <Button variant="outline" size="sm" className="gap-1">
                                         <Edit className="h-4 w-4" />
                                         Editar
                                       </Button>
@@ -211,6 +218,12 @@ export const SuperAdminUsersTable = () => {
                               </div>
                             ))}
                           </div>
+                        </div>
+                      )}
+                      
+                      {user.cards.length === 0 && (
+                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                          <p className="text-gray-600 text-center">Este usuario no tiene tarjetas creadas.</p>
                         </div>
                       )}
                     </div>
@@ -224,3 +237,4 @@ export const SuperAdminUsersTable = () => {
     </div>
   );
 };
+
