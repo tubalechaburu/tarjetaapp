@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { validateEmail, validatePassword, sanitizeInput, sanitizeErrorMessage } from "./validation";
@@ -143,10 +144,11 @@ class AuthService {
         throw new Error(sanitizeErrorMessage(error));
       }
 
-      // Clear any sensitive data from localStorage
+      // Clear any sensitive data from localStorage using a safer approach
       try {
         localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem(`sb-${supabase.supabaseUrl.split('//')[1]}-auth-token`);
+        // Use the project ID from the known Supabase URL
+        localStorage.removeItem('sb-tsrspstmwuxjqjnrymwm-auth-token');
         localStorage.removeItem(this.attemptKey);
       } catch (e) {
         console.warn("Could not clear auth tokens from localStorage");

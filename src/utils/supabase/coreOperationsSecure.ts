@@ -3,8 +3,13 @@ import { BusinessCard, SupabaseBusinessCard } from "../../types";
 import { supabase } from "../../integrations/supabase/client";
 import { mapSupabaseToBusinessCard, prepareSupabaseCard } from "./mappers";
 import { handleSupabaseError, isEmptyData } from "./helpers";
-import { sanitizeErrorMessage, validateInput } from "../security/validation";
+import { sanitizeErrorMessage, validateEmail, validatePhone, validateUrl, sanitizeInput } from "../security/validation";
 import { authService } from "../security/authService";
+
+// Helper function to validate basic input constraints
+const validateBasicInput = (input: string, maxLength: number): boolean => {
+  return input && typeof input === 'string' && input.trim().length > 0 && input.length <= maxLength;
+};
 
 export const saveCardToSupabaseSecure = async (card: BusinessCard): Promise<boolean> => {
   try {
@@ -24,27 +29,37 @@ export const saveCardToSupabaseSecure = async (card: BusinessCard): Promise<bool
     }
 
     // Enhanced input validation with security checks
-    if (!validateInput(card.name, 100)) {
+    if (!validateBasicInput(card.name, 100)) {
       console.error("❌ Invalid card name");
       return false;
     }
     
-    if (card.email && !validateInput(card.email, 254)) {
+    if (card.email && !validateEmail(card.email)) {
       console.error("❌ Invalid email format");
+      return false;
+    }
+
+    if (card.phone && !validatePhone(card.phone)) {
+      console.error("❌ Invalid phone format");
+      return false;
+    }
+
+    if (card.website && !validateUrl(card.website)) {
+      console.error("❌ Invalid website URL");
       return false;
     }
 
     // Validate and sanitize all string fields
     const sanitizedCard = {
       ...card,
-      name: validateInput(card.name, 100) ? card.name.trim() : '',
-      email: card.email ? (validateInput(card.email, 254) ? card.email.trim() : '') : '',
-      phone: card.phone ? (validateInput(card.phone, 50) ? card.phone.trim() : '') : '',
-      company: card.company ? (validateInput(card.company, 100) ? card.company.trim() : '') : '',
-      jobTitle: card.jobTitle ? (validateInput(card.jobTitle, 100) ? card.jobTitle.trim() : '') : '',
-      website: card.website ? (validateInput(card.website, 255) ? card.website.trim() : '') : '',
-      address: card.address ? (validateInput(card.address, 255) ? card.address.trim() : '') : '',
-      description: card.description ? (validateInput(card.description, 500) ? card.description.trim() : '') : '',
+      name: validateBasicInput(card.name, 100) ? sanitizeInput(card.name.trim(), 100) : '',
+      email: card.email ? (validateEmail(card.email) ? sanitizeInput(card.email.trim(), 254) : '') : '',
+      phone: card.phone ? (validatePhone(card.phone) ? sanitizeInput(card.phone.trim(), 50) : '') : '',
+      company: card.company ? sanitizeInput(card.company.trim(), 100) : '',
+      jobTitle: card.jobTitle ? sanitizeInput(card.jobTitle.trim(), 100) : '',
+      website: card.website ? (validateUrl(card.website) ? sanitizeInput(card.website.trim(), 255) : '') : '',
+      address: card.address ? sanitizeInput(card.address.trim(), 255) : '',
+      description: card.description ? sanitizeInput(card.description.trim(), 500) : '',
       userId: user.id // Ensure correct user ID
     };
 
