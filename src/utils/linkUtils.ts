@@ -37,16 +37,33 @@ export const getLinkIcon = (type: CardLink["type"]) => {
 };
 
 /**
+ * Formats a WhatsApp number correctly
+ */
+export const formatWhatsAppNumber = (phoneNumber: string) => {
+  // Remove all non-digit characters
+  let cleanNumber = phoneNumber.replace(/\D/g, "");
+  
+  // Handle Spanish numbers (if 9 digits, add country code)
+  if (cleanNumber.length === 9 && !cleanNumber.startsWith("34")) {
+    cleanNumber = "34" + cleanNumber;
+  }
+  
+  // Handle numbers that start with + but need country code
+  if (cleanNumber.length === 9) {
+    cleanNumber = "34" + cleanNumber;
+  }
+  
+  return cleanNumber;
+};
+
+/**
  * Formats a URL appropriately based on the link type
  */
 export const getFormattedUrl = (link: CardLink) => {
   if (link.type === "whatsapp") {
     // Format WhatsApp number
-    let phoneNumber = link.url.replace(/\D/g, "");
-    if (!phoneNumber.startsWith("+")) {
-      phoneNumber = "+" + phoneNumber;
-    }
-    return `https://wa.me/${phoneNumber}`;
+    const cleanNumber = formatWhatsAppNumber(link.url);
+    return `https://wa.me/${cleanNumber}`;
   }
   
   // For other links, ensure they have https://

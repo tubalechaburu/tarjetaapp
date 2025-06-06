@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail } from "lucide-react";
 
 interface ForgotPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -17,6 +19,7 @@ interface FormValues {
 
 const ForgotPasswordForm = ({ onSubmit, onCancel }: ForgotPasswordFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEmailSent, setIsEmailSent] = useState(false);
   
   const form = useForm<FormValues>({
     defaultValues: {
@@ -27,7 +30,9 @@ const ForgotPasswordForm = ({ onSubmit, onCancel }: ForgotPasswordFormProps) => 
   const handleSubmit = async (data: FormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Sending password reset to:", data.email);
       await onSubmit(data.email);
+      setIsEmailSent(true);
       toast.success("Instrucciones de recuperación enviadas a tu correo.");
     } catch (error: any) {
       console.error("Error al solicitar recuperación:", error);
@@ -36,6 +41,34 @@ const ForgotPasswordForm = ({ onSubmit, onCancel }: ForgotPasswordFormProps) => 
       setIsSubmitting(false);
     }
   };
+
+  if (isEmailSent) {
+    return (
+      <div className="space-y-4">
+        <Alert>
+          <Mail className="h-4 w-4" />
+          <AlertDescription>
+            Hemos enviado las instrucciones de recuperación a tu correo electrónico.
+            Revisa tu bandeja de entrada y spam.
+          </AlertDescription>
+        </Alert>
+        
+        <div className="space-y-2">
+          <Button onClick={onCancel} className="w-full">
+            Volver al inicio de sesión
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEmailSent(false)} 
+            className="w-full"
+          >
+            Enviar de nuevo
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -76,6 +109,13 @@ const ForgotPasswordForm = ({ onSubmit, onCancel }: ForgotPasswordFormProps) => 
         >
           Volver al inicio de sesión
         </Button>
+      </div>
+      
+      <div className="text-sm text-muted-foreground">
+        <p>
+          Si no recibes el correo en unos minutos, revisa tu carpeta de spam.
+          El enlace de recuperación expirará en 24 horas.
+        </p>
       </div>
     </form>
   );
