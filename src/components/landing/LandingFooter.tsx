@@ -1,7 +1,10 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
+
 const LandingFooter = () => {
-  return <footer className="bg-gray-900 text-white py-12">
+  return (
+    <footer className="bg-gray-900 text-white py-12">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8">
           <div>
@@ -25,7 +28,7 @@ const LandingFooter = () => {
           <div>
             <h4 className="font-semibold mb-4">Soporte</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="mailto:soporte@tarjetaapp.com" className="hover:text-white">Contacto</a></li>
+              <li><span className="hover:text-white">Contacto: tubal@tubalechaburu.com</span></li>
               <li><a href="#" className="hover:text-white">Ayuda</a></li>
             </ul>
           </div>
@@ -33,16 +36,18 @@ const LandingFooter = () => {
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white">Términos</a></li>
-              <li><a href="#" className="hover:text-white">Privacidad</a></li>
+              <li><Link to="/terms" className="hover:text-white">Términos</Link></li>
+              <li><Link to="/privacy" className="hover:text-white">Privacidad</Link></li>
             </ul>
           </div>
         </div>
         
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2025 TarjetaVisita - Todos los derechos reservados.</p>
+          <p>&copy; 2025 TarjetaVisita.App by tubalechaburu.com - Todos los derechos reservados.</p>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
+
 export default LandingFooter;

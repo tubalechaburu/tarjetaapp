@@ -16,6 +16,8 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import DemoCard from "./pages/DemoCard";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import AuthProviderSecure from "./providers/AuthProviderSecure";
 
 const queryClient = new QueryClient({
@@ -53,6 +55,8 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/demo" element={<DemoCard />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
