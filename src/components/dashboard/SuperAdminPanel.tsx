@@ -3,7 +3,7 @@ import { BusinessCard } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { deleteCard } from "@/utils/storage";
 import { toast } from "sonner";
@@ -35,6 +35,12 @@ export const SuperAdminPanel = ({ cards, onCardDeleted }: SuperAdminPanelProps) 
         toast.error("Error al eliminar la tarjeta");
       }
     }
+  };
+
+  const handleEditCard = (card: BusinessCard) => {
+    // Set flag to return to admin panel after editing
+    sessionStorage.setItem('returnToAdmin', 'true');
+    navigate(`/edit/${card.id}`);
   };
 
   if (cards.length === 0) {
@@ -72,6 +78,14 @@ export const SuperAdminPanel = ({ cards, onCardDeleted }: SuperAdminPanelProps) 
                   onClick={() => navigate(`/card/${card.id}`)}
                 >
                   Ver tarjeta
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleEditCard(card)}
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar
                 </Button>
                 <Button 
                   variant="destructive" 
