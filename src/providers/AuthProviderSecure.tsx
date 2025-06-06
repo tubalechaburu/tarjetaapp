@@ -3,14 +3,8 @@ import React, { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "./AuthContext";
-import { 
-  signInSecure, 
-  signUpSecure, 
-  signOutSecure, 
-  resetPasswordSecure, 
-  isAdmin, 
-  isSuperAdmin 
-} from "@/utils/authUtilsEnhanced";
+import { authService } from "@/utils/security/authService";
+import { sanitizeErrorMessage } from "@/utils/security/validation";
 
 export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any | null>(null);
@@ -39,8 +33,8 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
         setTimeout(async () => {
           try {
             // Verify session is still valid before making role call
-            const { data: currentSession } = await supabase.auth.getSession();
-            if (!currentSession.session || currentSession.session.user.id !== session.user.id) {
+            const isValidSession = await authService.validateSession();
+            if (!isValidSession || !mounted) {
               console.warn("⚠️ Session validation failed during role fetch");
               return;
             }
@@ -53,10 +47,10 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
               setUserRole(actualRole);
               console.log("✅ Secure user role updated:", actualRole);
             } else if (error) {
-              console.log("⚠️ Could not fetch role securely, keeping default:", error.message);
+              console.log("⚠️ Could not fetch role securely, keeping default:", sanitizeErrorMessage(error));
             }
           } catch (error) {
-            console.log("⚠️ Error in secure role fetch, keeping default:", error);
+            console.log("⚠️ Error in secure role fetch, keeping default:", sanitizeErrorMessage(error));
           }
         }, 100);
       } else {
@@ -76,20 +70,29 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Error getting initial secure session:", error);
+          console.error("Error getting initial secure session:", sanitizeErrorMessage(error));
           if (mounted) {
             setIsLoading(false);
           }
           return;
         }
 
-        if (mounted) {
-          await handleAuthStateChange('INITIAL_SESSION', session);
+        // Validate session before using it
+        if (session) {
+          const isValid = await authService.validateSession();
+          if (isValid && mounted) {
+            await handleAuthStateChange('INITIAL_SESSION', session);
+          } else if (mounted) {
+            console.warn("⚠️ Initial session validation failed");
+            setIsLoading(false);
+          }
+        } else if (mounted) {
+          setIsLoading(false);
         }
 
         return subscription;
       } catch (error) {
-        console.error("Error initializing secure auth:", error);
+        console.error("Error initializing secure auth:", sanitizeErrorMessage(error));
         if (mounted) {
           setIsLoading(false);
         }
@@ -110,22 +113,22 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const handleSignIn = async (email: string, password: string): Promise<void> => {
-    await signInSecure(email, password);
+    await authService.signIn(email, password);
   };
 
   const handleSignUp = async (email: string, password: string, metadata?: any): Promise<void> => {
-    await signUpSecure(email, password, metadata);
+    await authService.signUp(email, password, metadata);
   };
 
   const handleSignOut = async (): Promise<void> => {
     setUserRole(null);
     setUser(null);
     setSession(null);
-    await signOutSecure();
+    await authService.signOut();
   };
 
   const handleResetPassword = async (email: string): Promise<void> => {
-    await resetPasswordSecure(email);
+    await authService.resetPassword(email);
   };
 
   const refreshUserRole = async () => {
@@ -133,8 +136,8 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
     
     try {
       // Additional security check before role refresh
-      const { data: currentSession } = await supabase.auth.getSession();
-      if (!currentSession.session || currentSession.session.user.id !== user.id) {
+      const isValid = await authService.validateSession();
+      if (!isValid) {
         console.warn("⚠️ Session validation failed during role refresh");
         return;
       }
@@ -143,14 +146,17 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
         .rpc('is_superadmin', { _user_id: user.id });
       
       if (error) {
-        console.error("Error refreshing user role securely:", error);
+        console.error("Error refreshing user role securely:", sanitizeErrorMessage(error));
       } else {
         setUserRole(isSuperAdminResult ? 'superadmin' : 'user');
       }
     } catch (error) {
-      console.error("Error refreshing user role securely:", error);
+      console.error("Error refreshing user role securely:", sanitizeErrorMessage(error));
     }
   };
+
+  const isAdmin = () => userRole === 'superadmin';
+  const isSuperAdmin = () => userRole === 'superadmin';
 
   const value = {
     user,
@@ -161,8 +167,8 @@ export const AuthProviderSecure: React.FC<{ children: React.ReactNode }> = ({ ch
     signUp: handleSignUp,
     signOut: handleSignOut,
     resetPassword: handleResetPassword,
-    isAdmin: () => isAdmin(userRole),
-    isSuperAdmin: () => isSuperAdmin(userRole),
+    isAdmin,
+    isSuperAdmin,
     refreshUserRole,
   };
 

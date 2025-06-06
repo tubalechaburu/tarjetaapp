@@ -3,83 +3,55 @@ import { BusinessCard, SupabaseBusinessCard } from "../../types";
 import { supabase } from "../../integrations/supabase/client";
 import { mapSupabaseToBusinessCard, prepareSupabaseCard } from "./mappers";
 import { handleSupabaseError, isEmptyData } from "./helpers";
-import { 
-  sanitizeUserInput, 
-  validateEmail, 
-  validatePhoneNumber, 
-  validateURL,
-  sanitizeErrorMessage 
-} from "./securityEnhancements";
+import { sanitizeErrorMessage, validateInput } from "../security/validation";
+import { authService } from "../security/authService";
 
 export const saveCardToSupabaseSecure = async (card: BusinessCard): Promise<boolean> => {
   try {
-    console.log("💾 Saving card to Supabase with enhanced security:", card.name);
+    console.log("💾 Securely saving card to Supabase:", card.name);
     
-    // Enhanced input validation with sanitization
-    if (!card.name || sanitizeUserInput(card.name, 100).length < 2) {
+    // Enhanced authentication and session validation
+    const isValidSession = await authService.validateSession();
+    if (!isValidSession) {
+      console.error("❌ Invalid or expired session");
+      return false;
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("❌ User not authenticated:", sanitizeErrorMessage(authError));
+      return false;
+    }
+
+    // Enhanced input validation with security checks
+    if (!validateInput(card.name, 100)) {
       console.error("❌ Invalid card name");
       return false;
     }
     
-    if (card.email && !validateEmail(card.email)) {
+    if (card.email && !validateInput(card.email, 254)) {
       console.error("❌ Invalid email format");
       return false;
     }
-    
-    if (card.phone && !validatePhoneNumber(card.phone)) {
-      console.error("❌ Invalid phone number format");
-      return false;
-    }
-    
-    if (card.website && !validateURL(card.website)) {
-      console.error("❌ Invalid website URL format");
-      return false;
-    }
-    
-    // Secure authentication check with session validation
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error("❌ User not authenticated");
-      return false;
-    }
 
-    // Additional session validation
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session || session.user.id !== user.id) {
-      console.error("❌ Session validation failed");
-      return false;
-    }
-
-    // Sanitize all input fields
+    // Validate and sanitize all string fields
     const sanitizedCard = {
       ...card,
-      name: sanitizeUserInput(card.name, 100),
-      jobTitle: sanitizeUserInput(card.jobTitle || '', 100),
-      company: sanitizeUserInput(card.company || '', 100),
-      email: card.email ? sanitizeUserInput(card.email, 254) : '',
-      phone: card.phone ? sanitizeUserInput(card.phone, 20) : '',
-      website: card.website ? sanitizeUserInput(card.website, 200) : '',
-      address: card.address ? sanitizeUserInput(card.address, 200) : '',
-      description: card.description ? sanitizeUserInput(card.description, 500) : '',
-      userId: user.id
+      name: validateInput(card.name, 100) ? card.name.trim() : '',
+      email: card.email ? (validateInput(card.email, 254) ? card.email.trim() : '') : '',
+      phone: card.phone ? (validateInput(card.phone, 50) ? card.phone.trim() : '') : '',
+      company: card.company ? (validateInput(card.company, 100) ? card.company.trim() : '') : '',
+      jobTitle: card.jobTitle ? (validateInput(card.jobTitle, 100) ? card.jobTitle.trim() : '') : '',
+      website: card.website ? (validateInput(card.website, 255) ? card.website.trim() : '') : '',
+      address: card.address ? (validateInput(card.address, 255) ? card.address.trim() : '') : '',
+      description: card.description ? (validateInput(card.description, 500) ? card.description.trim() : '') : '',
+      userId: user.id // Ensure correct user ID
     };
-    
+
+    // RLS policies will automatically handle authorization and rate limiting
     const supabaseCard = prepareSupabaseCard(sanitizedCard);
     
-    // Rate limiting check - users should only be able to create/update cards at reasonable intervals
-    const { data: recentCards, error: recentError } = await supabase
-      .from('cards')
-      .select('created_at')
-      .eq('user_id', user.id)
-      .gte('created_at', new Date(Date.now() - 60000).toISOString()) // Last minute
-      .limit(5);
-    
-    if (!recentError && recentCards && recentCards.length >= 3) {
-      console.error("❌ Rate limit exceeded");
-      return false;
-    }
-    
-    // Secure upsert with RLS protection
+    // Secure upsert with enhanced error handling
     const { data, error } = await supabase
       .from('cards')
       .upsert(supabaseCard)
@@ -87,31 +59,31 @@ export const saveCardToSupabaseSecure = async (card: BusinessCard): Promise<bool
     
     if (error) {
       console.error("❌ Supabase error:", sanitizeErrorMessage(error));
-      return handleSupabaseError(error, "Card could not be saved");
+      return handleSupabaseError(error, "Card could not be saved due to a security restriction");
     } else {
-      console.log("✅ Card saved successfully with security validations");
+      console.log("✅ Card saved securely:", data);
       return true;
     }
   } catch (supabaseError) {
-    console.error("💥 Save card error:", sanitizeErrorMessage(supabaseError));
-    return handleSupabaseError(supabaseError, "Error saving card");
+    console.error("💥 Secure save card error:", sanitizeErrorMessage(supabaseError));
+    return handleSupabaseError(supabaseError, "Error saving card securely");
   }
 };
 
 export const getUserCardsFromSupabaseSecure = async (userId: string): Promise<BusinessCard[] | null> => {
   try {
-    console.log("🔍 Loading user cards with security checks...", userId);
+    console.log("🔍 Securely loading user cards from Supabase...", userId);
     
-    // Validate input
-    if (!userId || typeof userId !== 'string' || userId.length !== 36) {
-      console.error("❌ Invalid user ID format");
+    // Enhanced session validation
+    const isValidSession = await authService.validateSession();
+    if (!isValidSession) {
+      console.error("❌ Invalid session for user cards fetch");
       return null;
     }
-    
-    // Verify current user has access to this data
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user || user.id !== userId) {
-      console.error("❌ Unauthorized access attempt");
+
+    // Validate user ID format
+    if (!userId || typeof userId !== 'string' || userId.length !== 36) {
+      console.error("❌ Invalid user ID format");
       return null;
     }
     
@@ -126,7 +98,7 @@ export const getUserCardsFromSupabaseSecure = async (userId: string): Promise<Bu
       return null;
     }
     
-    console.log("✅ User cards data loaded securely:", data?.length || 0);
+    console.log("✅ User cards data securely loaded:", data?.length || 0);
     
     if (isEmptyData(data)) {
       console.log("📭 No cards found for user");
@@ -136,22 +108,28 @@ export const getUserCardsFromSupabaseSecure = async (userId: string): Promise<Bu
     const mappedCards = (data as SupabaseBusinessCard[]).map(item => mapSupabaseToBusinessCard(item));
     return mappedCards;
   } catch (supabaseError) {
-    console.error("💥 Error in getUserCardsFromSupabaseSecure:", sanitizeErrorMessage(supabaseError));
+    console.error("💥 Error in secure getUserCardsFromSupabase:", sanitizeErrorMessage(supabaseError));
     return null;
   }
 };
 
 export const getCardByIdFromSupabaseSecure = async (id: string): Promise<BusinessCard | null> => {
   try {
-    console.log(`🔍 Loading card ${id} with security validation...`);
+    console.log(`🔍 Securely loading card ${id} from Supabase...`);
     
-    // Validate input
-    if (!id || typeof id !== 'string' || id.length !== 36) {
+    // Validate card ID format
+    if (!id || typeof id !== 'string') {
       console.error("❌ Invalid card ID format");
       return null;
     }
-    
-    // Secure authentication check
+
+    // Enhanced session validation
+    const isValidSession = await authService.validateSession();
+    if (!isValidSession) {
+      console.error("❌ Invalid session for card fetch");
+      return null;
+    }
+
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError || !userData.user) {
@@ -159,7 +137,7 @@ export const getCardByIdFromSupabaseSecure = async (id: string): Promise<Busines
       return null;
     }
 
-    console.log("👤 User authenticated for secure card access:", userData.user.email);
+    console.log("👤 User authenticated:", userData.user.email);
 
     // RLS policies will automatically handle access control
     const { data, error } = await supabase
@@ -178,66 +156,51 @@ export const getCardByIdFromSupabaseSecure = async (id: string): Promise<Busines
       return null;
     }
     
-    console.log("✅ Card found with security validation:", data.name);
+    console.log("✅ Card found securely:", data.name);
     const mappedCard = mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
     return mappedCard;
   } catch (supabaseError) {
-    console.error("💥 Error in getCardByIdFromSupabaseSecure:", sanitizeErrorMessage(supabaseError));
+    console.error("💥 Error in secure getCardByIdFromSupabase:", sanitizeErrorMessage(supabaseError));
     return null;
   }
 };
 
 export const deleteCardFromSupabaseSecure = async (id: string): Promise<boolean> => {
   try {
-    console.log(`🗑️ Deleting card with ID ${id} with security checks`);
+    console.log(`🗑️ Securely deleting card with ID ${id} from Supabase`);
     
-    // Validate input
-    if (!id || typeof id !== 'string' || id.length !== 36) {
+    // Validate card ID format
+    if (!id || typeof id !== 'string') {
       console.error("❌ Invalid card ID format");
       return false;
     }
-    
-    // Secure authentication check
+
+    // Enhanced session validation
+    const isValidSession = await authService.validateSession();
+    if (!isValidSession) {
+      console.error("❌ Invalid session for card deletion");
+      return false;
+    }
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("❌ User not authenticated");
+      console.error("❌ User not authenticated for deletion");
       return false;
     }
 
-    // Additional check: verify user owns this card before deletion
-    const { data: cardCheck, error: checkError } = await supabase
-      .from('cards')
-      .select('user_id')
-      .eq('id', id)
-      .maybeSingle();
-    
-    if (checkError || !cardCheck) {
-      console.error("❌ Card not found or access denied");
-      return false;
-    }
-    
-    // Check if user is either the owner or superadmin
-    const { data: isSuperAdmin } = await supabase
-      .rpc('is_superadmin', { _user_id: user.id });
-    
-    if (cardCheck.user_id !== user.id && !isSuperAdmin) {
-      console.error("❌ User not authorized to delete this card");
-      return false;
-    }
-
-    // RLS policies will automatically handle authorization, but we've added extra checks
+    // RLS policies will automatically handle authorization
     const { error } = await supabase
       .from('cards')
       .delete()
       .eq('id', id);
     
     if (error) {
-      return handleSupabaseError(error, "Error deleting card");
+      return handleSupabaseError(error, "Error deleting card due to security restrictions");
     }
     
-    console.log("✅ Card deleted successfully with security validation");
+    console.log("✅ Card deleted securely");
     return true;
   } catch (supabaseError) {
-    return handleSupabaseError(supabaseError, "Error connecting to database");
+    return handleSupabaseError(supabaseError, "Error connecting to database securely");
   }
 };

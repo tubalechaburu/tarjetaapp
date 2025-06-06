@@ -16,13 +16,26 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import DemoCard from "./pages/DemoCard";
-import AuthProvider from "./providers/AuthProvider";
+import AuthProviderSecure from "./providers/AuthProviderSecure";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry on authentication errors
+        if (error?.message?.includes('permission denied') || error?.message?.includes('unauthorized')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+    <AuthProviderSecure>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -44,7 +57,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
+    </AuthProviderSecure>
   </QueryClientProvider>
 );
 
