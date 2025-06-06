@@ -21,6 +21,7 @@ export type Database = {
           name: string
           phone: string | null
           photo: string | null
+          profile_id: string | null
           theme: Json | null
           title: string | null
           updated_at: string | null
@@ -38,6 +39,7 @@ export type Database = {
           name: string
           phone?: string | null
           photo?: string | null
+          profile_id?: string | null
           theme?: Json | null
           title?: string | null
           updated_at?: string | null
@@ -55,13 +57,36 @@ export type Database = {
           name?: string
           phone?: string | null
           photo?: string | null
+          profile_id?: string | null
           theme?: Json | null
           title?: string | null
           updated_at?: string | null
           user_id?: string
           visible_fields?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_cards_profile"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "all_user_data"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_cards_profile"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "all_user_data"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_cards_profile"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -112,26 +137,100 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          nombre_profile: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
+          nombre_profile?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
+          nombre_profile?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_user_data"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_user_data"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      all_user_data: {
+        Row: {
+          card_id: string | null
+          card_name: string | null
+          company: string | null
+          email: string | null
+          estado: string | null
+          full_name: string | null
+          has_card: boolean | null
+          has_role: boolean | null
+          phone: string | null
+          profile_id: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+          user_role_id: string | null
+        }
+        Relationships: []
+      }
+      user_roles_with_names: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          nombre_profile: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_user_data"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "all_user_data"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_user_role: {

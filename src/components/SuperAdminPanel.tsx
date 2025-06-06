@@ -12,11 +12,11 @@ export const SuperAdminPanel = () => {
     console.log("SuperAdminPanel - Current role:", userRole);
     console.log("SuperAdminPanel - User:", user);
     
-    // Remove hardcoded email check - use only secure role-based authorization
+    // Use only secure role-based authorization
     const hasValidAccess = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
     
     if (user && !hasValidAccess) {
-      toast.error(`Access denied. Superadmin role required. Current role: ${userRole || 'no role assigned'}`);
+      toast.error(`Acceso denegado. Se requiere rol de superadmin. Rol actual: ${userRole || 'sin rol asignado'}`);
     }
   }, [user, userRole, isSuperAdmin]);
 

@@ -30,22 +30,22 @@ export const useUsersWithCards = () => {
 
       console.log("Current user:", userData.user.email);
       
-      // Verificar si es superadmin (más permisivo)
-      const isSuperAdmin = userData.user.email === 'tubal@tubalechaburu.com';
+      // Verificar si es superadmin usando la función RPC
+      const { data: isSuperAdminResult, error: roleError } = await supabase
+        .rpc('is_superadmin', { _user_id: userData.user.id });
       
-      if (!isSuperAdmin) {
-        // También verificar usando la función RPC correcta
-        const { data: rpcResult, error: roleError } = await supabase
-          .rpc('is_superadmin', { _user_id: userData.user.id });
-        
-        if (roleError || !rpcResult) {
-          throw new Error("Solo los superadministradores pueden ver todos los usuarios");
-        }
+      if (roleError) {
+        console.error("Error checking superadmin status:", roleError);
+        throw new Error("Error verificando permisos de administrador");
+      }
+      
+      if (!isSuperAdminResult) {
+        throw new Error("Solo los superadministradores pueden ver todos los usuarios");
       }
       
       console.log("Access granted for superadmin");
       
-      // Get profiles from database - removing role from selection
+      // Get profiles from database - now with RLS policies in place
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, full_name, updated_at');
@@ -57,15 +57,17 @@ export const useUsersWithCards = () => {
       
       console.log("Profiles fetched:", profiles?.length || 0);
       
-      // Get user roles separately
+      // Get user roles separately - now with RLS policies
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
       
       if (rolesError) {
         console.error("Error fetching user roles:", rolesError);
-        // Continue without roles if there's an error
+        throw new Error(`Error al obtener roles: ${rolesError.message}`);
       }
+      
+      console.log("User roles fetched:", userRoles?.length || 0);
       
       // Get all cards directly from cards table
       const { data: cards, error: cardsError } = await supabase
@@ -74,7 +76,7 @@ export const useUsersWithCards = () => {
         
       if (cardsError) {
         console.error("Error fetching cards:", cardsError);
-        // No lanzar error si no se pueden obtener tarjetas, solo continuar sin ellas
+        // Continue without cards if there's an error
         console.log("Continuing without cards data");
       }
       
