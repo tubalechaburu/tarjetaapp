@@ -1,139 +1,142 @@
 
-import React from "react";
-import { TableRow, TableCell } from "@/components/ui/table";
+import React, { useState } from "react";
+import { BusinessCard } from "@/types";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Eye, Edit } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { UserRole } from "@/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { UserWithCards } from "@/types/admin";
-import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Eye, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { deleteCard } from "@/utils/storage";
+import { toast } from "sonner";
+import { EditUserCardForm } from "./EditUserCardForm";
 
 interface SuperAdminUserTableRowProps {
-  user: UserWithCards;
-  isExpanded: boolean;
-  onToggleExpansion: (userId: string) => void;
-  onRoleUpdate: (userId: string, newRole: 'user' | 'superadmin', userName: string) => void;
+  card: BusinessCard;
+  onCardDeleted: (cardId: string) => void;
 }
 
-export const SuperAdminUserTableRow = ({
-  user,
-  isExpanded,
-  onToggleExpansion,
-  onRoleUpdate
-}: SuperAdminUserTableRowProps) => {
+export const SuperAdminUserTableRow: React.FC<SuperAdminUserTableRowProps> = ({
+  card,
+  onCardDeleted,
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const navigate = useNavigate();
 
-  const getRoleBadgeColor = (role: UserRole) => {
-    switch (role) {
-      case 'superadmin': return 'bg-red-500 text-white';
-      default: return 'bg-gray-500 text-white';
+  const handleDelete = async () => {
+    if (card.id && confirm("¿Estás seguro de que quieres eliminar esta tarjeta?")) {
+      try {
+        await deleteCard(card.id);
+        onCardDeleted(card.id);
+        toast.success("Tarjeta eliminada correctamente");
+      } catch (error) {
+        console.error("Error al eliminar la tarjeta:", error);
+        toast.error("Error al eliminar la tarjeta");
+      }
     }
   };
 
-  const handleToggleExpansion = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("🔄 SuperAdminUserTableRow - Toggle clicked for user:", user.id);
-    console.log("🔄 SuperAdminUserTableRow - Current isExpanded:", isExpanded);
-    onToggleExpansion(user.id);
+  const handleEdit = () => {
+    // Set a flag to indicate we came from admin panel
+    sessionStorage.setItem('returnToAdmin', 'true');
+    navigate(`/edit/${card.id}`);
   };
 
-  const navigateToCard = (url: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Store the current admin route to return to it later
-    sessionStorage.setItem('returnToAdmin', 'true');
-    navigate(url);
+  const handleCardSaved = () => {
+    setShowEditForm(false);
+    toast.success("Tarjeta actualizada correctamente");
   };
 
   return (
-    <TableRow className="hover:bg-muted/50">
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleToggleExpansion}
-            className="p-1 h-8 w-8 hover:bg-gray-100 flex items-center justify-center shrink-0"
-          >
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-          <span className="font-medium">{user.full_name || "Sin nombre"}</span>
-        </div>
-      </TableCell>
-      <TableCell className="text-gray-600">{user.email}</TableCell>
-      <TableCell>
-        <Badge className={getRoleBadgeColor(user.role)}>
-          {user.role}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        {user.cards.length > 0 ? (
-          <span className="text-green-600 font-medium">Sí ({user.cards.length})</span>
-        ) : (
-          <span className="text-gray-500">No</span>
-        )}
-      </TableCell>
-      <TableCell className="text-right">
-        <div className="flex gap-1 justify-end">
-          {user.cards.length > 0 && (
-            <>
+    <>
+      <Card className="mb-4">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {card.avatarUrl && (
+                <img 
+                  src={card.avatarUrl} 
+                  alt={card.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              )}
+              <div>
+                <h3 className="font-semibold">{card.name}</h3>
+                <p className="text-sm text-gray-600">{card.email}</p>
+                <p className="text-sm text-gray-500">
+                  {card.company} {card.jobTitle && `- ${card.jobTitle}`}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Link to={`/card/${card.id}`} target="_blank">
+                <Button variant="outline" size="sm">
+                  <Eye className="h-4 w-4" />
+                  Ver
+                </Button>
+              </Link>
+              
               <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-1"
-                onClick={(e) => navigateToCard(`/card/${user.cards[0].id}`, e)}
-              >
-                <Eye className="h-4 w-4" />
-                Ver
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-1"
-                onClick={(e) => navigateToCard(`/edit/${user.cards[0].id}`, e)}
+                variant="outline" 
+                size="sm"
+                onClick={handleEdit}
               >
                 <Edit className="h-4 w-4" />
                 Editar
               </Button>
-            </>
-          )}
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Cambiar rol
+              
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Seleccionar rol</DropdownMenuLabel>
-              <DropdownMenuItem 
-                onClick={() => onRoleUpdate(user.id, 'user', user.full_name || user.email)}
-                disabled={user.role === 'user'}
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDetails(!showDetails)}
               >
-                Usuario {user.role === 'user' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onRoleUpdate(user.id, 'superadmin', user.full_name || user.email)}
-                disabled={user.role === 'superadmin'}
-              >
-                Superadmin {user.role === 'superadmin' && '✓'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </TableCell>
-    </TableRow>
+                {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          
+          {showDetails && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <strong>Teléfono:</strong> {card.phone || 'No especificado'}
+                </div>
+                <div>
+                  <strong>Sitio web:</strong> {card.website || 'No especificado'}
+                </div>
+                <div>
+                  <strong>Dirección:</strong> {card.address || 'No especificado'}
+                </div>
+                <div>
+                  <strong>Creado:</strong> {new Date(card.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+              {card.description && (
+                <div className="mt-2">
+                  <strong>Descripción:</strong> {card.description}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {showEditForm && (
+        <EditUserCardForm
+          cardId={card.id}
+          onClose={() => setShowEditForm(false)}
+          onSaved={handleCardSaved}
+        />
+      )}
+    </>
   );
 };

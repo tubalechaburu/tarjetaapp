@@ -1,8 +1,9 @@
 
 import React from "react";
 import { CardLink } from "@/types";
-import { getLinkIcon, getFormattedUrl } from "@/utils/linkUtils";
+import { getLinkIcon, formatWhatsAppNumber } from "@/utils/linkUtils";
 import { ExternalLink, Mail, Phone, MapPin, Globe, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface CardLinksProps {
   email?: string;
@@ -40,17 +41,26 @@ const CardLinks: React.FC<CardLinksProps> = ({
   const websiteLinkIndex = links.findIndex(link => link.type === 'website');
   const hasWebsiteInLinks = websiteLinkIndex !== -1;
 
-  // Format WhatsApp number correctly
-  const formatWhatsAppNumber = (phoneNumber: string) => {
-    // Remove all non-digit characters
-    let cleanNumber = phoneNumber.replace(/\D/g, '');
+  // Handle WhatsApp click with error handling
+  const handleWhatsAppClick = (e: React.MouseEvent, phoneNumber: string) => {
+    e.preventDefault();
     
-    // Ensure it starts with country code
-    if (!cleanNumber.startsWith('34') && cleanNumber.length === 9) {
-      cleanNumber = '34' + cleanNumber; // Add Spain country code if missing
+    const cleanNumber = formatWhatsAppNumber(phoneNumber);
+    
+    if (!cleanNumber) {
+      toast.error("Número de teléfono no válido para WhatsApp");
+      return;
     }
+
+    const whatsappUrl = `https://wa.me/${cleanNumber}`;
+    console.log("Opening WhatsApp with URL:", whatsappUrl);
     
-    return cleanNumber;
+    try {
+      window.open(whatsappUrl, "_blank");
+    } catch (error) {
+      console.error("Error opening WhatsApp:", error);
+      toast.error("Error al abrir WhatsApp");
+    }
   };
 
   // Website from property (only show if no website in links)
@@ -95,10 +105,9 @@ const CardLinks: React.FC<CardLinksProps> = ({
       {/* Only show automatic WhatsApp if there's no custom WhatsApp link */}
       {phone && !hasWhatsAppInLinks && (
         <a
-          href={`https://wa.me/${formatWhatsAppNumber(phone)}`}
+          href="#"
           style={linkStyle}
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={(e) => handleWhatsAppClick(e, phone)}
         >
           <MessageCircle size={16} />
           <span>WhatsApp</span>
@@ -123,14 +132,25 @@ const CardLinks: React.FC<CardLinksProps> = ({
       {/* Show all links from links array */}
       {links.map((link) => {
         const IconComponent = getLinkIcon(link.type);
-        let href = link.url;
-
-        // Format URL based on link type
+        
+        // Special handling for WhatsApp links
         if (link.type === 'whatsapp') {
-          // For WhatsApp links, format the number correctly
-          const cleanNumber = formatWhatsAppNumber(link.url);
-          href = `https://wa.me/${cleanNumber}`;
-        } else if (link.url && !link.url.match(/^https?:\/\//i)) {
+          return (
+            <a
+              key={link.id || link.url}
+              href="#"
+              style={linkStyle}
+              onClick={(e) => handleWhatsAppClick(e, link.url)}
+            >
+              <IconComponent size={16} />
+              <span>{link.label || link.title || 'WhatsApp'}</span>
+            </a>
+          );
+        }
+
+        // For other link types
+        let href = link.url;
+        if (link.url && !link.url.match(/^https?:\/\//i)) {
           href = `https://${link.url}`;
         }
 

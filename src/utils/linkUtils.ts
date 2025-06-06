@@ -40,17 +40,31 @@ export const getLinkIcon = (type: CardLink["type"]) => {
  * Formats a WhatsApp number correctly
  */
 export const formatWhatsAppNumber = (phoneNumber: string) => {
-  // Remove all non-digit characters
-  let cleanNumber = phoneNumber.replace(/\D/g, "");
+  if (!phoneNumber) return "";
   
-  // Handle Spanish numbers (if 9 digits, add country code)
-  if (cleanNumber.length === 9 && !cleanNumber.startsWith("34")) {
+  // Remove all non-digit characters except +
+  let cleanNumber = phoneNumber.replace(/[^\d+]/g, "");
+  
+  // Remove + from the beginning if present
+  if (cleanNumber.startsWith("+")) {
+    cleanNumber = cleanNumber.substring(1);
+  }
+  
+  // If it's a 9-digit Spanish number, add country code
+  if (cleanNumber.length === 9 && cleanNumber.match(/^[67]/)) {
     cleanNumber = "34" + cleanNumber;
   }
   
-  // Handle numbers that start with + but need country code
-  if (cleanNumber.length === 9) {
-    cleanNumber = "34" + cleanNumber;
+  // If it starts with 34 but has more than 11 digits, it might be malformed
+  if (cleanNumber.startsWith("34") && cleanNumber.length > 11) {
+    // Take only the first 11 digits (34 + 9 digits)
+    cleanNumber = cleanNumber.substring(0, 11);
+  }
+  
+  // Ensure we have a valid international format
+  if (!cleanNumber.match(/^\d{10,15}$/)) {
+    console.warn("Invalid phone number format:", phoneNumber);
+    return "";
   }
   
   return cleanNumber;
@@ -63,6 +77,10 @@ export const getFormattedUrl = (link: CardLink) => {
   if (link.type === "whatsapp") {
     // Format WhatsApp number
     const cleanNumber = formatWhatsAppNumber(link.url);
+    if (!cleanNumber) {
+      console.error("Could not format WhatsApp number:", link.url);
+      return "#";
+    }
     return `https://wa.me/${cleanNumber}`;
   }
   
