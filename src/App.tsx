@@ -15,7 +15,6 @@ import AuthConfirm from "./pages/AuthConfirm";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
 import DemoCard from "./pages/DemoCard";
 import AuthProvider from "./providers/AuthProvider";
 
@@ -40,7 +39,6 @@ const App = () => (
             <Route path="/auth/confirm" element={<AuthConfirm />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
             <Route path="/demo" element={<DemoCard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

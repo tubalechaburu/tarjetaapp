@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthContext";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Shield, LogOut } from "lucide-react";
+import { User, Shield, LogOut } from "lucide-react";
 
 const Header = () => {
   const { user, userRole, signOut } = useAuth();
@@ -47,13 +47,6 @@ const Header = () => {
                   <Button variant="ghost" size="sm" className="gap-1">
                     <User className="h-4 w-4" />
                     Perfil
-                  </Button>
-                </Link>
-                
-                <Link to="/settings">
-                  <Button variant="ghost" size="sm" className="gap-1">
-                    <Settings className="h-4 w-4" />
-                    Configuración
                   </Button>
                 </Link>
 

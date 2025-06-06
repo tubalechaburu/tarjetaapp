@@ -13,7 +13,7 @@ import CardForm from "@/components/CardForm";
 const EditCard = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole, isSuperAdmin } = useAuth();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,8 +23,11 @@ const EditCard = () => {
         try {
           const foundCard = await getCardById(id);
           if (foundCard) {
-            // Verificar que el usuario es el propietario de la tarjeta
-            if (user && foundCard.userId !== user.id) {
+            // Verificar permisos: propietario de la tarjeta O superadmin
+            const isOwner = user && foundCard.userId === user.id;
+            const isSuperAdminUser = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
+            
+            if (!isOwner && !isSuperAdminUser) {
               toast.error("No tienes permisos para editar esta tarjeta");
               navigate("/dashboard");
               return;
@@ -45,7 +48,7 @@ const EditCard = () => {
     };
 
     fetchCard();
-  }, [id, navigate, user]);
+  }, [id, navigate, user, userRole, isSuperAdmin]);
 
   const getBackRoute = () => {
     // Check if we came from admin panel
