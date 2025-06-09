@@ -62,16 +62,16 @@ class AuthService {
   async signIn(email: string, password: string): Promise<void> {
     // Input validation
     if (!validateEmail(email)) {
-      throw new Error('Please enter a valid email address');
+      throw new Error('Por favor introduce una dirección de correo válida');
     }
 
-    if (!password || password.length < 8) {
-      throw new Error('Password must be at least 8 characters long');
+    if (!password || password.length < 6) {
+      throw new Error('La contraseña debe tener al menos 6 caracteres');
     }
 
     // Check for account lockout
     if (this.isAccountLocked(email)) {
-      throw new Error('Account temporarily locked due to too many failed attempts. Please try again in 15 minutes.');
+      throw new Error('Cuenta bloqueada temporalmente por demasiados intentos fallidos. Inténtalo de nuevo en 15 minutos.');
     }
 
     const sanitizedEmail = sanitizeInput(email, 254);
@@ -84,29 +84,44 @@ class AuthService {
 
       if (error) {
         this.recordFailedAttempt(sanitizedEmail);
-        throw new Error(sanitizeErrorMessage(error));
+        
+        // Mejorar los mensajes de error
+        let errorMessage = "Error al iniciar sesión";
+        
+        if (error.message === "Invalid login credentials") {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión. Revisa tu correo.";
+        } else if (error.message.includes("too many requests")) {
+          errorMessage = "Demasiados intentos. Espera unos minutos antes de intentar de nuevo.";
+        } else {
+          errorMessage = sanitizeErrorMessage(error);
+        }
+        
+        throw new Error(errorMessage);
       }
 
       // Clear failed attempts on successful login
       this.clearAttempts(sanitizedEmail);
       
       console.log("Secure sign in successful:", data.user?.email);
-      toast.success("Signed in successfully");
+      toast.success("Sesión iniciada correctamente");
     } catch (error: any) {
       console.error("Secure sign in failed:", error);
-      throw new Error(sanitizeErrorMessage(error));
+      // Re-throw the error so it can be handled by the form
+      throw error;
     }
   }
 
   async signUp(email: string, password: string, metadata?: any): Promise<void> {
     // Input validation
     if (!validateEmail(email)) {
-      throw new Error('Please enter a valid email address');
+      throw new Error('Por favor introduce una dirección de correo válida');
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      throw new Error(`Password requirements not met: ${passwordValidation.errors.join(', ')}`);
+      throw new Error(`Requisitos de contraseña no cumplidos: ${passwordValidation.errors.join(', ')}`);
     }
 
     const sanitizedEmail = sanitizeInput(email, 254);
@@ -120,19 +135,29 @@ class AuthService {
         password,
         options: {
           data: sanitizedMetadata,
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: `${window.location.origin}/auth/confirm`
         },
       });
 
       if (error) {
-        throw new Error(sanitizeErrorMessage(error));
+        let errorMessage = "Error al registrarse";
+        
+        if (error.message.includes("User already registered")) {
+          errorMessage = "Este email ya está registrado. Intenta iniciar sesión o usar otro email.";
+        } else if (error.message.includes("Password should be")) {
+          errorMessage = "La contraseña no cumple con los requisitos de seguridad.";
+        } else {
+          errorMessage = sanitizeErrorMessage(error);
+        }
+        
+        throw new Error(errorMessage);
       }
 
       console.log("Secure sign up successful:", data.user?.email);
-      toast.success("Registration successful. Please verify your email address.");
+      toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
     } catch (error: any) {
       console.error("Secure sign up failed:", error);
-      throw new Error(sanitizeErrorMessage(error));
+      throw error;
     }
   }
 
@@ -144,10 +169,9 @@ class AuthService {
         throw new Error(sanitizeErrorMessage(error));
       }
 
-      // Clear any sensitive data from localStorage using a safer approach
+      // Clear any sensitive data from localStorage
       try {
         localStorage.removeItem('supabase.auth.token');
-        // Use the project ID from the known Supabase URL
         localStorage.removeItem('sb-tsrspstmwuxjqjnrymwm-auth-token');
         localStorage.removeItem(this.attemptKey);
       } catch (e) {
@@ -155,7 +179,7 @@ class AuthService {
       }
 
       console.log("Secure sign out successful");
-      toast.success("Signed out successfully");
+      toast.success("Sesión cerrada correctamente");
       
       // Force redirect to prevent cached data access
       window.location.href = '/landing';
@@ -167,7 +191,7 @@ class AuthService {
 
   async resetPassword(email: string): Promise<void> {
     if (!validateEmail(email)) {
-      throw new Error('Please enter a valid email address');
+      throw new Error('Por favor introduce una dirección de correo válida');
     }
 
     const sanitizedEmail = sanitizeInput(email, 254);
@@ -184,7 +208,7 @@ class AuthService {
         throw new Error(sanitizeErrorMessage(error));
       }
 
-      toast.success("Password reset instructions sent to your email");
+      toast.success("Instrucciones de recuperación enviadas a tu email");
     } catch (error: any) {
       console.error("Secure password reset failed:", error);
       throw new Error(sanitizeErrorMessage(error));

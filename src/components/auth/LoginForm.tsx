@@ -4,10 +4,10 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AuthFormValues } from "@/types";
-import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormProps {
   onForgotPassword: () => void;
@@ -34,18 +34,46 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
     console.log("LoginForm: handleSubmit called with:", { email: data.email });
     
     if (!data.email || !data.password) {
-      toast.error("Por favor completa todos los campos");
+      form.setError("root", {
+        type: "manual",
+        message: "Por favor completa todos los campos"
+      });
       return;
     }
     
     try {
       setIsSubmitting(true);
+      // Limpiar errores previos
+      form.clearErrors();
       console.log("LoginForm: Calling onSubmit...");
       await onSubmit(data);
       console.log("LoginForm: onSubmit completed successfully");
     } catch (error: any) {
       console.error("LoginForm: Error during submit:", error);
-      // Error handling is done in the parent component or authUtils
+      
+      // Mostrar mensaje de error específico
+      let errorMessage = "Error al iniciar sesión. Por favor, inténtalo de nuevo.";
+      
+      if (error.message) {
+        if (error.message.includes("Invalid login credentials") || 
+            error.message.includes("Invalid credentials") ||
+            error.message.includes("Credenciales incorrectas")) {
+          errorMessage = "Email o contraseña incorrectos. Verifica tus datos.";
+        } else if (error.message.includes("Email not confirmed") ||
+                   error.message.includes("no confirmado")) {
+          errorMessage = "Debes confirmar tu email antes de iniciar sesión. Revisa tu correo.";
+        } else if (error.message.includes("too many requests") ||
+                   error.message.includes("Account temporarily locked")) {
+          errorMessage = "Demasiados intentos fallidos. Espera unos minutos antes de intentar de nuevo.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      form.setError("root", {
+        type: "manual",
+        message: errorMessage
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -139,6 +167,15 @@ export const LoginForm = ({ onForgotPassword, onSubmit }: LoginFormProps) => {
           Recordar en este dispositivo
         </label>
       </div>
+      
+      {form.formState.errors.root && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {form.formState.errors.root.message}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Button 
         type="submit" 

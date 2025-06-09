@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail } from "lucide-react";
+import { Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AuthFormValues } from "@/types";
 import { Link } from "react-router-dom";
@@ -27,13 +27,12 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
       fullName: "",
       acceptTerms: false
     },
-    mode: "onChange" // Validar al cambiar los campos
+    mode: "onChange"
   });
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (data: AuthFormValues) => {
-    // Verificación explícita del checkbox
     if (data.acceptTerms !== true) {
       form.setError("acceptTerms", {
         type: "manual",
@@ -46,7 +45,7 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
       setIsSubmitting(true);
       await onSubmit(data);
       setRegistrationSuccess(true);
-      onSuccess();
+      // No llamamos onSuccess() inmediatamente, mostramos el mensaje primero
     } catch (error: any) {
       console.error("Error en registro:", error);
       form.setError("root", { 
@@ -62,16 +61,20 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
     return (
       <div className="space-y-4">
         <Alert className="bg-green-50 border-green-200">
-          <Mail className="h-4 w-4" />
-          <AlertTitle>¡Registro exitoso!</AlertTitle>
-          <AlertDescription>
-            Te hemos enviado un correo de confirmación a tu dirección de email. 
-            Por favor, revisa tu bandeja de entrada y haz clic en el enlace para verificar tu cuenta.
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800">¡Registro exitoso!</AlertTitle>
+          <AlertDescription className="text-green-700">
+            <strong>Importante:</strong> Hemos enviado un correo de confirmación a tu dirección de email. 
+            <br /><br />
+            <strong>Debes hacer clic en el enlace del correo para activar tu cuenta</strong> antes de poder iniciar sesión.
+            <br /><br />
+            Si no ves el correo en tu bandeja de entrada, revisa también la carpeta de spam o correo no deseado.
           </AlertDescription>
         </Alert>
         <Button 
           onClick={onSuccess}
           className="w-full"
+          variant="outline"
         >
           Ir a iniciar sesión
         </Button>
@@ -87,6 +90,7 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
           id="register-name"
           type="text"
           placeholder="Tu nombre"
+          disabled={isSubmitting}
           {...form.register("fullName", {
             required: "El nombre es obligatorio"
           })}
@@ -104,6 +108,7 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
           id="register-email"
           type="email"
           placeholder="tu@email.com"
+          disabled={isSubmitting}
           {...form.register("email", {
             required: "El correo electrónico es obligatorio",
             pattern: {
@@ -126,6 +131,7 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
             id="register-password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
+            disabled={isSubmitting}
             {...form.register("password", {
               required: "La contraseña es obligatoria",
               minLength: {
@@ -140,6 +146,7 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
             size="icon"
             className="absolute right-0 top-0 h-full"
             onClick={togglePasswordVisibility}
+            disabled={isSubmitting}
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />
@@ -158,9 +165,9 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
       <div className="flex items-start space-x-2">
         <Checkbox 
           id="terms" 
+          disabled={isSubmitting}
           onCheckedChange={(checked) => {
             form.setValue("acceptTerms", checked === true);
-            // Limpiar el error si se marca el checkbox
             if (checked) {
               form.clearErrors("acceptTerms");
             }
@@ -189,7 +196,6 @@ const RegisterForm = ({ onSubmit, onSuccess }: RegisterFormProps) => {
         </div>
       </div>
       
-      {/* Root error message */}
       {form.formState.errors.root && (
         <Alert variant="destructive" className="mt-4">
           <AlertDescription>
