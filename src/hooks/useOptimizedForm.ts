@@ -1,4 +1,5 @@
 
+
 import { useForm, UseFormProps, FieldValues, UseFormReturn, Path, PathValue } from "react-hook-form";
 import { useMemo, useCallback } from "react";
 import { useErrorHandler } from "./useErrorHandler";
@@ -125,15 +126,15 @@ export const useFieldValidation = <T extends FieldValues>(
   form: UseFormReturn<T>,
   fieldName: Path<T>
 ) => {
-  const fieldError = form.formState.errors[fieldName];
-  const isTouched = form.formState.touchedFields[fieldName];
+  const fieldState = form.getFieldState(fieldName, form.formState);
   const fieldValue = form.watch(fieldName);
 
   const validationState = useMemo(() => ({
-    hasError: !!fieldError && !!isTouched,
-    errorMessage: fieldError?.message as string,
-    isValid: !fieldError && !!isTouched && !!fieldValue,
-  }), [fieldError, isTouched, fieldValue]);
+    hasError: !!fieldState.error && !!fieldState.isTouched,
+    errorMessage: fieldState.error?.message as string,
+    isValid: !fieldState.error && !!fieldState.isTouched && !!fieldValue,
+  }), [fieldState.error, fieldState.isTouched, fieldValue]);
 
   return validationState;
 };
+
