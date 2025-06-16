@@ -27,7 +27,7 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       return null;
     }
 
-    console.log("👤 User authenticated:", userData.user.email);
+    console.log("👤 User authenticated:", userData.user.email, "User ID:", userData.user.id);
 
     // Check if user is superadmin
     const isSuperAdmin = await checkSuperAdminAccess();
@@ -39,9 +39,20 @@ export const getCardsSupabase = async (): Promise<BusinessCard[] | null> => {
       return await getAllCardsForAdmin();
     }
     
-    // For regular users, get only their cards
-    console.log("👤 Regular user, fetching own cards...");
-    return await getUserCardsFromSupabase(userData.user.id);
+    // For regular users, get only their cards with explicit user_id filter
+    console.log("👤 Regular user, fetching own cards for user ID:", userData.user.id);
+    const userCards = await getUserCardsFromSupabase(userData.user.id);
+    
+    if (userCards) {
+      console.log("✅ User cards loaded:", userCards.length, "cards found");
+      userCards.forEach(card => {
+        console.log(`📋 Card: ${card.name} (ID: ${card.id}, User: ${card.userId})`);
+      });
+    } else {
+      console.log("📭 No cards found for user");
+    }
+    
+    return userCards;
   } catch (supabaseError) {
     console.error("💥 Error in getCardsSupabase:", supabaseError);
     return null;

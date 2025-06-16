@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BusinessCard } from "@/types";
 import { getCardsSupabase } from "@/utils/supabaseStorage";
@@ -42,46 +41,75 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
         setError(null);
         setLoading(true);
         
-        // Use RLS-protected query - will automatically filter based on user permissions
-        console.log("👤 Loading cards using RLS policies...");
-        const { data: cardsData, error: cardsError } = await supabase
-          .from('cards')
-          .select('*');
+        const isSuperAdminUser = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
+        console.log("🎭 User is superadmin:", isSuperAdminUser);
         
-        if (cardsError) {
-          console.error("❌ Error loading cards:", cardsError);
-          // Don't show error for permission denied - it's expected for new users
-          if (!cardsError.message?.includes('permission denied')) {
-            toast.error("Error al cargar las tarjetas");
-          }
-          setUserCards([]);
-          setAllCards([]);
-          setUserCard(null);
-        } else {
-          console.log("✅ Cards loaded (RLS-filtered):", cardsData?.length || 0);
-          const mappedCards = (cardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+        if (isSuperAdminUser) {
+          // For superadmin: Load all cards AND their own cards separately
+          console.log("🔐 Loading all cards for superadmin...");
+          const { data: allCardsData, error: allCardsError } = await supabase
+            .from('cards')
+            .select('*');
           
-          // For regular users, these will be their own cards
-          // For superadmins, these will be all cards in the system
-          const isSuperAdminUser = userRole === 'superadmin' || (isSuperAdmin && isSuperAdmin());
-          
-          if (isSuperAdminUser) {
-            // Superadmin sees all cards
-            setAllCards(mappedCards);
-            // Find their own cards within all cards
-            const ownCards = mappedCards.filter(card => card.userId === user.id);
-            setUserCards(ownCards);
-            setUserCard(ownCards.length > 0 ? ownCards[0] : null);
-            if (mappedCards.length > 0) {
-              toast.success(`${mappedCards.length} tarjetas cargadas en el panel de administración`);
-            }
+          if (allCardsError) {
+            console.error("❌ Error loading all cards:", allCardsError);
+            toast.error("Error al cargar todas las tarjetas");
+            setAllCards([]);
           } else {
-            // Regular user sees only their own cards
+            console.log("✅ All cards loaded:", allCardsData?.length || 0);
+            const mappedAllCards = (allCardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+            setAllCards(mappedAllCards);
+          }
+          
+          // Load superadmin's own cards
+          const { data: ownCardsData, error: ownCardsError } = await supabase
+            .from('cards')
+            .select('*')
+            .eq('user_id', user.id);
+          
+          if (ownCardsError) {
+            console.error("❌ Error loading own cards:", ownCardsError);
+            setUserCards([]);
+            setUserCard(null);
+          } else {
+            console.log("✅ Own cards loaded:", ownCardsData?.length || 0);
+            const mappedOwnCards = (ownCardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+            setUserCards(mappedOwnCards);
+            setUserCard(mappedOwnCards.length > 0 ? mappedOwnCards[0] : null);
+          }
+        } else {
+          // For regular users: Only load their own cards
+          console.log("👤 Loading cards for regular user:", user.id);
+          const { data: cardsData, error: cardsError } = await supabase
+            .from('cards')
+            .select('*')
+            .eq('user_id', user.id);
+          
+          if (cardsError) {
+            console.error("❌ Error loading user cards:", cardsError);
+            if (!cardsError.message?.includes('permission denied')) {
+              toast.error("Error al cargar las tarjetas");
+            }
+            setUserCards([]);
+            setUserCard(null);
+          } else {
+            console.log("✅ User cards loaded:", cardsData?.length || 0);
+            const mappedCards = (cardsData || []).map(item => mapSupabaseToBusinessCard(item as SupabaseBusinessCard));
+            
+            // Log each card to verify ownership
+            mappedCards.forEach(card => {
+              console.log(`📋 Card loaded: ${card.name} (ID: ${card.id}, Owner: ${card.userId})`);
+              if (card.userId !== user.id) {
+                console.warn(`⚠️ WARNING: Card ${card.name} belongs to ${card.userId}, not current user ${user.id}`);
+              }
+            });
+            
             setUserCards(mappedCards);
             setUserCard(mappedCards.length > 0 ? mappedCards[0] : null);
             setAllCards([]); // Regular users don't see admin panel
+            
             if (mappedCards.length > 0) {
-              toast.success("Tus tarjetas cargadas correctamente");
+              toast.success(`${mappedCards.length} tarjeta(s) cargada(s) correctamente`);
             }
           }
         }
@@ -89,7 +117,6 @@ export const DashboardContainer = ({ connectionStatus }: DashboardContainerProps
       } catch (error) {
         console.error("💥 Error loading data:", error);
         setError("Error al cargar los datos");
-        // Don't show toast for every error to avoid spam
       } finally {
         setLoading(false);
       }

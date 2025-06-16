@@ -25,14 +25,16 @@ const AuthConfirm = () => {
 
         let result;
 
-        if (token_hash) {
+        if (token_hash && type) {
           // Use token_hash for newer email confirmations
+          console.log('Using token_hash verification method');
           result = await supabase.auth.verifyOtp({
             token_hash,
             type: type as any
           });
         } else if (token) {
-          // Use token for older email confirmations - need to include email for this method
+          // Use token for older email confirmations
+          console.log('Using token verification method');
           const email = searchParams.get('email');
           if (!email) {
             throw new Error('Email requerido para verificación con token');
@@ -43,10 +45,23 @@ const AuthConfirm = () => {
             type: type as any
           });
         } else {
+          // Try to handle the confirmation automatically if no explicit tokens
+          console.log('No tokens found, checking current session...');
+          const { data: session } = await supabase.auth.getSession();
+          if (session.session) {
+            console.log('User already has active session');
+            setStatus('success');
+            setMessage('Tu cuenta ya está activada. Redirigiendo...');
+            setTimeout(() => {
+              navigate('/dashboard', { replace: true });
+            }, 2000);
+            return;
+          }
           throw new Error('No hay token de confirmación válido');
         }
 
         if (result.error) {
+          console.error('Verification error:', result.error);
           throw result.error;
         }
 
@@ -73,7 +88,20 @@ const AuthConfirm = () => {
       } catch (error: any) {
         console.error('Error confirming auth:', error);
         setStatus('error');
-        setMessage(error.message || 'Ha ocurrido un error al confirmar tu cuenta');
+        
+        let errorMessage = 'Ha ocurrido un error al confirmar tu cuenta';
+        
+        if (error.message?.includes('Token has expired')) {
+          errorMessage = 'El enlace de confirmación ha expirado. Por favor, solicita un nuevo enlace de confirmación.';
+        } else if (error.message?.includes('Invalid token')) {
+          errorMessage = 'El enlace de confirmación no es válido. Verifica que hayas copiado la URL completa.';
+        } else if (error.message?.includes('User not found')) {
+          errorMessage = 'No se encontró el usuario. Por favor, regístrate nuevamente.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        setMessage(errorMessage);
         toast.error('Error al confirmar la cuenta');
       }
     };

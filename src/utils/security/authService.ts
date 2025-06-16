@@ -216,6 +216,8 @@ class AuthService {
     } : undefined;
 
     try {
+      console.log("Attempting signup with redirect URL:", `${window.location.origin}/auth/confirm`);
+      
       const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
@@ -240,7 +242,13 @@ class AuthService {
       }
 
       console.log("Secure sign up successful:", data.user?.email);
-      toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
+      console.log("Signup data:", data);
+      
+      if (data.user && !data.session) {
+        toast.success("Registro exitoso. Por favor verifica tu correo electrónico antes de iniciar sesión.");
+      } else {
+        toast.success("Registro exitoso. Ya puedes usar la aplicación.");
+      }
     } catch (error: any) {
       console.error("Secure sign up failed:", error);
       throw error;
