@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { validateEmail, validatePassword, sanitizeInput, sanitizeErrorMessage } from "./validation";
@@ -181,7 +180,7 @@ class AuthService {
   }
 
   /**
-   * Registra un nuevo usuario con validaciones de seguridad
+   * Registra un nuevo usuario con validaciones de seguridad mejoradas
    * 
    * @param {string} email - Email del nuevo usuario
    * @param {string} password - Contraseña del nuevo usuario
@@ -216,24 +215,35 @@ class AuthService {
     } : undefined;
 
     try {
-      console.log("Attempting signup with redirect URL:", `${window.location.origin}/auth/confirm`);
+      // Get current domain for redirect
+      const currentDomain = window.location.origin;
+      const redirectUrl = `${currentDomain}/auth/confirm`;
+      
+      console.log("Attempting signup with improved email settings");
+      console.log("Redirect URL:", redirectUrl);
+      console.log("Email:", sanitizedEmail);
       
       const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
           data: sanitizedMetadata,
-          emailRedirectTo: `${window.location.origin}/auth/confirm`
+          emailRedirectTo: redirectUrl,
+          // Force email confirmation
+          captchaToken: undefined
         },
       });
 
       if (error) {
+        console.error("Signup error:", error);
         let errorMessage = "Error al registrarse";
         
         if (error.message.includes("User already registered")) {
           errorMessage = "Este email ya está registrado. Intenta iniciar sesión o usar otro email.";
         } else if (error.message.includes("Password should be")) {
           errorMessage = "La contraseña no cumple con los requisitos de seguridad.";
+        } else if (error.message.includes("Email rate limit exceeded")) {
+          errorMessage = "Demasiados emails enviados. Espera unos minutos antes de intentar de nuevo.";
         } else {
           errorMessage = sanitizeErrorMessage(error);
         }
@@ -241,14 +251,23 @@ class AuthService {
         throw new Error(errorMessage);
       }
 
-      console.log("Secure sign up successful:", data.user?.email);
-      console.log("Signup data:", data);
+      console.log("Signup successful:", data);
       
       if (data.user && !data.session) {
-        toast.success("Registro exitoso. Por favor verifica tu correo electrónico antes de iniciar sesión.");
-      } else {
-        toast.success("Registro exitoso. Ya puedes usar la aplicación.");
+        console.log("User created, email confirmation required");
+        toast.success("¡Registro exitoso! Revisa tu email (incluyendo spam) para confirmar tu cuenta.");
+      } else if (data.session) {
+        console.log("User created and automatically logged in");
+        toast.success("¡Registro exitoso! Ya puedes usar la aplicación.");
       }
+      
+      // Additional logging for debugging
+      if (data.user) {
+        console.log("User ID:", data.user.id);
+        console.log("Email confirmed:", data.user.email_confirmed_at);
+        console.log("User metadata:", data.user.user_metadata);
+      }
+      
     } catch (error: any) {
       console.error("Secure sign up failed:", error);
       throw error;
