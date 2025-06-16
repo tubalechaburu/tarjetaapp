@@ -3,16 +3,45 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { validateEmail, validatePassword, sanitizeInput, sanitizeErrorMessage } from "./validation";
 
+/**
+ * Interface para intentos de inicio de sesión
+ */
 interface SignInAttempt {
   timestamp: number;
   email: string;
 }
 
+/**
+ * Servicio de autenticación seguro con protecciones contra ataques de fuerza bruta
+ * y validación de entrada robusta
+ * 
+ * Características principales:
+ * - Limitación de intentos de inicio de sesión
+ * - Validación y sanitización de entradas
+ * - Gestión segura de sesiones
+ * - Mensajes de error seguros
+ * 
+ * @example
+ * ```typescript
+ * import { authService } from '@/utils/security/authService';
+ * 
+ * try {
+ *   await authService.signIn(email, password);
+ * } catch (error) {
+ *   console.error('Error de autenticación:', error.message);
+ * }
+ * ```
+ */
 class AuthService {
   private maxAttempts = 5;
-  private lockoutDuration = 15 * 60 * 1000; // 15 minutes
+  private lockoutDuration = 15 * 60 * 1000; // 15 minutos
   private attemptKey = 'auth_attempts';
 
+  /**
+   * Obtiene los intentos de inicio de sesión almacenados localmente
+   * @returns {SignInAttempt[]} Array de intentos de inicio de sesión
+   * @private
+   */
   private getAttempts(): SignInAttempt[] {
     try {
       const stored = localStorage.getItem(this.attemptKey);
@@ -22,6 +51,11 @@ class AuthService {
     }
   }
 
+  /**
+   * Almacena los intentos de inicio de sesión en localStorage
+   * @param {SignInAttempt[]} attempts - Array de intentos a almacenar
+   * @private
+   */
   private setAttempts(attempts: SignInAttempt[]): void {
     try {
       localStorage.setItem(this.attemptKey, JSON.stringify(attempts));
@@ -30,6 +64,12 @@ class AuthService {
     }
   }
 
+  /**
+   * Verifica si una cuenta está bloqueada por demasiados intentos fallidos
+   * @param {string} email - Email de la cuenta a verificar
+   * @returns {boolean} True si la cuenta está bloqueada
+   * @private
+   */
   private isAccountLocked(email: string): boolean {
     const attempts = this.getAttempts();
     const recentAttempts = attempts.filter(
@@ -41,6 +81,11 @@ class AuthService {
     return recentAttempts.length >= this.maxAttempts;
   }
 
+  /**
+   * Registra un intento fallido de inicio de sesión
+   * @param {string} email - Email del intento fallido
+   * @private
+   */
   private recordFailedAttempt(email: string): void {
     const attempts = this.getAttempts();
     attempts.push({ timestamp: Date.now(), email });
@@ -53,12 +98,34 @@ class AuthService {
     this.setAttempts(recentAttempts);
   }
 
+  /**
+   * Limpia los intentos fallidos para un email específico
+   * @param {string} email - Email para limpiar intentos
+   * @private
+   */
   private clearAttempts(email: string): void {
     const attempts = this.getAttempts();
     const filteredAttempts = attempts.filter(attempt => attempt.email !== email);
     this.setAttempts(filteredAttempts);
   }
 
+  /**
+   * Inicia sesión de usuario con validaciones de seguridad
+   * 
+   * @param {string} email - Email del usuario
+   * @param {string} password - Contraseña del usuario
+   * @throws {Error} Si las credenciales son inválidas o la cuenta está bloqueada
+   * 
+   * @example
+   * ```typescript
+   * try {
+   *   await authService.signIn('user@example.com', 'securePassword123');
+   *   console.log('Inicio de sesión exitoso');
+   * } catch (error) {
+   *   console.error('Error:', error.message);
+   * }
+   * ```
+   */
   async signIn(email: string, password: string): Promise<void> {
     // Input validation
     if (!validateEmail(email)) {
@@ -113,6 +180,25 @@ class AuthService {
     }
   }
 
+  /**
+   * Registra un nuevo usuario con validaciones de seguridad
+   * 
+   * @param {string} email - Email del nuevo usuario
+   * @param {string} password - Contraseña del nuevo usuario
+   * @param {any} metadata - Metadata adicional del usuario
+   * @throws {Error} Si los datos son inválidos o el registro falla
+   * 
+   * @example
+   * ```typescript
+   * try {
+   *   await authService.signUp('user@example.com', 'securePassword123', {
+   *     full_name: 'Juan Pérez'
+   *   });
+   * } catch (error) {
+   *   console.error('Error en registro:', error.message);
+   * }
+   * ```
+   */
   async signUp(email: string, password: string, metadata?: any): Promise<void> {
     // Input validation
     if (!validateEmail(email)) {
@@ -161,6 +247,20 @@ class AuthService {
     }
   }
 
+  /**
+   * Cierra la sesión del usuario actual y limpia datos sensibles
+   * 
+   * @throws {Error} Si el cierre de sesión falla
+   * 
+   * @example
+   * ```typescript
+   * try {
+   *   await authService.signOut();
+   * } catch (error) {
+   *   console.error('Error al cerrar sesión:', error.message);
+   * }
+   * ```
+   */
   async signOut(): Promise<void> {
     try {
       const { error } = await supabase.auth.signOut();
@@ -189,6 +289,12 @@ class AuthService {
     }
   }
 
+  /**
+   * Envía un email de recuperación de contraseña
+   * 
+   * @param {string} email - Email del usuario
+   * @throws {Error} Si el email es inválido o el envío falla
+   */
   async resetPassword(email: string): Promise<void> {
     if (!validateEmail(email)) {
       throw new Error('Por favor introduce una dirección de correo válida');
@@ -215,6 +321,19 @@ class AuthService {
     }
   }
 
+  /**
+   * Valida si la sesión actual es válida
+   * 
+   * @returns {Promise<boolean>} True si la sesión es válida
+   * 
+   * @example
+   * ```typescript
+   * const isValid = await authService.validateSession();
+   * if (!isValid) {
+   *   // Redirigir a login
+   * }
+   * ```
+   */
   async validateSession(): Promise<boolean> {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -232,4 +351,8 @@ class AuthService {
   }
 }
 
+/**
+ * Instancia singleton del servicio de autenticación
+ * @type {AuthService}
+ */
 export const authService = new AuthService();
