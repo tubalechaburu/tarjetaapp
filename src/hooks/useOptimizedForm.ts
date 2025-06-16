@@ -1,5 +1,5 @@
 
-import { useForm, UseFormProps, FieldValues, UseFormReturn } from "react-hook-form";
+import { useForm, UseFormProps, FieldValues, UseFormReturn, Path, PathValue } from "react-hook-form";
 import { useMemo, useCallback } from "react";
 import { useErrorHandler } from "./useErrorHandler";
 
@@ -69,7 +69,7 @@ export const useOptimizedForm = <T extends FieldValues>({
   /**
    * Resetea el formulario con valores opcionales
    */
-  const resetForm = useCallback((values?: Partial<T>) => {
+  const resetForm = useCallback((values?: T) => {
     form.reset(values);
   }, [form]);
 
@@ -92,7 +92,7 @@ export const useOptimizedForm = <T extends FieldValues>({
    */
   const setFormValues = useCallback((values: Partial<T>) => {
     Object.entries(values).forEach(([key, value]) => {
-      form.setValue(key as keyof T, value);
+      form.setValue(key as Path<T>, value as PathValue<T, Path<T>>);
     });
   }, [form]);
 
@@ -123,11 +123,11 @@ export const useOptimizedForm = <T extends FieldValues>({
  */
 export const useFieldValidation = <T extends FieldValues>(
   form: UseFormReturn<T>,
-  fieldName: keyof T
+  fieldName: Path<T>
 ) => {
   const fieldError = form.formState.errors[fieldName];
   const isTouched = form.formState.touchedFields[fieldName];
-  const fieldValue = form.watch(fieldName as string);
+  const fieldValue = form.watch(fieldName);
 
   const validationState = useMemo(() => ({
     hasError: !!fieldError && !!isTouched,
