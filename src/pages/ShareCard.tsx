@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getCardById } from "@/utils/storage";
+import { getCardByIdSupabase } from "@/utils/supabase/cardOperations";
 import { BusinessCard } from "@/types";
 import Footer from "@/components/Footer";
 import ShareCardHeader from "@/components/navigation/ShareCardHeader";
@@ -29,30 +29,20 @@ const ShareCard = () => {
         setLoading(true);
         setError(null);
         try {
-          console.log("ShareCard: Fetching card with ID:", id);
-          // Try multiple times with a delay to ensure we get the data
-          let attempts = 0;
-          let foundCard = null;
+          console.log("ShareCard: Fetching card with ID from Supabase:", id);
           
-          while (!foundCard && attempts < 3) {
-            foundCard = await getCardById(id);
-            console.log(`ShareCard: Card fetch attempt ${attempts + 1} result:`, foundCard);
-            
-            if (!foundCard && attempts < 2) {
-              // Wait before trying again
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            attempts++;
-          }
+          // Intentar obtener directamente de Supabase (ahora es público)
+          const foundCard = await getCardByIdSupabase(id);
           
           if (foundCard) {
+            console.log("✅ Card found in Supabase:", foundCard.name);
             setCard(foundCard);
           } else {
-            console.error("Tarjeta no encontrada");
-            setError(`Tarjeta con ID ${id} no encontrada en la base de datos o almacenamiento local`);
+            console.error("❌ Card not found in Supabase");
+            setError(`Tarjeta con ID ${id} no encontrada. Es posible que no se haya sincronizado correctamente o haya sido eliminada.`);
           }
         } catch (error) {
-          console.error("Error al cargar la tarjeta:", error);
+          console.error("💥 Error al cargar la tarjeta:", error);
           setError(`Error al cargar la tarjeta: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
           setLoading(false);

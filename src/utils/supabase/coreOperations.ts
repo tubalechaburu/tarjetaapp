@@ -33,17 +33,26 @@ export const saveCardToSupabase = async (card: BusinessCard): Promise<boolean> =
       userId: user.id // Ensure correct user ID
     });
     
+    console.log("📤 Upserting card to Supabase with data:", {
+      id: supabaseCard.id,
+      name: supabaseCard.name,
+      user_id: supabaseCard.user_id
+    });
+    
     // Secure upsert with RLS protection
     const { data, error } = await supabase
       .from('cards')
-      .upsert(supabaseCard)
+      .upsert(supabaseCard, { 
+        onConflict: 'id',
+        ignoreDuplicates: false 
+      })
       .select();
     
     if (error) {
       console.error("❌ Supabase error:", sanitizeErrorMessage(error));
       return handleSupabaseError(error, sanitizeErrorMessage("Card could not be saved"));
     } else {
-      console.log("✅ Card saved successfully:", data);
+      console.log("✅ Card saved successfully to Supabase:", data);
       return true;
     }
   } catch (supabaseError) {
@@ -86,17 +95,8 @@ export const getCardByIdFromSupabase = async (id: string): Promise<BusinessCard 
   try {
     console.log(`🔍 Loading card ${id} from Supabase...`);
     
-    // Secure authentication check
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      console.error("❌ No user authenticated:", sanitizeErrorMessage(userError));
-      return null;
-    }
-
-    console.log("👤 User authenticated:", userData.user.email);
-
-    // RLS policies will automatically handle access control
+    // Con las nuevas políticas RLS, cualquiera puede ver las tarjetas
+    // No necesitamos verificar autenticación para lectura
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -109,11 +109,11 @@ export const getCardByIdFromSupabase = async (id: string): Promise<BusinessCard 
     }
     
     if (!data) {
-      console.log(`📭 Card ${id} not found or not accessible`);
+      console.log(`📭 Card ${id} not found in Supabase`);
       return null;
     }
     
-    console.log("✅ Card found:", data.name);
+    console.log("✅ Card found in Supabase:", data.name);
     const mappedCard = mapSupabaseToBusinessCard(data as SupabaseBusinessCard);
     return mappedCard;
   } catch (supabaseError) {
