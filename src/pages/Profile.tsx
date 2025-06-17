@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
 import { useAuth } from "@/providers/AuthContext";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +81,6 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Header />
         <ProfileLoading />
       </div>
     );
@@ -91,8 +88,6 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Header />
-      
       <div className="max-w-4xl mx-auto space-y-6">
         <ProfileForm 
           profile={profile} 
