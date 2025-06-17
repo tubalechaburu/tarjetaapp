@@ -1,7 +1,7 @@
 
 import { BusinessCard } from "../../types";
 import { saveCardSupabase, getCardsSupabase, getCardByIdSupabase, deleteCardSupabase } from "../supabase/cardOperations";
-import { getCards as getLocalCards, saveCard as saveLocalCard, deleteCard as deleteLocalCard } from "../localStorage";
+import { getCardsLocally, saveCardLocally, deleteCardLocally } from "../localStorage";
 
 export const getCardById = async (id: string): Promise<BusinessCard | null> => {
   try {
@@ -18,7 +18,7 @@ export const getCardById = async (id: string): Promise<BusinessCard | null> => {
     
     // SEGUNDA PRIORIDAD: Buscar en localStorage como fallback
     console.log("💾 Falling back to localStorage...");
-    const localCards = getLocalCards();
+    const localCards = getCardsLocally();
     const localCard = localCards.find(card => card.id === id);
     
     if (localCard) {
@@ -55,19 +55,19 @@ export const saveCard = async (card: BusinessCard): Promise<boolean> => {
     if (supabaseSuccess) {
       console.log("✅ Card saved to Supabase successfully");
       // También guardar localmente como backup
-      saveLocalCard(card);
+      saveCardLocally(card);
       return true;
     } else {
       console.log("⚠️ Supabase save failed, saving to localStorage as fallback");
       // Si falla Supabase, guardar localmente
-      saveLocalCard(card);
+      saveCardLocally(card);
       return true; // Devolver true porque al menos se guardó localmente
     }
   } catch (error) {
     console.error("💥 Error saving card:", error);
     // Como último recurso, intentar localStorage
     try {
-      saveLocalCard(card);
+      saveCardLocally(card);
       return true;
     } catch (localError) {
       console.error("💥 Failed to save to localStorage too:", localError);
@@ -90,14 +90,14 @@ export const getCards = async (): Promise<BusinessCard[]> => {
     
     // Fallback a localStorage
     console.log("💾 Falling back to localStorage");
-    const localCards = getLocalCards();
+    const localCards = getCardsLocally();
     console.log(`✅ Found ${localCards.length} cards in localStorage`);
     
     return localCards;
   } catch (error) {
     console.error("💥 Error fetching cards:", error);
     // Último recurso: localStorage
-    return getLocalCards();
+    return getCardsLocally();
   }
 };
 
@@ -109,7 +109,7 @@ export const deleteCard = async (id: string): Promise<boolean> => {
     const supabaseSuccess = await deleteCardSupabase(id);
     
     // Siempre intentar eliminar de localStorage también
-    const localSuccess = deleteLocalCard(id);
+    const localSuccess = deleteCardLocally(id);
     
     // Éxito si al menos uno funcionó
     const success = supabaseSuccess || localSuccess;
