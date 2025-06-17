@@ -26,8 +26,14 @@ export const getCardByIdLocally = (id: string): BusinessCard | undefined => {
   return cards.find((card) => card.id === id);
 };
 
-export const deleteCardLocally = (id: string): void => {
-  const cards = getCardsLocally();
-  const filteredCards = cards.filter((card) => card.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredCards));
+export const deleteCardLocally = (id: string): boolean => {
+  try {
+    const cards = getCardsLocally();
+    const filteredCards = cards.filter((card) => card.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredCards));
+    return true;
+  } catch (error) {
+    console.error("Error deleting card locally:", error);
+    return false;
+  }
 };
