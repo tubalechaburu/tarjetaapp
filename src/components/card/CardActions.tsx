@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Share2, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { BusinessCard } from "@/types";
-import { deleteCard, saveCard } from "@/utils/storage";
+import { deleteCard } from "@/utils/storage";
+import { saveCardSupabase } from "@/utils/supabase/cardOperations";
 
 interface CardActionsProps {
   card: BusinessCard;
@@ -47,17 +48,17 @@ const CardActions: React.FC<CardActionsProps> = ({
 
   const shareCard = async () => {
     try {
-      // Ensure the card exists in Supabase before sharing
-      if (card) {
-        try {
-          await saveCard(card);
-          // Only show one success message
-          toast.success("Tarjeta guardada correctamente");
-        } catch (error) {
-          console.error("Error ensuring card exists in Supabase:", error);
-          toast.error("Error al guardar la tarjeta");
-        }
+      console.log("🔄 Preparando tarjeta para compartir...");
+      
+      // Asegurar que la tarjeta existe en Supabase antes de compartir
+      const saved = await saveCardSupabase(card);
+      
+      if (!saved) {
+        toast.error("Error: No se pudo preparar la tarjeta para compartir. Verifica tu conexión a internet.");
+        return;
       }
+      
+      console.log("✅ Tarjeta confirmada en la base de datos, procediendo a compartir");
       
       if (navigator.share) {
         await navigator.share({
@@ -65,12 +66,14 @@ const CardActions: React.FC<CardActionsProps> = ({
           text: `Información de contacto de ${card?.name} - ${card?.jobTitle} en ${card?.company}`,
           url: shareUrl
         });
+        toast.success("Tarjeta compartida correctamente");
       } else {
         await navigator.clipboard.writeText(shareUrl);
+        toast.success("Enlace copiado al portapapeles - La tarjeta está lista para compartir");
       }
     } catch (error) {
       console.error("Error sharing:", error);
-      toast.error("No se pudo compartir la tarjeta");
+      toast.error("No se pudo compartir la tarjeta. Inténtalo de nuevo.");
     }
   };
 

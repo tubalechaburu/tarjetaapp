@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/navigation/BackButton";
 import CardActions from "@/components/card/CardActions";
 import ViewCardContent from "@/components/card/ViewCardContent";
+import { saveCardSupabase } from "@/utils/supabase/cardOperations";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,19 +72,32 @@ const ViewCard = () => {
     if (!card) return;
     
     try {
+      console.log("🔄 Preparando tarjeta para compartir desde ViewCard...");
+      
+      // Asegurar que la tarjeta está en Supabase antes de compartir
+      const saved = await saveCardSupabase(card);
+      
+      if (!saved) {
+        toast.error("Error: No se pudo preparar la tarjeta para compartir. Verifica tu conexión.");
+        return;
+      }
+      
+      console.log("✅ Tarjeta verificada en la base de datos");
+      
       if (navigator.share) {
         await navigator.share({
           title: `Tarjeta de ${card.name}`,
           text: `Información de contacto de ${card.name} - ${card.jobTitle} en ${card.company}`,
           url: fullShareUrl
         });
+        toast.success("Tarjeta compartida correctamente");
       } else {
         await navigator.clipboard.writeText(fullShareUrl);
-        toast.success("Enlace copiado al portapapeles");
+        toast.success("Enlace copiado - La tarjeta está lista para compartir");
       }
     } catch (error) {
       console.error("Error sharing:", error);
-      toast.error("No se pudo compartir la tarjeta");
+      toast.error("No se pudo compartir la tarjeta. Inténtalo de nuevo.");
     }
   };
 

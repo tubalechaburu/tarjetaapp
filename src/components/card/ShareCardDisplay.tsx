@@ -6,6 +6,8 @@ import CardPreview from "@/components/CardPreview";
 import { Link } from "react-router-dom";
 import { Share2, Download, Link2 } from "lucide-react";
 import { downloadVCard } from "@/utils/linkUtils";
+import { saveCardSupabase } from "@/utils/supabase/cardOperations";
+import { toast } from "sonner";
 
 interface ShareCardDisplayProps {
   card: BusinessCard;
@@ -18,6 +20,25 @@ const ShareCardDisplay: React.FC<ShareCardDisplayProps> = ({
   shareUrl, 
   onShare 
 }) => {
+  const handleShare = async () => {
+    try {
+      console.log("🔄 Verificando disponibilidad de la tarjeta para compartir...");
+      
+      // Asegurar que la tarjeta esté en Supabase
+      const saved = await saveCardSupabase(card);
+      
+      if (!saved) {
+        toast.error("Error: No se pudo verificar la tarjeta. Inténtalo de nuevo.");
+        return;
+      }
+      
+      onShare();
+    } catch (error) {
+      console.error("Error preparing card for sharing:", error);
+      toast.error("Error al preparar la tarjeta para compartir");
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto">
       <div className="text-center mb-6">
@@ -32,7 +53,7 @@ const ShareCardDisplay: React.FC<ShareCardDisplayProps> = ({
       <CardPreview card={card} actions={true} />
       
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <Button onClick={onShare} className="gap-1">
+        <Button onClick={handleShare} className="gap-1">
           <Share2 className="h-4 w-4" />
           Compartir
         </Button>
