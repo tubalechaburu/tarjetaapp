@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { CheckCircle, Users, Zap } from "lucide-react";
 
 const HeroSection = () => {
   return (
-    <section className="container mx-auto px-4 py-16 lg:py-24">
+    <section className="container mx-auto px-4 py-12 lg:py-16">
       <div className="text-center max-w-4xl mx-auto">
         <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm font-medium">
           🚀 La revolución digital de las tarjetas de presentación
