@@ -29,9 +29,8 @@ serve(async (req) => {
       );
     }
 
-    // Use the current domain from the request
-    const origin = req.headers.get('origin') || "https://tarjetavisita.app";
-    const baseUrl = origin;
+    // Use the production domain tarjetavisita.app
+    const baseUrl = "https://tarjetavisita.app";
     
     console.log("Using base URL:", baseUrl);
     

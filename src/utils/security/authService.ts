@@ -215,11 +215,10 @@ class AuthService {
     } : undefined;
 
     try {
-      // Get current domain for redirect
-      const currentDomain = window.location.origin;
-      const redirectUrl = `${currentDomain}/auth/confirm`;
+      // Use production domain for redirect
+      const redirectUrl = `https://tarjetavisita.app/auth/confirm`;
       
-      console.log("Attempting signup with improved email settings");
+      console.log("Attempting signup with production domain");
       console.log("Redirect URL:", redirectUrl);
       console.log("Email:", sanitizedEmail);
       
