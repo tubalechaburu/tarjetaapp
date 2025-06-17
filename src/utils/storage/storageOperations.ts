@@ -45,6 +45,59 @@ export const getCardById = async (id: string): Promise<BusinessCard | null> => {
   }
 };
 
+// Nueva función específica para obtener tarjetas para compartir
+export const getCardForSharing = async (id: string): Promise<BusinessCard | null> => {
+  try {
+    console.log(`🔍 Fetching card for sharing with ID: ${id}`);
+    
+    // Para compartir, SOLO usar Supabase
+    console.log("🌐 Getting card from Supabase for sharing...");
+    const supabaseCard = await getCardByIdSupabase(id);
+    
+    if (supabaseCard) {
+      console.log("✅ Card found in Supabase for sharing:", supabaseCard.name);
+      return supabaseCard;
+    }
+    
+    console.log(`❌ Card ${id} not found in Supabase for sharing`);
+    return null;
+  } catch (error) {
+    console.error("💥 Error getting card for sharing:", error);
+    return null;
+  }
+};
+
+// Nueva función para asegurar que una tarjeta esté sincronizada en Supabase antes de compartir
+export const ensureCardInSupabase = async (card: BusinessCard): Promise<boolean> => {
+  try {
+    console.log("🔄 Ensuring card is in Supabase before sharing:", card.name);
+    
+    // Verificar si ya existe en Supabase
+    if (card.id) {
+      const existingCard = await getCardByIdSupabase(card.id);
+      if (existingCard) {
+        console.log("✅ Card already exists in Supabase");
+        return true;
+      }
+    }
+    
+    // Si no existe, intentar guardarla
+    console.log("📤 Saving card to Supabase for sharing...");
+    const saved = await saveCardSupabase(card);
+    
+    if (saved) {
+      console.log("✅ Card successfully saved to Supabase for sharing");
+      return true;
+    } else {
+      console.error("❌ Failed to save card to Supabase");
+      return false;
+    }
+  } catch (error) {
+    console.error("💥 Error ensuring card is in Supabase:", error);
+    return false;
+  }
+};
+
 export const saveCard = async (card: BusinessCard): Promise<boolean> => {
   try {
     console.log("💾 Saving card:", card.name);

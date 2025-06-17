@@ -12,7 +12,9 @@ export {
   saveCard,
   getCards,
   getCardById,
-  deleteCard
+  deleteCard,
+  getCardForSharing,
+  ensureCardInSupabase
 } from "./storageOperations";
 
 // Export normalization utilities

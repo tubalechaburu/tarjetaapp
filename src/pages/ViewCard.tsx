@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getCardById } from "@/utils/storage";
+import { getCardById, ensureCardInSupabase } from "@/utils/storage/storageOperations";
 import { BusinessCard } from "@/types";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthContext";
@@ -10,7 +10,6 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/navigation/BackButton";
 import CardActions from "@/components/card/CardActions";
 import ViewCardContent from "@/components/card/ViewCardContent";
-import { saveCardSupabase } from "@/utils/supabase/cardOperations";
 
 const ViewCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -74,10 +73,10 @@ const ViewCard = () => {
     try {
       console.log("🔄 Preparando tarjeta para compartir desde ViewCard...");
       
-      // Asegurar que la tarjeta está en Supabase antes de compartir
-      const saved = await saveCardSupabase(card);
+      // Usar la nueva función para asegurar que esté en Supabase
+      const isInSupabase = await ensureCardInSupabase(card);
       
-      if (!saved) {
+      if (!isInSupabase) {
         toast.error("Error: No se pudo preparar la tarjeta para compartir. Verifica tu conexión.");
         return;
       }

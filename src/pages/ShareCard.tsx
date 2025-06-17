@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getCardByIdSupabase } from "@/utils/supabase/cardOperations";
+import { getCardForSharing } from "@/utils/storage/storageOperations";
 import { BusinessCard } from "@/types";
 import Footer from "@/components/Footer";
 import ShareCardHeader from "@/components/navigation/ShareCardHeader";
@@ -29,20 +29,20 @@ const ShareCard = () => {
         setLoading(true);
         setError(null);
         try {
-          console.log("ShareCard: Fetching card with ID from Supabase:", id);
+          console.log("ShareCard: Fetching card for sharing with ID:", id);
           
-          // Intentar obtener directamente de Supabase (ahora es público)
-          const foundCard = await getCardByIdSupabase(id);
+          // Usar la nueva función específica para compartir (solo Supabase)
+          const foundCard = await getCardForSharing(id);
           
           if (foundCard) {
-            console.log("✅ Card found in Supabase:", foundCard.name);
+            console.log("✅ Card found for sharing:", foundCard.name);
             setCard(foundCard);
           } else {
-            console.error("❌ Card not found in Supabase");
+            console.error("❌ Card not found for sharing");
             setError(`Tarjeta con ID ${id} no encontrada. Es posible que no se haya sincronizado correctamente o haya sido eliminada.`);
           }
         } catch (error) {
-          console.error("💥 Error al cargar la tarjeta:", error);
+          console.error("💥 Error al cargar la tarjeta para compartir:", error);
           setError(`Error al cargar la tarjeta: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
           setLoading(false);

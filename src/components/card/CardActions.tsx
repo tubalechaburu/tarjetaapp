@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Share2, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { BusinessCard } from "@/types";
-import { deleteCard } from "@/utils/storage";
-import { saveCardSupabase } from "@/utils/supabase/cardOperations";
+import { deleteCard } from "@/utils/storage/storageOperations";
+import { ensureCardInSupabase } from "@/utils/storage/storageOperations";
 
 interface CardActionsProps {
   card: BusinessCard;
@@ -50,10 +50,10 @@ const CardActions: React.FC<CardActionsProps> = ({
     try {
       console.log("🔄 Preparando tarjeta para compartir...");
       
-      // Asegurar que la tarjeta existe en Supabase antes de compartir
-      const saved = await saveCardSupabase(card);
+      // Usar la nueva función para asegurar que esté en Supabase
+      const isInSupabase = await ensureCardInSupabase(card);
       
-      if (!saved) {
+      if (!isInSupabase) {
         toast.error("Error: No se pudo preparar la tarjeta para compartir. Verifica tu conexión a internet.");
         return;
       }

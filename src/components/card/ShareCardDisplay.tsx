@@ -6,7 +6,7 @@ import CardPreview from "@/components/CardPreview";
 import { Link } from "react-router-dom";
 import { Share2, Download, Link2 } from "lucide-react";
 import { downloadVCard } from "@/utils/linkUtils";
-import { saveCardSupabase } from "@/utils/supabase/cardOperations";
+import { ensureCardInSupabase } from "@/utils/storage/storageOperations";
 import { toast } from "sonner";
 
 interface ShareCardDisplayProps {
@@ -24,10 +24,10 @@ const ShareCardDisplay: React.FC<ShareCardDisplayProps> = ({
     try {
       console.log("🔄 Verificando disponibilidad de la tarjeta para compartir...");
       
-      // Asegurar que la tarjeta esté en Supabase
-      const saved = await saveCardSupabase(card);
+      // Usar la nueva función para asegurar que esté en Supabase
+      const isInSupabase = await ensureCardInSupabase(card);
       
-      if (!saved) {
+      if (!isInSupabase) {
         toast.error("Error: No se pudo verificar la tarjeta. Inténtalo de nuevo.");
         return;
       }

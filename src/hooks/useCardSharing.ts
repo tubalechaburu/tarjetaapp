@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { BusinessCard } from "@/types";
-import { saveCardSupabase } from "@/utils/supabase/cardOperations";
+import { ensureCardInSupabase } from "@/utils/storage/storageOperations";
 
 export const useCardSharing = (card: BusinessCard | null, shareUrl: string) => {
   const [isSharing, setIsSharing] = useState(false);
@@ -16,10 +16,10 @@ export const useCardSharing = (card: BusinessCard | null, shareUrl: string) => {
       console.log("🔄 Preparando tarjeta para compartir...");
       console.log("🔗 URL a compartir:", shareUrl);
       
-      // Asegurar que la tarjeta existe en Supabase antes de compartir
-      const saved = await saveCardSupabase(card);
+      // Usar la nueva función para asegurar que esté en Supabase
+      const isInSupabase = await ensureCardInSupabase(card);
       
-      if (!saved) {
+      if (!isInSupabase) {
         toast.error("Error: No se pudo sincronizar la tarjeta con la base de datos. Verifica tu conexión a internet.");
         return;
       }
